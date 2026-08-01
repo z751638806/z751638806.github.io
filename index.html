@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>佩佩队长 | Peipei Dev</title>
+<meta name="description" content="佩佩队长（Peipei）— BW16 / ESP32 嵌入式开发UP主，固件、教程、项目分享">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font:14px/1.6 system-ui,-apple-system,sans-serif;color:#222;background:#f5f5f5}
+.wrap{max-width:720px;margin:0 auto;padding:24px 20px}
+header{border-bottom:2px solid #222;padding-bottom:12px;margin-bottom:20px}
+h1{font-size:22px;font-weight:700}
+.tag{color:#555;font-size:13px;margin-top:4px}
+nav{margin:12px 0}
+nav a{color:#1a73e8;text-decoration:none;margin-right:14px;font-size:13px}
+nav a:hover{text-decoration:underline}
+section{background:#fff;border:1px solid #e0e0e0;border-radius:6px;padding:16px;margin-bottom:16px}
+h2{font-size:16px;font-weight:600;border-left:3px solid #222;padding-left:8px;margin-bottom:12px}
+p{color:#333;margin-bottom:8px}
+ul{list-style:none}
+li{padding:8px 0;border-bottom:1px solid #eee}
+li:last-child{border-bottom:none}
+.vid{display:flex;justify-content:space-between;align-items:center}
+.vid a{color:#1a73e8;text-decoration:none;font-size:13px}
+.vid a:hover{text-decoration:underline}
+.badge{font-size:11px;color:#888;white-space:nowrap}
+.btn{display:inline-block;background:#1a73e8;color:#fff;padding:6px 14px;border-radius:4px;text-decoration:none;font-size:13px;margin-top:8px}
+.btn:hover{background:#1558b0}
+.dl{font-size:13px;color:#333}
+.dl a{color:#1a73e8;text-decoration:none}
+.dl a:hover{text-decoration:underline}
+footer{margin-top:24px;padding-top:12px;border-top:1px solid #e0e0e0;color:#999;font-size:12px;text-align:center}
+.note{background:#f5f5f5;border:1px solid #eee;border-radius:4px;padding:10px;font-size:12px;color:#555;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>佩佩队长 · Peipei Dev</h1>
+  <div class="tag">BW16 / ESP32 嵌入式开发 · 技术视频 · 固件分享</div>
+  <nav>
+    <a href="#videos">视频</a>
+    <a href="#tutorials">教程</a>
+    <a href="#firmware">固件</a>
+    <a href="#projects">项目</a>
+    <a href="#contact">联系</a>
+  </nav>
+</header>
+
+<section>
+  <h2>关于我</h2>
+  <p>大家好，我是<b>佩佩队长</b>，B站技术区UP主，专注 BW16（RTL8720DN）、ESP32 系列单片机开发。</p>
+  <p>这里是我的个人主页，汇总我的视频教程、固件下载和开源项目。欢迎交流学习，一起折腾嵌入式。</p>
+</section>
+
+<section id="videos">
+  <h2>最新视频</h2>
+  <ul id="vidlist">
+    <li class="vid"><span>视频正在整理中…</span><span class="badge">敬请期待</span></li>
+  </ul>
+  <p class="note">视频列表维护方式：在 GitHub 仓库的 <code>videos.json</code> 中更新，页面自动加载。详见 README。</p>
+</section>
+
+<section id="tutorials">
+  <h2>教程</h2>
+  <ul id="tutlist">
+    <li class="vid"><span>教程正在编写中…</span><span class="badge">写作中</span></li>
+  </ul>
+</section>
+
+<section id="firmware">
+  <h2>固件下载</h2>
+  <p>以下固件均基于本人视频教程制作，支持 BW16 / ESP32 平台：</p>
+  <ul class="dl" id="fwlist">
+    <li>固件列表整理中，请关注 B站动态或联系获取</li>
+  </ul>
+  <p class="note">⚠️ 固件仅供学习研究使用。使用前请确认硬件型号与烧录方法，烧录教程见视频。</p>
+</section>
+
+<section id="projects">
+  <h2>开源项目</h2>
+  <ul class="dl">
+    <li><b>BW16 系列开发笔记</b> — BW16 开发环境搭建、外设驱动、实用例程 <a href="https://github.com/z751638806">→ GitHub</a></li>
+    <li><b>CMCC Phisher</b> — 基于 BW16 的 WiFi 安全演示项目（教育用途）<a href="https://github.com/z751638806">→ GitHub</a></li>
+    <li><b>更多项目</b> — 持续更新中</li>
+  </ul>
+</section>
+
+<section id="contact">
+  <h2>联系我</h2>
+  <ul class="dl">
+    <li>B站：<a href="https://space.bilibili.com/" id="bili-link">闲鱼ID无敌佩佩队长</a></li>
+    <li>GitHub：<a href="https://github.com/z751638806">github.com/z751638806</a></li>
+    <li>邮箱：<a href="mailto:751638806@qq.com">751638806@qq.com</a></li>
+  </ul>
+</section>
+
+<footer>
+  © 2026 佩佩队长 · peipeidev.cn · 本站由 GitHub Pages 免费托管
+</footer>
+
+</div>
+<script>
+// 预留数据加载接口：后续可添加 videos.json / tutorials.json / firmware.json
+// fetch('videos.json').then(r=>r.json()).then(renderVideos)
+</script>
+</body>
+</html>
