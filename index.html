@@ -40,6 +40,26 @@ h1 .dot{color:#FB7299}
 .social a{color:#777;font-size:12px;border:1px solid #333;padding:4px 12px;border-radius:4px}
 .social a:hover{color:#fff;border-color:#FB7299;text-decoration:none}
 
+/* Hero 右侧芯片 logo */
+.hero-flex{display:flex;justify-content:space-between;align-items:center;gap:30px;flex-wrap:wrap}
+.chip-svg{flex-shrink:0;opacity:.85}
+
+/* 数据指标条 */
+.stats{margin-top:36px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;border-top:1px solid #2a2a2a;padding-top:24px}
+.stat{text-align:center}
+.stat b{display:block;font-size:26px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:#777}
+@media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr);gap:16px 12px}}
+
+/* 时间线 */
+.tl{position:relative;padding-left:22px;border-left:2px solid #e0e0e0}
+.tl-item{position:relative;padding:0 0 22px 6px}
+.tl-item::before{content:"";position:absolute;left:-29px;top:5px;width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid #FB7299}
+.tl-item:last-child{padding-bottom:0}
+.tl-date{font:12px ui-monospace,Menlo,monospace;color:#999}
+.tl-title{font-size:14px;font-weight:600;color:#222;margin:2px 0 2px}
+.tl-desc{font-size:13px;color:#666}
+
 /* ===== 主区 ===== */
 main{max-width:860px;margin:0 auto;padding:36px 20px 20px}
 section{margin-bottom:44px}
@@ -88,10 +108,15 @@ h2::after{content:"";flex:1;height:1px;background:#e0e0e0}
 .about b{color:#222}
 
 /* 页脚 */
-footer{border-top:1px solid #e0e0e0;margin-top:30px;padding:22px 20px 30px;text-align:center;color:#999;font-size:12px}
-footer .dom{font:12px ui-monospace,Menlo,monospace;color:#666}
-footer a{color:#777}
-footer a:hover{color:#FB7299}
+footer{background:#111;color:#999;margin-top:40px;padding:32px 20px 36px;font-size:12px}
+.foot-in{max-width:860px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr;gap:28px}
+@media(max-width:600px){.foot-in{grid-template-columns:1fr;gap:20px}}
+footer h4{color:#ccc;font-size:12px;font-weight:700;margin-bottom:10px;letter-spacing:1px}
+footer p{color:#777;line-height:1.8}
+footer a{color:#888}
+footer a:hover{color:#FB7299;text-decoration:none}
+.foot-bottom{border-top:1px solid #2a2a2a;margin-top:26px;padding-top:16px;text-align:center;color:#666;font-size:11px;line-height:1.9}
+.foot-bottom .dom{font:11px ui-monospace,Menlo,monospace;color:#888}
 
 @media(max-width:600px){
   h1{font-size:26px}
@@ -117,24 +142,45 @@ footer a:hover{color:#FB7299}
 
 <div class="hero">
   <div class="hero-in">
-    <div class="prompt">
-      <span class="c1">peipei@dev</span>:<span class="c2">~</span>$ ./intro.sh<br>
-      <span class="c3"># 嵌入式开发 · 技术视频 · 固件分享</span>
+    <div class="hero-flex">
+      <div>
+        <div class="prompt">
+          <span class="c1">peipei@dev</span>:<span class="c2">~</span>$ ./intro.sh<br>
+          <span class="c3"># 嵌入式开发 · 技术视频 · 固件分享</span>
+        </div>
+        <h1>佩佩队长<span class="dot">.</span></h1>
+        <div class="sub">BW16 (RTL8720DN) / ESP32 嵌入式开发 UP 主</div>
+        <p class="hero-desc">
+          专注 WiFi 单片机开发，分享从零开始的硬件折腾实录。
+          这里是我的视频、固件与开源项目大本营——B站更新，GitHub 开源，闲鱼可购固件。
+        </p>
+        <div class="cta">
+          <a class="btn btn-pink" href="https://space.bilibili.com/" target="_blank" rel="noopener">▶ 去B站看视频</a>
+          <a class="btn btn-ghost" href="https://github.com/z751638806" target="_blank" rel="noopener">GitHub 仓库</a>
+        </div>
+        <div class="social">
+          <a href="https://space.bilibili.com/" target="_blank" rel="noopener">Bilibili</a>
+          <a href="https://github.com/z751638806" target="_blank" rel="noopener">GitHub</a>
+          <a href="mailto:751638806@qq.com">Email</a>
+        </div>
+      </div>
+      <svg class="chip-svg" width="150" height="150" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+        <rect x="35" y="35" width="50" height="50" rx="4" stroke="#e5c07b" stroke-width="3"/>
+        <rect x="48" y="48" width="24" height="24" rx="2" stroke="#61afef" stroke-width="2.5"/>
+        <line x1="60" y1="22" x2="60" y2="35" stroke="#98c379" stroke-width="3"/>
+        <line x1="60" y1="85" x2="60" y2="98" stroke="#98c379" stroke-width="3"/>
+        <line x1="22" y1="60" x2="35" y2="60" stroke="#98c379" stroke-width="3"/>
+        <line x1="85" y1="60" x2="98" y2="60" stroke="#98c379" stroke-width="3"/>
+        <path d="M45 70 A15 15 0 0 1 75 70" stroke="#FB7299" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M53 78 A7 7 0 0 1 67 78" stroke="#FB7299" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="60" cy="85" r="2.5" fill="#FB7299"/>
+      </svg>
     </div>
-    <h1>佩佩队长<span class="dot">.</span></h1>
-    <div class="sub">BW16 (RTL8720DN) / ESP32 嵌入式开发 UP 主</div>
-    <p class="hero-desc">
-      专注 WiFi 单片机开发，分享从零开始的硬件折腾实录。
-      这里是我的视频、固件与开源项目大本营——B站更新，GitHub 开源，闲鱼可购固件。
-    </p>
-    <div class="cta">
-      <a class="btn btn-pink" href="https://space.bilibili.com/" target="_blank" rel="noopener">▶ 去B站看视频</a>
-      <a class="btn btn-ghost" href="https://github.com/z751638806" target="_blank" rel="noopener">GitHub 仓库</a>
-    </div>
-    <div class="social">
-      <a href="https://space.bilibili.com/" target="_blank" rel="noopener">Bilibili</a>
-      <a href="https://github.com/z751638806" target="_blank" rel="noopener">GitHub</a>
-      <a href="mailto:751638806@qq.com">Email</a>
+    <div class="stats">
+      <div class="stat"><b>10+</b><span>技术视频</span></div>
+      <div class="stat"><b>2</b><span>固件系列</span></div>
+      <div class="stat"><b>3</b><span>开源项目</span></div>
+      <div class="stat"><b>1000+</b><span>B站粉丝</span></div>
     </div>
   </div>
 </div>
@@ -223,6 +269,32 @@ footer a:hover{color:#FB7299}
   </div>
 </section>
 
+<section id="timeline">
+  <h2>更新日志</h2>
+  <div class="tl">
+    <div class="tl-item">
+      <div class="tl-date">2026-08-02</div>
+      <div class="tl-title">peipeidev.cn 上线</div>
+      <div class="tl-desc">个人主页正式上线，绑定 GitHub Pages，全站 HTTPS</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">2026-08</div>
+      <div class="tl-title">BW16 固件系列发布</div>
+      <div class="tl-desc">CMCC Phisher 等 WiFi 安全演示固件，配套激活码</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">2026-07</div>
+      <div class="tl-title">ESP32 安全研究起步</div>
+      <div class="tl-desc">WiFi 攻防演示系列视频开始更新</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">2026-06</div>
+      <div class="tl-title">BW16 开发入门</div>
+      <div class="tl-desc">从零折腾 RTL8720DN，Arduino + Ameba SDK 踩坑记录</div>
+    </div>
+  </div>
+</section>
+
 <section id="about">
   <h2>关于</h2>
   <div class="about">
@@ -238,9 +310,32 @@ footer a:hover{color:#FB7299}
 </main>
 
 <footer>
-  <div>© 2026 佩佩队长 · <span class="dom">peipeidev.cn</span> · 由 GitHub Pages 免费托管</div>
-  <div style="margin-top:6px">B站 @闲鱼ID无敌佩佩队长 · <a href="mailto:751638806@qq.com">751638806@qq.com</a></div>
-  <div style="margin-top:8px;font-size:11px">👁 <span id="busuanzi_value_site_pv"></span> 次访问 · <span id="busuanzi_value_site_uv"></span> 位访客</div>
+  <div class="foot-in">
+    <div>
+      <h4>关于本站</h4>
+      <p>佩佩队长 · peipeidev.cn<br>
+      个人技术博客，分享 BW16 / ESP32 嵌入式开发经验、固件与开源项目。<br>
+      本站由 GitHub Pages 托管于境外服务器，依法无需 ICP 备案。</p>
+    </div>
+    <div>
+      <h4>快速链接</h4>
+      <p><a href="#videos">最新视频</a><br>
+         <a href="#firmware">固件下载</a><br>
+         <a href="#projects">开源项目</a><br>
+         <a href="#about">关于我</a></p>
+    </div>
+    <div>
+      <h4>联系我</h4>
+      <p><a href="https://space.bilibili.com/" target="_blank" rel="noopener">B站 @闲鱼ID无敌佩佩队长</a><br>
+         <a href="https://github.com/z751638806" target="_blank" rel="noopener">GitHub</a> · 闲鱼同名<br>
+         <a href="mailto:751638806@qq.com">751638806@qq.com</a></p>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    © 2026 佩佩队长 · <span class="dom">peipeidev.cn</span> · 保留所有权利<br>
+    免责声明：本站固件仅供学习研究使用，请勿用于非法用途 · 内容均为个人观点<br>
+    👁 <span id="busuanzi_value_site_pv"></span> 次访问 · <span id="busuanzi_value_site_uv"></span> 位访客 · 最后更新 2026-08-02
+  </div>
 </footer>
 <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 
