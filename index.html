@@ -3,108 +3,244 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>佩佩队长 | Peipei Dev</title>
-<meta name="description" content="佩佩队长（Peipei）— BW16 / ESP32 嵌入式开发UP主，固件、教程、项目分享">
+<title>佩佩队长 · Peipei Dev — BW16 / ESP32 嵌入式开发</title>
+<meta name="description" content="佩佩队长（Peipei）— BW16 (RTL8720DN) / ESP32 嵌入式开发UP主。技术视频、固件下载、开源项目。">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font:14px/1.6 system-ui,-apple-system,sans-serif;color:#222;background:#f5f5f5}
-.wrap{max-width:720px;margin:0 auto;padding:24px 20px}
-header{border-bottom:2px solid #222;padding-bottom:12px;margin-bottom:20px}
-h1{font-size:22px;font-weight:700}
-.tag{color:#555;font-size:13px;margin-top:4px}
-nav{margin:12px 0}
-nav a{color:#1a73e8;text-decoration:none;margin-right:14px;font-size:13px}
-nav a:hover{text-decoration:underline}
-section{background:#fff;border:1px solid #e0e0e0;border-radius:6px;padding:16px;margin-bottom:16px}
-h2{font-size:16px;font-weight:600;border-left:3px solid #222;padding-left:8px;margin-bottom:12px}
-p{color:#333;margin-bottom:8px}
-ul{list-style:none}
-li{padding:8px 0;border-bottom:1px solid #eee}
-li:last-child{border-bottom:none}
-.vid{display:flex;justify-content:space-between;align-items:center}
-.vid a{color:#1a73e8;text-decoration:none;font-size:13px}
-.vid a:hover{text-decoration:underline}
-.badge{font-size:11px;color:#888;white-space:nowrap}
-.btn{display:inline-block;background:#1a73e8;color:#fff;padding:6px 14px;border-radius:4px;text-decoration:none;font-size:13px;margin-top:8px}
-.btn:hover{background:#1558b0}
-.dl{font-size:13px;color:#333}
-.dl a{color:#1a73e8;text-decoration:none}
-.dl a:hover{text-decoration:underline}
-footer{margin-top:24px;padding-top:12px;border-top:1px solid #e0e0e0;color:#999;font-size:12px;text-align:center}
-.note{background:#f5f5f5;border:1px solid #eee;border-radius:4px;padding:10px;font-size:12px;color:#555;margin-top:8px}
+html{scroll-behavior:smooth}
+body{font:15px/1.7 system-ui,-apple-system,sans-serif;color:#222;background:#f5f5f5}
+a{color:#1a73e8;text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ===== 顶栏 ===== */
+.nav{position:sticky;top:0;z-index:10;background:#111;border-bottom:1px solid #2a2a2a}
+.nav-in{max-width:860px;margin:0 auto;padding:10px 20px;display:flex;justify-content:space-between;align-items:center}
+.logo{color:#fff;font-weight:700;font-size:15px}
+.logo span{color:#FB7299}
+.nav-links a{color:#aaa;font-size:13px;margin-left:18px}
+.nav-links a:hover{color:#fff;text-decoration:none}
+
+/* ===== Hero ===== */
+.hero{background:#111;color:#f0f0f0;padding:64px 20px 56px}
+.hero-in{max-width:860px;margin:0 auto}
+.prompt{font:13px/1.8 ui-monospace,SFMono-Regular,Menlo,monospace;color:#6f8f6f;margin-bottom:18px}
+.prompt b{color:#fff;font-weight:600}
+.prompt .c1{color:#e5c07b}.prompt .c2{color:#61afef}.prompt .c3{color:#98c379}
+h1{font-size:34px;font-weight:700;color:#fff;letter-spacing:.5px}
+h1 .dot{color:#FB7299}
+.sub{margin-top:10px;font-size:16px;color:#bbb}
+.hero-desc{margin-top:16px;max-width:640px;color:#888;font-size:14px}
+.cta{margin-top:24px;display:flex;gap:12px;flex-wrap:wrap}
+.btn{display:inline-block;padding:9px 22px;border-radius:5px;font-size:14px;font-weight:600;border:1px solid transparent}
+.btn:hover{text-decoration:none;opacity:.9}
+.btn-pink{background:#FB7299;color:#fff}
+.btn-ghost{background:transparent;color:#ddd;border-color:#444}
+.btn-ghost:hover{border-color:#FB7299;color:#FB7299;opacity:1}
+.social{margin-top:28px;display:flex;gap:8px;flex-wrap:wrap}
+.social a{color:#777;font-size:12px;border:1px solid #333;padding:4px 12px;border-radius:4px}
+.social a:hover{color:#fff;border-color:#FB7299;text-decoration:none}
+
+/* ===== 主区 ===== */
+main{max-width:860px;margin:0 auto;padding:36px 20px 20px}
+section{margin-bottom:44px}
+h2{font-size:13px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:2px;margin-bottom:18px;display:flex;align-items:center;gap:10px}
+h2::after{content:"";flex:1;height:1px;background:#e0e0e0}
+
+/* 技能标签 */
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.tag{background:#fff;border:1px solid #e0e0e0;border-radius:4px;padding:4px 12px;font-size:13px;color:#555}
+.tag b{color:#222}
+
+/* 视频卡片 */
+.vid-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.card{background:#fff;border:1px solid #e0e0e0;border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.card:hover{border-color:#FB7299}
+.card .t{font-size:14px;font-weight:600;color:#222;line-height:1.5}
+.card .m{font-size:12px;color:#999}
+.card .go{margin-top:auto;font-size:13px;color:#FB7299;font-weight:600}
+.card .go:hover{text-decoration:underline}
+
+/* 固件列表 */
+.fw{background:#fff;border:1px solid #e0e0e0;border-radius:6px;overflow:hidden}
+.fw-row{display:flex;justify-content:space-between;align-items:center;padding:13px 18px;border-bottom:1px solid #eee;gap:12px;flex-wrap:wrap}
+.fw-row:last-child{border-bottom:none}
+.fw-row:hover{background:#fafafa}
+.fw-name{font-size:14px;font-weight:600}
+.fw-name small{display:block;font-weight:400;color:#999;font-size:12px;margin-top:2px}
+.fw-meta{display:flex;align-items:center;gap:14px;font-size:12px;color:#888;flex-shrink:0}
+.fw-dl{background:#111;color:#fff;padding:5px 14px;border-radius:4px;font-size:12px}
+.fw-dl:hover{background:#FB7299;color:#fff;text-decoration:none}
+.badge{display:inline-block;background:#f0f0f0;border:1px solid #e0e0e0;color:#666;font-size:11px;padding:1px 8px;border-radius:3px}
+
+/* 项目 */
+.proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.proj{background:#fff;border:1px solid #e0e0e0;border-radius:6px;padding:16px}
+.proj:hover{border-color:#111}
+.proj .n{font-size:14px;font-weight:600;margin-bottom:6px}
+.proj .n span{color:#999;font-weight:400;font-size:12px}
+.proj p{font-size:13px;color:#666}
+.proj a{font-size:12px;color:#1a73e8}
+
+/* 关于 */
+.about{background:#fff;border:1px solid #e0e0e0;border-radius:6px;padding:20px}
+.about p{font-size:14px;color:#444;margin-bottom:10px}
+.about p:last-child{margin-bottom:0}
+.about b{color:#222}
+
+/* 页脚 */
+footer{border-top:1px solid #e0e0e0;margin-top:30px;padding:22px 20px 30px;text-align:center;color:#999;font-size:12px}
+footer .dom{font:12px ui-monospace,Menlo,monospace;color:#666}
+footer a{color:#777}
+footer a:hover{color:#FB7299}
+
+@media(max-width:600px){
+  h1{font-size:26px}
+  .hero{padding:44px 16px 40px}
+  .nav-links a{margin-left:12px}
+  .sub{font-size:14px}
+}
 </style>
 </head>
 <body>
-<div class="wrap">
 
-<header>
-  <h1>佩佩队长 · Peipei Dev</h1>
-  <div class="tag">BW16 / ESP32 嵌入式开发 · 技术视频 · 固件分享</div>
-  <nav>
-    <a href="#videos">视频</a>
-    <a href="#tutorials">教程</a>
-    <a href="#firmware">固件</a>
-    <a href="#projects">项目</a>
-    <a href="#contact">联系</a>
-  </nav>
-</header>
+<div class="nav">
+  <div class="nav-in">
+    <div class="logo">peipei<span>.</span>dev</div>
+    <div class="nav-links">
+      <a href="#videos">视频</a>
+      <a href="#firmware">固件</a>
+      <a href="#projects">项目</a>
+      <a href="#about">关于</a>
+    </div>
+  </div>
+</div>
 
-<section>
-  <h2>关于我</h2>
-  <p>大家好，我是<b>佩佩队长</b>，B站技术区UP主，专注 BW16（RTL8720DN）、ESP32 系列单片机开发。</p>
-  <p>这里是我的个人主页，汇总我的视频教程、固件下载和开源项目。欢迎交流学习，一起折腾嵌入式。</p>
+<div class="hero">
+  <div class="hero-in">
+    <div class="prompt">
+      <span class="c1">peipei@dev</span>:<span class="c2">~</span>$ ./intro.sh<br>
+      <span class="c3"># 嵌入式开发 · 技术视频 · 固件分享</span>
+    </div>
+    <h1>佩佩队长<span class="dot">.</span></h1>
+    <div class="sub">BW16 (RTL8720DN) / ESP32 嵌入式开发 UP 主</div>
+    <p class="hero-desc">
+      专注 WiFi 单片机开发，分享从零开始的硬件折腾实录。
+      这里是我的视频、固件与开源项目大本营——B站更新，GitHub 开源，闲鱼可购固件。
+    </p>
+    <div class="cta">
+      <a class="btn btn-pink" href="https://space.bilibili.com/" target="_blank" rel="noopener">▶ 去B站看视频</a>
+      <a class="btn btn-ghost" href="https://github.com/z751638806" target="_blank" rel="noopener">GitHub 仓库</a>
+    </div>
+    <div class="social">
+      <a href="https://space.bilibili.com/" target="_blank" rel="noopener">Bilibili</a>
+      <a href="https://github.com/z751638806" target="_blank" rel="noopener">GitHub</a>
+      <a href="mailto:751638806@qq.com">Email</a>
+    </div>
+  </div>
+</div>
+
+<main>
+
+<section id="skills">
+  <h2>技能栈</h2>
+  <div class="tags">
+    <span class="tag"><b>BW16</b> RTL8720DN</span>
+    <span class="tag"><b>ESP32</b> / ESP32-C3</span>
+    <span class="tag"><b>WiFi</b> 802.11</span>
+    <span class="tag"><b>Arduino</b> IDE</span>
+    <span class="tag"><b>Ameba</b> SDK</span>
+    <span class="tag"><b>C</b> / C++</span>
+    <span class="tag"><b>IoT</b> 应用</span>
+    <span class="tag"><b>固件</b> 开发</span>
+  </div>
 </section>
 
 <section id="videos">
   <h2>最新视频</h2>
-  <ul id="vidlist">
-    <li class="vid"><span>视频正在整理中…</span><span class="badge">敬请期待</span></li>
-  </ul>
-  <p class="note">视频列表维护方式：在 GitHub 仓库的 <code>videos.json</code> 中更新，页面自动加载。详见 README。</p>
-</section>
-
-<section id="tutorials">
-  <h2>教程</h2>
-  <ul id="tutlist">
-    <li class="vid"><span>教程正在编写中…</span><span class="badge">写作中</span></li>
-  </ul>
+  <div class="vid-grid">
+    <div class="card">
+      <div class="t">视频整理中…</div>
+      <div class="m">B站 @闲鱼ID无敌佩佩队长 持续更新</div>
+      <a class="go" href="https://space.bilibili.com/" target="_blank" rel="noopener">去B站观看 →</a>
+    </div>
+    <div class="card">
+      <div class="t">BW16 开发环境搭建教程</div>
+      <div class="m">敬请期待 · Arduino IDE + Ameba SDK</div>
+      <a class="go" href="https://space.bilibili.com/" target="_blank" rel="noopener">预约观看 →</a>
+    </div>
+    <div class="card">
+      <div class="t">ESP32 WiFi 安全研究系列</div>
+      <div class="m">敬请期待 · 攻防演示</div>
+      <a class="go" href="https://space.bilibili.com/" target="_blank" rel="noopener">预约观看 →</a>
+    </div>
+  </div>
 </section>
 
 <section id="firmware">
   <h2>固件下载</h2>
-  <p>以下固件均基于本人视频教程制作，支持 BW16 / ESP32 平台：</p>
-  <ul class="dl" id="fwlist">
-    <li>固件列表整理中，请关注 B站动态或联系获取</li>
-  </ul>
-  <p class="note">⚠️ 固件仅供学习研究使用。使用前请确认硬件型号与烧录方法，烧录教程见视频。</p>
+  <div class="fw">
+    <div class="fw-row">
+      <div class="fw-name">BW16 系列固件包
+        <small>CMCC Phisher 等 WiFi 安全演示固件 · 含烧录说明</small>
+      </div>
+      <div class="fw-meta">
+        <span class="badge">v1.0</span>
+        <span>2026-08</span>
+        <a class="fw-dl" href="https://github.com/z751638806" target="_blank" rel="noopener">获取 ↓</a>
+      </div>
+    </div>
+    <div class="fw-row">
+      <div class="fw-name">ESP32 系列固件包
+        <small>WiFi 渗透 / 演示固件 · 含激活码说明</small>
+      </div>
+      <div class="fw-meta">
+        <span class="badge">v1.0</span>
+        <span>2026-08</span>
+        <a class="fw-dl" href="https://github.com/z751638806" target="_blank" rel="noopener">获取 ↓</a>
+      </div>
+    </div>
+  </div>
 </section>
 
 <section id="projects">
   <h2>开源项目</h2>
-  <ul class="dl">
-    <li><b>BW16 系列开发笔记</b> — BW16 开发环境搭建、外设驱动、实用例程 <a href="https://github.com/z751638806">→ GitHub</a></li>
-    <li><b>CMCC Phisher</b> — 基于 BW16 的 WiFi 安全演示项目（教育用途）<a href="https://github.com/z751638806">→ GitHub</a></li>
-    <li><b>更多项目</b> — 持续更新中</li>
-  </ul>
+  <div class="proj-grid">
+    <div class="proj">
+      <div class="n">BW16 开发笔记 <span>· 持续更新</span></div>
+      <p>BW16 环境搭建、外设驱动、踩坑记录，从入门到实战。</p>
+      <a href="https://github.com/z751638806" target="_blank" rel="noopener">GitHub →</a>
+    </div>
+    <div class="proj">
+      <div class="n">CMCC Phisher <span>· 教育演示</span></div>
+      <p>基于 BW16 的 WiFi 钓鱼演示项目，仅用于安全教学。</p>
+      <a href="https://github.com/z751638806" target="_blank" rel="noopener">GitHub →</a>
+    </div>
+    <div class="proj">
+      <div class="n">ESP32 安全工具箱 <span>· 规划中</span></div>
+      <p>ESP32 系列 WiFi 安全测试工具合集。</p>
+      <a href="https://github.com/z751638806" target="_blank" rel="noopener">GitHub →</a>
+    </div>
+  </div>
 </section>
 
-<section id="contact">
-  <h2>联系我</h2>
-  <ul class="dl">
-    <li>B站：<a href="https://space.bilibili.com/" id="bili-link">闲鱼ID无敌佩佩队长</a></li>
-    <li>GitHub：<a href="https://github.com/z751638806">github.com/z751638806</a></li>
-    <li>邮箱：<a href="mailto:751638806@qq.com">751638806@qq.com</a></li>
-  </ul>
+<section id="about">
+  <h2>关于</h2>
+  <div class="about">
+    <p>大家好，我是<b>佩佩队长</b>，一名野生嵌入式开发玩家。从 BW16 到 ESP32，从点灯到 WiFi 攻防，我把每一块开发板的折腾过程都拍成了视频。</p>
+    <p>· <b>B站</b>：闲鱼ID无敌佩佩队长（视频 + 图文教程）<br>
+       · <b>闲鱼</b>：在售固件 + 激活码（8.8 元起）<br>
+       · <b>GitHub</b>：z751638806（开源代码）<br>
+       · <b>联系</b>：751638806@qq.com</p>
+    <p>固件仅供学习研究，请勿用于非法用途。</p>
+  </div>
 </section>
+
+</main>
 
 <footer>
-  © 2026 佩佩队长 · peipeidev.cn · 本站由 GitHub Pages 免费托管
+  <div>© 2026 佩佩队长 · <span class="dom">peipeidev.cn</span> · 由 GitHub Pages 免费托管</div>
+  <div style="margin-top:6px">B站 @闲鱼ID无敌佩佩队长 · <a href="mailto:751638806@qq.com">751638806@qq.com</a></div>
 </footer>
 
-</div>
-<script>
-// 预留数据加载接口：后续可添加 videos.json / tutorials.json / firmware.json
-// fetch('videos.json').then(r=>r.json()).then(renderVideos)
-</script>
 </body>
 </html>
