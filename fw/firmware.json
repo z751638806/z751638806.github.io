@@ -1,0 +1,7 @@
+{
+  "notice": "📢 v1.1 已发布：修复 WiFi 连接稳定性和网络就绪判断，强烈推荐升级。",
+  "versions": [
+    {"version": "1.1", "date": "2026-08-03", "note": "修复 WiFi 连接 + 网络就绪判断", "path": "/fw/fw.bin"},
+    {"version": "1.0", "date": "2026-08-02", "note": "初始版本", "path": "/fw/fw_1.0.bin"}
+  ]
+}
