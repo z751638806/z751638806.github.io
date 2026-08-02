@@ -21,31 +21,27 @@ a:hover{text-decoration:underline}
 .nav-links a:hover{color:#fff;text-decoration:none}
 
 /* ===== Hero ===== */
-.hero{background:#111;color:#f0f0f0;padding:64px 20px 56px}
+.hero{background:#111;color:#f0f0f0;padding:88px 20px 72px}
 .hero-in{max-width:860px;margin:0 auto}
-.prompt{font:13px/1.8 ui-monospace,SFMono-Regular,Menlo,monospace;color:#6f8f6f;margin-bottom:18px}
+.prompt{font:14px/1.8 ui-monospace,SFMono-Regular,Menlo,monospace;color:#6f8f6f;margin-bottom:26px}
 .prompt b{color:#fff;font-weight:600}
 .prompt .c1{color:#e5c07b}.prompt .c2{color:#61afef}.prompt .c3{color:#98c379}
-h1{font-size:34px;font-weight:700;color:#fff;letter-spacing:.5px}
+h1{font-size:46px;font-weight:700;color:#fff;letter-spacing:.5px;line-height:1.15}
 h1 .dot{color:#FB7299}
-.sub{margin-top:10px;font-size:16px;color:#bbb}
-.hero-desc{margin-top:16px;max-width:640px;color:#888;font-size:14px}
-.cta{margin-top:24px;display:flex;gap:12px;flex-wrap:wrap}
-.btn{display:inline-block;padding:9px 22px;border-radius:5px;font-size:14px;font-weight:600;border:1px solid transparent}
+.sub{margin-top:14px;font-size:18px;color:#bbb}
+.hero-desc{margin-top:20px;max-width:600px;color:#888;font-size:15px;line-height:1.8}
+.cta{margin-top:32px;display:flex;gap:12px;flex-wrap:wrap}
+.btn{display:inline-block;padding:10px 26px;border-radius:5px;font-size:14px;font-weight:600;border:1px solid transparent}
 .btn:hover{text-decoration:none;opacity:.9}
 .btn-pink{background:#FB7299;color:#fff}
 .btn-ghost{background:transparent;color:#ddd;border-color:#444}
 .btn-ghost:hover{border-color:#FB7299;color:#FB7299;opacity:1}
-.social{margin-top:28px;display:flex;gap:8px;flex-wrap:wrap}
+.social{margin-top:32px;display:flex;gap:8px;flex-wrap:wrap}
 .social a{color:#777;font-size:12px;border:1px solid #333;padding:4px 12px;border-radius:4px}
 .social a:hover{color:#fff;border-color:#FB7299;text-decoration:none}
 
-/* Hero 右侧芯片 logo */
-.hero-flex{display:flex;justify-content:space-between;align-items:center;gap:30px;flex-wrap:wrap}
-.chip-svg{flex-shrink:0;opacity:.85}
-
 /* 数据指标条 */
-.stats{margin-top:36px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;border-top:1px solid #2a2a2a;padding-top:24px}
+.stats{margin-top:44px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;border-top:1px solid #2a2a2a;padding-top:26px}
 .stat{text-align:center}
 .stat b{display:block;font-size:26px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums}
 .stat span{font-size:12px;color:#777}
@@ -142,39 +138,24 @@ footer a:hover{color:#FB7299;text-decoration:none}
 
 <div class="hero">
   <div class="hero-in">
-    <div class="hero-flex">
-      <div>
-        <div class="prompt">
-          <span class="c1">peipei@dev</span>:<span class="c2">~</span>$ ./intro.sh<br>
-          <span class="c3"># 嵌入式开发 · 技术视频 · 固件分享</span>
-        </div>
-        <h1>佩佩队长<span class="dot">.</span></h1>
-        <div class="sub">BW16 (RTL8720DN) / ESP32 嵌入式开发 UP 主</div>
-        <p class="hero-desc">
-          专注 WiFi 单片机开发，分享从零开始的硬件折腾实录。
-          这里是我的视频、固件与开源项目大本营——B站更新，GitHub 开源，闲鱼可购固件。
-        </p>
-        <div class="cta">
-          <a class="btn btn-pink" href="https://space.bilibili.com/" target="_blank" rel="noopener">▶ 去B站看视频</a>
-          <a class="btn btn-ghost" href="https://github.com/z751638806" target="_blank" rel="noopener">GitHub 仓库</a>
-        </div>
-        <div class="social">
-          <a href="https://space.bilibili.com/" target="_blank" rel="noopener">Bilibili</a>
-          <a href="https://github.com/z751638806" target="_blank" rel="noopener">GitHub</a>
-          <a href="mailto:751638806@qq.com">Email</a>
-        </div>
-      </div>
-      <svg class="chip-svg" width="150" height="150" viewBox="0 0 120 120" fill="none" aria-hidden="true">
-        <rect x="35" y="35" width="50" height="50" rx="4" stroke="#e5c07b" stroke-width="3"/>
-        <rect x="48" y="48" width="24" height="24" rx="2" stroke="#61afef" stroke-width="2.5"/>
-        <line x1="60" y1="22" x2="60" y2="35" stroke="#98c379" stroke-width="3"/>
-        <line x1="60" y1="85" x2="60" y2="98" stroke="#98c379" stroke-width="3"/>
-        <line x1="22" y1="60" x2="35" y2="60" stroke="#98c379" stroke-width="3"/>
-        <line x1="85" y1="60" x2="98" y2="60" stroke="#98c379" stroke-width="3"/>
-        <path d="M45 70 A15 15 0 0 1 75 70" stroke="#FB7299" stroke-width="2.5" stroke-linecap="round"/>
-        <path d="M53 78 A7 7 0 0 1 67 78" stroke="#FB7299" stroke-width="2.5" stroke-linecap="round"/>
-        <circle cx="60" cy="85" r="2.5" fill="#FB7299"/>
-      </svg>
+    <div class="prompt">
+      <span class="c1">peipei@dev</span>:<span class="c2">~</span>$ ./intro.sh<br>
+      <span class="c3"># 嵌入式开发 · 技术视频 · 固件分享</span>
+    </div>
+    <h1>佩佩队长<span class="dot">.</span></h1>
+    <div class="sub">BW16 (RTL8720DN) / ESP32 嵌入式开发 UP 主</div>
+    <p class="hero-desc">
+      专注 WiFi 单片机开发，分享从零开始的硬件折腾实录。
+      这里是我的视频、固件与开源项目大本营——B站更新，GitHub 开源，闲鱼可购固件。
+    </p>
+    <div class="cta">
+      <a class="btn btn-pink" href="https://space.bilibili.com/" target="_blank" rel="noopener">▶ 去B站看视频</a>
+      <a class="btn btn-ghost" href="https://github.com/z751638806" target="_blank" rel="noopener">GitHub 仓库</a>
+    </div>
+    <div class="social">
+      <a href="https://space.bilibili.com/" target="_blank" rel="noopener">Bilibili</a>
+      <a href="https://github.com/z751638806" target="_blank" rel="noopener">GitHub</a>
+      <a href="mailto:751638806@qq.com">Email</a>
     </div>
     <div class="stats">
       <div class="stat"><b>10+</b><span>技术视频</span></div>
