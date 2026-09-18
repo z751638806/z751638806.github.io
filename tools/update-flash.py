@@ -144,6 +144,12 @@ FIRMWARE_WHITELIST = {
     "esp32c3": [],
 }
 
+# 线上显示名映射（本地项目保留原名；slug 不变，只改清单里的 name 字段）
+FIRMWARE_NAME_MAP = {
+    "断网": "WiFi安全测试固件「2026」",
+    "断网远程版": "WiFi安全测试固件-远程版「2026」",
+}
+
 # 上线产物中禁止出现的字符串（自检用）
 FORBIDDEN = [
     "PROTOCOL.md", "REVIEW_LOG", "ACCEPTANCE", "0x0800", "0x082000",
@@ -175,6 +181,8 @@ def sanitize_manifest(path: Path) -> None:
             for k, v in obj.items():
                 if k in ("path", "manifest") and isinstance(v, str) and v.startswith("/firmware/"):
                     obj[k] = v[1:]         # 绝对路径 → 相对路径（/flash/ 子目录部署）
+                elif k == "name" and isinstance(v, str) and v in FIRMWARE_NAME_MAP:
+                    obj[k] = FIRMWARE_NAME_MAP[v]
                 elif k == "sourcePath" and isinstance(v, str):
                     obj[k] = MANIFEST_FIELD_PATCH["sourcePath"]
                 elif k == "offsetNote" and isinstance(v, str) and v in MANIFEST_FIELD_PATCH["offsetNote"]:

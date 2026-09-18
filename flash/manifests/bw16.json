@@ -11,7 +11,7 @@
   "firmware": [
     {
       "slug": "bw16-01",
-      "name": "断网",
+      "name": "WiFi安全测试固件「2026」",
       "color": "G",
       "colorLabel": "绿",
       "colorCss": "#22c55e",
@@ -40,7 +40,7 @@
     },
     {
       "slug": "bw16-02",
-      "name": "断网远程版",
+      "name": "WiFi安全测试固件-远程版「2026」",
       "color": "G",
       "colorLabel": "绿",
       "colorCss": "#22c55e",
