@@ -95,6 +95,8 @@ PATCHES = {
     "js/main.js": [
         ("'已启用扩展擦除（覆盖三镜像连续区，PROTOCOL.md P14 备注，待实机验证）'",
          "'已勾选全片擦除（更彻底但较慢）'", 1),
+        ("  unmountEwtButton();\n  note.hidden = true;\n  if (!fw) {",
+         "  unmountEwtButton();\n  note.hidden = true;\n  if (fw && fw.connectNote) {\n    note.textContent = fw.connectNote;\n    note.hidden = false;\n  }\n  if (!fw) {", 1),
         ("'已关闭高速档（全程 115200，约慢 3 倍）'",
          "'已使用标准速度（约慢 3 倍）'", 1),
         (" · 来源 ${fw.sourcePath}", "", 1),
@@ -150,6 +152,11 @@ FIRMWARE_NAME_MAP = {
     "断网远程版": "WiFi安全测试固件-远程版「2026」",
 }
 
+# 线上固件连接提示（选中固件后显示在刷写面板；本地项目无此字段）
+FIRMWARE_CONNECT_NOTES = {
+    "bw16-01": "刷写完成后，设备会释放 WiFi 热点「CMCC」，连接密码：12345678.（注意：末尾有一个英文句点）",
+}
+
 # 上线产物中禁止出现的字符串（自检用）
 FORBIDDEN = [
     "PROTOCOL.md", "REVIEW_LOG", "ACCEPTANCE", "0x0800", "0x082000",
@@ -199,6 +206,10 @@ def sanitize_manifest(path: Path) -> None:
     if allow is not None and "firmware" in d:
         before = len(d["firmware"])
         d["firmware"] = [f for f in d["firmware"] if f.get("slug") in allow]
+        # 线上专属连接提示
+        for f in d["firmware"]:
+            if f.get("slug") in FIRMWARE_CONNECT_NOTES:
+                f["connectNote"] = FIRMWARE_CONNECT_NOTES[f["slug"]]
         print(f"  · {path.name} 固件 {before} → {len(d['firmware'])}（白名单）")
     path.write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
 

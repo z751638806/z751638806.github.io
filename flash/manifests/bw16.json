@@ -36,7 +36,8 @@
           "md5": "bfae06c14acf4ee73363ca6fe7e487ba",
           "sha256": "a07622003e29cb43eec1690cfd290dc334e934ec5828dd708c95271eeb8fc212"
         }
-      }
+      },
+      "connectNote": "刷写完成后，设备会释放 WiFi 热点「CMCC」，连接密码：12345678.（注意：末尾有一个英文句点）"
     },
     {
       "slug": "bw16-02",
