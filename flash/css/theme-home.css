@@ -11,9 +11,28 @@
   --radius: 8px;
 }
 body { font: 15px/1.7 system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--text); }
+html { background: var(--bg); }
 
-/* ---- 顶栏 ---- */
-.topbar { background: #0b0e12; border-bottom: 1px solid #1c232c; padding: 10px 20px; }
+/* ---- 背景特效：虚化渐变光斑 + 网格（与主页一致） ---- */
+body { background: transparent; }
+body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(560px 560px at -60px -80px, rgba(251, 114, 153, .16), transparent 70%),
+    radial-gradient(520px 520px at 110% 30%, rgba(139, 157, 252, .13), transparent 70%),
+    radial-gradient(500px 500px at 40% 110%, rgba(95, 212, 245, .09), transparent 70%);
+}
+body::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background-image: linear-gradient(rgba(255, 255, 255, .028) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 255, 255, .028) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 40%, transparent 100%);
+          mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 40%, transparent 100%);
+}
+
+/* ---- 顶栏：毛玻璃吸顶（与主页导航一致） ---- */
+.topbar { position: sticky; top: 0; z-index: 50; background: rgba(11, 14, 18, .72);
+  -webkit-backdrop-filter: blur(14px) saturate(150%); backdrop-filter: blur(14px) saturate(150%);
+  border-bottom: 1px solid #1c232c; padding: 10px 20px; }
 .topbar h1.logo { font-size: 15px; margin: 0; display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .3px; }
 .topbar h1.logo a { color: #fff; text-decoration: none; }
 .topbar h1.logo a span { color: #FB7299; }
@@ -31,9 +50,10 @@ body { font: 15px/1.7 system-ui, -apple-system, "PingFang SC", "Microsoft YaHei"
 .topbar .badge-err { color: #f87171; border-color: #6b2b2b; }
 .topbar .badge-dim { color: #8b97a7; }
 
-/* ---- 小节标题 ---- */
+/* ---- 小节标题：粉色菱形 + 渐隐细线（与主页一致） ---- */
 h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--text-dim); display: flex; align-items: center; gap: 10px; }
-h2::after { content: ""; flex: 1; height: 1px; background: #262e39; }
+h2::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--accent); transform: rotate(45deg); box-shadow: 0 0 10px rgba(251, 114, 153, .8); }
+h2::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--border), transparent); }
 h2 small { letter-spacing: 0; text-transform: none; }
 
 /* ---- 按钮 ---- */
@@ -44,6 +64,13 @@ h2 small { letter-spacing: 0; text-transform: none; }
 
 /* ---- 卡片选中态：粉色描边 + 微光 ---- */
 .device-card.selected, .fw-card.selected { box-shadow: 0 0 0 1px #FB7299, 0 0 18px rgba(251, 114, 153, .22); }
+
+/* ---- 玻璃拟态 + 悬停上浮光晕（与主页卡片一致） ---- */
+.device-card, .fw-card, .flash-panel, .fw { background: rgba(21, 26, 33, .66);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.device-card, .fw-card { transition: transform .22s, border-color .22s, box-shadow .22s; }
+.device-card:hover, .fw-card:hover { transform: translateY(-3px); border-color: rgba(251, 114, 153, .55);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, .42); }
 
 /* ---- 提示块 ---- */
 .alert-info { border-color: var(--accent); background: rgba(251, 114, 153, 0.1); }
@@ -59,8 +86,13 @@ h2 small { letter-spacing: 0; text-transform: none; }
 .progress-track { box-shadow: inset 0 0 0 1px #262e39; }
 .progress-bar { background: linear-gradient(90deg, #e05a85, #FB7299); }
 
+/* ---- 徽章：品牌粉调（与主页一致；顶栏徽章另有深色规则） ---- */
+main .badge, .flash-panel .badge { background: rgba(251, 114, 153, .12); border-color: rgba(251, 114, 153, .4); color: #ffb3ca; }
+
 /* ---- 页脚 ---- */
-.footer { max-width: none; background: #0b0e12; color: var(--text-dim); border-top: 1px solid #1c232c; margin-top: 40px; padding: 26px 20px 34px; text-align: center; }
+.footer { max-width: none; background: #0b0e12; color: var(--text-dim); border-top: none; margin-top: 40px; padding: 26px 20px 34px; text-align: center; position: relative; }
+.footer::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(251, 114, 153, .55), transparent); }
 .footer a { color: #FB7299; text-decoration: none; }
 .footer a:hover { text-decoration: underline; }
 .footer .dim { color: #5d6874; }
