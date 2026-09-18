@@ -15,18 +15,19 @@
 - BW16：自研协议实现（17 个固件，支持高速档 921600、救砖恢复、扩展擦除）
 - ESP32-C3：ESP Web Tools（2 个固件）
 - 无硬件演练：`https://peipeidev.cn/flash/?mock=1` 跑完整模拟流程
-- 源项目：本地 `BW16-ESP32-tool`（协议证据链见 `flash/docs/PROTOCOL.md`）
 
-### 更新刷写工具 / 固件
+### 更新刷写工具 / 固件（净化流水线）
 
-在本地源项目 `web/` 中改动或更新固件后：
+线上版本是本地工具的"用户视角净化版"——**本地项目保持原样**（协议文档、调试日志照旧），
+线上则剥离全部开发向内容（协议文档不发布、日志通俗化、界面无技术细节）。更新流程：
 
 ```bash
-cd web && npm run build:dist        # 重建 dist（terser 压缩）
-# 把 web/dist/{css,js,manifests,firmware,docs,test,index.html} 覆盖到本仓库 flash/
-# ⚠️ 覆盖后必须把 manifests/bw16.json、manifests/esp32c3.json 里的
-#    "/firmware/ 替换为 "firmware/（线上部署在 /flash/ 子目录，需相对路径）
+python3 tools/update-flash.py [本地项目web目录]   # 默认 ~/Downloads/归档/BW16-ESP32-tool/web
 ```
+
+脚本自动完成：源码副本打净化补丁（文案替换表在脚本内）→ terser 压缩 → manifest
+相对路径/字段净化 → 组装到 flash/（**不含 docs/**）→ 敏感串自检（17 项黑名单零命中）。
+改完 push 即可；如本地工具新增了界面文案，往脚本的 PATCHES 表里补对应替换即可。
 
 ## 如何更新内容
 

@@ -8,7 +8,7 @@
       "color": "B",
       "colorLabel": "蓝",
       "colorCss": "#3b82f6",
-      "sourcePath": "esp32c3/ESP32-Wi-Fi-Penetration-Tool-flipper",
+      "sourcePath": "佩佩队长固件库",
       "device": "esp32c3",
       "type": "esptool",
       "manifest": "firmware/esp32c3-1/manifest.json",
@@ -29,7 +29,7 @@
           "size": 3072
         }
       ],
-      "offsetNote": "分区表/偏移解析自 firmware_config.json 该固件 flash_cmd 原文",
+      "offsetNote": "使用该固件的标准写入布局",
       "version": "local-20260729"
     },
     {
@@ -38,7 +38,7 @@
       "color": "B",
       "colorLabel": "蓝",
       "colorCss": "#3b82f6",
-      "sourcePath": "esp32c3/ble",
+      "sourcePath": "佩佩队长固件库",
       "device": "esp32c3",
       "type": "platformio",
       "manifest": "firmware/esp32c3-2/manifest.json",
@@ -59,7 +59,7 @@
           "size": 1387104
         }
       ],
-      "offsetNote": "偏移推断自 firmware_config.json 同为 esp32c3 的 flash_cmd 布局 (0x0/0x8000/0x10000) —— 待实机验证",
+      "offsetNote": "使用标准布局写入（如刷写失败请通过首页联系方式反馈）",
       "version": "local-20260915"
     }
   ]

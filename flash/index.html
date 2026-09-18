@@ -170,11 +170,11 @@
           <div id="esp-web-slot" hidden></div>
           <label id="advanced-row" class="advanced-row" hidden>
             <input type="checkbox" id="opt-extended-erase">
-            扩展擦除（覆盖全部镜像区，较慢；出处 PROTOCOL.md P14 备注）
+            全片擦除（更彻底但较慢；普通刷写无需勾选）
           </label>
           <label id="speed-row" class="advanced-row" hidden>
             <input type="checkbox" id="opt-high-speed" checked>
-            高速档 921600（快约 3 倍；失败自动回退 115200；出处 PROTOCOL.md P19）
+            高速模式（约快 3 倍；连不上会自动改用标准速度）
           </label>
         </div>
         <div id="flash-note" class="small dim" hidden></div>
@@ -208,9 +208,7 @@
       <h2>救砖恢复</h2>
       <div class="flash-panel">
         <p class="small dim">
-          适用于设备"变砖"或需要恢复已知固件的场景：把三段镜像按固定地址写入
-          （km0@0x08000000 / km4@0x08004000 / 应用@0x08006000，出处 PROTOCOL.md P13）。
-          flashloader 自动使用内置副本，无需提供。
+          适用于设备"变砖"或需要恢复已知固件的场景：选择三个镜像文件（或点"用 SDK 默认镜像"自动填充），再点"连接并恢复"，工具会自动完成清理与写入。引导程序已内置，无需额外提供。
         </p>
         <div class="rescue-slot">
           <span class="rescue-label">km0_boot_all.bin</span>
@@ -231,7 +229,7 @@
         </div>
         <label class="advanced-row">
           <input type="checkbox" id="rescue-extended-erase" checked>
-          扩展擦除（变砖恢复建议勾选；出处 PROTOCOL.md P14 备注）
+          全片擦除（变砖恢复建议勾选，较慢）
         </label>
         <div class="flash-actions">
           <button id="btn-rescue-flash" class="btn btn-primary" type="button">连接并恢复</button>
@@ -265,8 +263,7 @@
 
   <footer class="footer">
     <p>本工具与固件仅限<b>授权环境下</b>的安全研究与教学用途，请遵守当地法律法规。</p>
-    <p class="dim small">协议出处：<a href="docs/PROTOCOL.md">web/docs/PROTOCOL.md</a> ·
-      审查记录：<a href="docs/REVIEW_LOG.md">web/docs/REVIEW_LOG.md</a></p>
+    <p class="dim small">使用遇到问题？观看 B 站视频教程，或通过 <a href="/">peipeidev.cn</a> 首页的联系方式联系我。</p>
   </footer>
 
   <script type="module" src="js/main.js"></script>

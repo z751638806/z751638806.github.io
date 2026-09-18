@@ -1,7 +1,6 @@
 {
   "generatedAt": "2026-09-15 03:12:38",
   "device": "bw16",
-  "protocolRef": "web/docs/PROTOCOL.md (P8/P13)",
   "flashloader": {
     "path": "firmware/_common/imgtool_flashloader_amebad.bin",
     "md5": "db71809057ae6638e6c6fc1f3712ac70",
@@ -16,7 +15,7 @@
       "color": "G",
       "colorLabel": "绿",
       "colorCss": "#22c55e",
-      "sourcePath": "bw16/一键刷入2026断网",
+      "sourcePath": "佩佩队长固件库",
       "device": "bw16",
       "files": {
         "km0_boot_all.bin": {
@@ -45,7 +44,7 @@
       "color": "G",
       "colorLabel": "绿",
       "colorCss": "#22c55e",
-      "sourcePath": "bw16/一键刷入2026断网远程版",
+      "sourcePath": "佩佩队长固件库",
       "device": "bw16",
       "files": {
         "km0_boot_all.bin": {
@@ -74,7 +73,7 @@
       "color": "C",
       "colorLabel": "青",
       "colorCss": "#06b6d4",
-      "sourcePath": "bw16/一键刷入戒网瘾260517",
+      "sourcePath": "佩佩队长固件库",
       "device": "bw16",
       "files": {
         "km0_boot_all.bin": {
@@ -103,7 +102,7 @@
       "color": "C",
       "colorLabel": "青",
       "colorCss": "#06b6d4",
-      "sourcePath": "bw16/刷入戒网瘾优化版",
+      "sourcePath": "佩佩队长固件库",
       "device": "bw16",
       "files": {
         "km0_boot_all.bin": {
@@ -132,7 +131,7 @@
       "color": "C",
       "colorLabel": "青",
       "colorCss": "#06b6d4",
-      "sourcePath": "bw16/刷入戒网瘾范围版",
+      "sourcePath": "佩佩队长固件库",
       "device": "bw16",
       "files": {
         "km0_boot_all.bin": {
@@ -161,7 +160,7 @@
       "color": "Y",
       "colorLabel": "黄",
       "colorCss": "#eab308",
-      "sourcePath": "bw16/刷入捕获握手包客户端检测-优化2",
+      "sourcePath": "佩佩队长固件库",
       "device": "bw16",
       "files": {
         "km0_boot_all.bin": {
@@ -190,7 +189,7 @@
       "color": "Y",
       "colorLabel": "黄",
       "colorCss": "#eab308",
-      "sourcePath": "bw16/一键刷入捕获握手包厂商检测260517",
+      "sourcePath": "佩佩队长固件库",
       "device": "bw16",
       "files": {
         "km0_boot_all.bin": {
@@ -219,7 +218,7 @@
       "color": "Y",
       "colorLabel": "黄",
       "colorCss": "#eab308",
-      "sourcePath": "bw16/一键刷入捕获握手包厂商检测隐藏捕获260524",
+      "sourcePath": "佩佩队长固件库",
       "device": "bw16",
       "files": {
         "km0_boot_all.bin": {
@@ -248,7 +247,7 @@
       "color": "Y",
       "colorLabel": "黄",
       "colorCss": "#eab308",
-      "sourcePath": "bw16/握手包捕获20260527",
+      "sourcePath": "佩佩队长固件库",
       "device": "bw16",
       "files": {
         "km0_boot_all.bin": {
@@ -277,7 +276,7 @@
       "color": "Y",
       "colorLabel": "黄",
       "colorCss": "#eab308",
-      "sourcePath": "bw16/握手包捕获20260527英文版",
+      "sourcePath": "佩佩队长固件库",
       "device": "bw16",
       "files": {
         "km0_boot_all.bin": {
@@ -306,7 +305,7 @@
       "color": "G",
       "colorLabel": "绿",
       "colorCss": "#22c55e",
-      "sourcePath": "bw16/捕获握手包20260531",
+      "sourcePath": "佩佩队长固件库",
       "device": "bw16",
       "files": {
         "km0_boot_all.bin": {
@@ -335,7 +334,7 @@
       "color": "H",
       "colorLabel": "品红",
       "colorCss": "#d946ef",
-      "sourcePath": "bw16/刷入戒网瘾DEV2小范围版260525",
+      "sourcePath": "佩佩队长固件库",
       "device": "bw16",
       "files": {
         "km0_boot_all.bin": {
@@ -364,7 +363,7 @@
       "color": "H",
       "colorLabel": "品红",
       "colorCss": "#d946ef",
-      "sourcePath": "bw16/刷入戒网瘾DEV2小范围版260715",
+      "sourcePath": "佩佩队长固件库",
       "device": "bw16",
       "files": {
         "km0_boot_all.bin": {
@@ -393,7 +392,7 @@
       "color": "R",
       "colorLabel": "红",
       "colorCss": "#ef4444",
-      "sourcePath": "bw16/一键刷入戒网瘾20260601",
+      "sourcePath": "佩佩队长固件库",
       "device": "bw16",
       "files": {
         "km0_boot_all.bin": {
@@ -422,7 +421,7 @@
       "color": "R",
       "colorLabel": "红",
       "colorCss": "#ef4444",
-      "sourcePath": "bw16/一键刷入戒网瘾20260604",
+      "sourcePath": "佩佩队长固件库",
       "device": "bw16",
       "files": {
         "km0_boot_all.bin": {
@@ -451,7 +450,7 @@
       "color": "",
       "colorLabel": "未分类",
       "colorCss": "#94a3b8",
-      "sourcePath": "bw16/捕获握手包20260610",
+      "sourcePath": "佩佩队长固件库",
       "device": "bw16",
       "files": {
         "km0_boot_all.bin": {
@@ -480,7 +479,7 @@
       "color": "",
       "colorLabel": "未分类",
       "colorCss": "#94a3b8",
-      "sourcePath": "bw16/捕获握手包20260714",
+      "sourcePath": "佩佩队长固件库",
       "device": "bw16",
       "files": {
         "km0_boot_all.bin": {
