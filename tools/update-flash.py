@@ -153,9 +153,9 @@ FIRMWARE_NAME_MAP = {
 }
 
 # 线上固件连接提示（选中固件后显示在刷写面板；本地项目无此字段）
-FIRMWARE_CONNECT_NOTES = {
-    "bw16-01": "刷写完成后，设备会释放 WiFi 热点「CMCC」，连接密码：12345678.（注意：末尾有一个英文句点）",
-}
+# DEFAULT_CONNECT_NOTE 应用到所有上线固件；如某固件需要单独文案，加进下面的 override 表
+DEFAULT_CONNECT_NOTE = "刷写完成后，设备会释放 WiFi 热点「CMCC」，连接密码：12345678.（注意：末尾有一个英文句点）"
+FIRMWARE_CONNECT_NOTES_OVERRIDE = {}
 
 # 上线产物中禁止出现的字符串（自检用）
 FORBIDDEN = [
@@ -206,10 +206,11 @@ def sanitize_manifest(path: Path) -> None:
     if allow is not None and "firmware" in d:
         before = len(d["firmware"])
         d["firmware"] = [f for f in d["firmware"] if f.get("slug") in allow]
-        # 线上专属连接提示
+        # 线上专属连接提示：默认统一文案，override 表可按 slug 单独覆盖
         for f in d["firmware"]:
-            if f.get("slug") in FIRMWARE_CONNECT_NOTES:
-                f["connectNote"] = FIRMWARE_CONNECT_NOTES[f["slug"]]
+            note = FIRMWARE_CONNECT_NOTES_OVERRIDE.get(f.get("slug"), DEFAULT_CONNECT_NOTE)
+            if note:
+                f["connectNote"] = note
         print(f"  · {path.name} 固件 {before} → {len(d['firmware'])}（白名单）")
     path.write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
 
