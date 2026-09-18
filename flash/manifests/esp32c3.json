@@ -1,0 +1,66 @@
+{
+  "generatedAt": "2026-09-15 03:12:38",
+  "device": "esp32c3",
+  "firmware": [
+    {
+      "slug": "esp32c3-1",
+      "name": "WiFi渗透工具",
+      "color": "B",
+      "colorLabel": "蓝",
+      "colorCss": "#3b82f6",
+      "sourcePath": "esp32c3/ESP32-Wi-Fi-Penetration-Tool-flipper",
+      "device": "esp32c3",
+      "type": "esptool",
+      "manifest": "firmware/esp32c3-1/manifest.json",
+      "parts": [
+        {
+          "path": "bootloader.bin",
+          "offset": 0,
+          "size": 19840
+        },
+        {
+          "path": "esp32-wifi-penetration-tool.bin",
+          "offset": 65536,
+          "size": 723280
+        },
+        {
+          "path": "partition-table.bin",
+          "offset": 32768,
+          "size": 3072
+        }
+      ],
+      "offsetNote": "分区表/偏移解析自 firmware_config.json 该固件 flash_cmd 原文",
+      "version": "local-20260729"
+    },
+    {
+      "slug": "esp32c3-2",
+      "name": "BLE工具",
+      "color": "B",
+      "colorLabel": "蓝",
+      "colorCss": "#3b82f6",
+      "sourcePath": "esp32c3/ble",
+      "device": "esp32c3",
+      "type": "platformio",
+      "manifest": "firmware/esp32c3-2/manifest.json",
+      "parts": [
+        {
+          "path": "bootloader.bin",
+          "offset": 0,
+          "size": 12464
+        },
+        {
+          "path": "partitions.bin",
+          "offset": 32768,
+          "size": 3072
+        },
+        {
+          "path": "firmware.bin",
+          "offset": 65536,
+          "size": 1387104
+        }
+      ],
+      "offsetNote": "偏移推断自 firmware_config.json 同为 esp32c3 的 flash_cmd 布局 (0x0/0x8000/0x10000) —— 待实机验证",
+      "version": "local-20260915"
+    }
+  ]
+}

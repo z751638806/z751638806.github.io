@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>在线烧录 · BW16 / ESP32-C3 网页刷写工具 — peipeidev.cn</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <script>
+    // 早期错误捕获（诊断用；后续版本把错误接入日志面板）
+    window.__errs = [];
+    window.addEventListener('error', (e) => window.__errs.push('err: ' + (e.message || e.filename) + ' @' + e.lineno));
+    window.addEventListener('unhandledrejection', (e) => window.__errs.push('rej: ' + (e.reason && e.reason.stack ? e.reason.stack.split('\n').slice(0, 3).join(' | ') : e.reason)));
+  </script>
+</head>
+<body>
+  <header class="topbar">
+    <h1>⚡ BW16 / ESP32-C3 网页刷写工具</h1>
+    <nav class="view-nav" aria-label="视图切换">
+      <button id="nav-flash" class="view-tab selected" type="button">刷固件</button>
+      <button id="nav-rescue" class="view-tab" type="button">救砖恢复</button>
+    </nav>
+    <div class="topbar-status">
+      <a class="btn" href="/" style="padding:2px 10px;font-size:12px;text-decoration:none;">← peipeidev.cn</a>
+      <button id="btn-feedback" class="btn" type="button" hidden style="padding:2px 10px;font-size:12px;">反馈</button>
+      <span id="user-box" class="badge badge-dim" hidden></span>
+      <button id="btn-redeem" class="btn" type="button" hidden style="padding:2px 10px;font-size:12px;">兑换码</button>
+      <button id="btn-login" class="btn" type="button" hidden style="padding:2px 10px;font-size:12px;">登录 / 注册</button>
+      <span id="serial-support" class="badge badge-dim">检测浏览器中…</span>
+    </div>
+  </header>
+
+  <!-- 公告条（M4：F5，API 模式轮询刷新；显示样式在 style.css，勿用内联 display 以免压过 hidden） -->
+  <div id="announce-bar" class="alert alert-info" hidden>
+    <div style="flex:1;">
+      <strong id="announce-title"></strong>
+      <span id="announce-body" style="margin-left:8px;"></span>
+    </div>
+    <button id="announce-close" class="btn" type="button" style="padding:0 8px;">×</button>
+  </div>
+
+  <!-- 最低版本强制刷新遮罩（M4：F5） -->
+  <div id="version-overlay" hidden
+       style="position:fixed;inset:0;background:rgba(2,6,23,.9);z-index:80;align-items:center;justify-content:center;">
+    <div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:26px 30px;width:min(92vw,420px);color:#e2e8f0;text-align:center;">
+      <h3 style="margin:0 0 10px;">🚀 站点已更新</h3>
+      <p id="version-message" class="dim" style="margin:0 0 16px;font-size:13px;">当前页面版本过旧，请刷新后使用。</p>
+      <button id="btn-hard-reload" class="btn btn-primary" type="button">立即刷新</button>
+    </div>
+  </div>
+
+  <!-- 登录/注册对话框（M3：F1） -->
+  <div id="auth-overlay" hidden
+       style="position:fixed;inset:0;background:rgba(2,6,23,.72);z-index:60;align-items:center;justify-content:center;">
+    <div id="auth-dialog" role="dialog" aria-modal="true" aria-label="登录或注册"
+         style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:22px 24px;width:min(92vw,360px);color:#e2e8f0;">
+      <h3 style="margin:0 0 6px;font-size:17px;">登录 / 注册</h3>
+      <p class="dim" style="margin:0 0 14px;font-size:12px;">注册即送 3 次刷写额度；密码至少 8 位。</p>
+      <div class="auth-tabs" style="display:flex;gap:8px;margin-bottom:12px;">
+        <button id="auth-tab-login" class="view-tab selected" type="button">登录</button>
+        <button id="auth-tab-register" class="view-tab" type="button">注册</button>
+      </div>
+      <label style="display:block;margin-bottom:10px;font-size:13px;">
+        邮箱 / 手机号
+        <input id="auth-login-id" type="text" autocomplete="username" inputmode="email"
+               style="width:100%;margin-top:4px;padding:8px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;">
+      </label>
+      <label style="display:block;margin-bottom:12px;font-size:13px;">
+        密码
+        <input id="auth-password" type="password" autocomplete="current-password"
+               style="width:100%;margin-top:4px;padding:8px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;">
+      </label>
+      <p id="auth-error" class="alert alert-err" style="margin:0 0 12px;" hidden></p>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button id="auth-cancel" class="btn" type="button">取消</button>
+        <button id="auth-submit" class="btn btn-primary" type="button">登录</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 兑换码对话框（M6：F8） -->
+  <div id="rd-overlay" hidden
+       style="position:fixed;inset:0;background:rgba(2,6,23,.72);z-index:60;align-items:center;justify-content:center;">
+    <div id="rd-dialog" role="dialog" aria-modal="true" aria-label="卡密兑换"
+         style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:22px 24px;width:min(92vw,360px);color:#e2e8f0;">
+      <h3 style="margin:0 0 6px;font-size:17px;">卡密兑换</h3>
+      <p class="dim" style="margin:0 0 12px;font-size:12px;">输入 16 位卡密（XXXX-XXXX-XXXX-XXXX），面额即时到账。</p>
+      <input id="rd-code" type="text" placeholder="XXXX-XXXX-XXXX-XXXX" maxlength="19" autocomplete="off"
+             style="width:100%;padding:8px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;">
+      <p id="rd-error" class="alert alert-err" style="margin:12px 0 0;" hidden></p>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
+        <button id="rd-cancel" class="btn" type="button">取消</button>
+        <button id="rd-submit" class="btn btn-primary" type="button">兑换</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 反馈对话框（M4：F6） -->
+  <div id="fb-overlay" hidden
+       style="position:fixed;inset:0;background:rgba(2,6,23,.72);z-index:60;align-items:center;justify-content:center;">
+    <div id="fb-dialog" role="dialog" aria-modal="true" aria-label="提交反馈"
+         style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:22px 24px;width:min(92vw,420px);color:#e2e8f0;">
+      <h3 style="margin:0 0 6px;font-size:17px;">提交反馈</h3>
+      <p class="dim" style="margin:0 0 12px;font-size:12px;">问题反馈 / 功能建议；仅登录用户可提交，处理进度可在后台查看。</p>
+      <label style="display:block;margin-bottom:10px;font-size:13px;">
+        类型
+        <select id="fb-type" style="width:100%;margin-top:4px;padding:8px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;">
+          <option value="bug">问题（刷写失败 / 页面异常）</option>
+          <option value="suggestion">建议</option>
+          <option value="other">其他</option>
+        </select>
+      </label>
+      <label style="display:block;margin-bottom:10px;font-size:13px;">
+        内容（1-2000 字）
+        <textarea id="fb-body" rows="4" maxlength="2000"
+                  style="width:100%;margin-top:4px;padding:8px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;resize:vertical;"></textarea>
+      </label>
+      <label style="display:flex;gap:8px;align-items:center;margin-bottom:12px;font-size:13px;">
+        <input id="fb-attach" type="checkbox" checked>
+        附带最近一次刷写摘要（固件名/结果/耗时，不含串口数据）
+      </label>
+      <p id="fb-error" class="alert alert-err" style="margin:0 0 12px;" hidden></p>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button id="fb-cancel" class="btn" type="button">取消</button>
+        <button id="fb-submit" class="btn btn-primary" type="button">提交</button>
+      </div>
+    </div>
+  </div>
+
+  <main>
+  <div id="view-flash">
+    <!-- 设备类型选择 (F1) -->
+    <section id="device-section" aria-label="设备类型">
+      <h2>1 · 选择设备类型</h2>
+      <div class="device-grid">
+        <button class="device-card" data-device="bw16" type="button">
+          <span class="device-icon">📡</span>
+          <span class="device-name">BW16</span>
+          <span class="device-desc">安信可 Ai-Thinker BW16（RTL8720DN）<br>Web Serial 直刷 · 17 个固件</span>
+        </button>
+        <button class="device-card" data-device="esp32c3" type="button">
+          <span class="device-icon">🔗</span>
+          <span class="device-name">ESP32-C3</span>
+          <span class="device-desc">乐鑫 ESP32-C3 开发板<br>ESP Web Tools · 2 个固件</span>
+        </button>
+      </div>
+      <p id="device-mismatch" class="alert alert-warn" hidden></p>
+    </section>
+
+    <!-- 固件清单 (F2) -->
+    <section id="firmware-section" hidden aria-label="固件清单">
+      <h2>2 · 选择固件 <small id="firmware-count" class="dim"></small></h2>
+      <div id="firmware-grid" class="fw-grid" role="listbox" aria-label="固件列表"></div>
+    </section>
+
+    <!-- 刷写面板 (F3/F4/M3 起启用) -->
+    <section id="flash-section" hidden aria-label="刷写">
+      <h2>3 · 刷写</h2>
+      <div class="flash-panel">
+        <div class="flash-target">
+          <span id="flash-target-color" class="color-dot"></span>
+          <div>
+            <div id="flash-target-name" class="fw-name"></div>
+            <div id="flash-target-meta" class="dim small"></div>
+          </div>
+        </div>
+
+        <div class="flash-actions">
+          <button id="btn-flash" class="btn btn-primary" type="button" disabled>连接并刷写</button>
+          <div id="esp-web-slot" hidden></div>
+          <label id="advanced-row" class="advanced-row" hidden>
+            <input type="checkbox" id="opt-extended-erase">
+            扩展擦除（覆盖全部镜像区，较慢；出处 PROTOCOL.md P14 备注）
+          </label>
+          <label id="speed-row" class="advanced-row" hidden>
+            <input type="checkbox" id="opt-high-speed" checked>
+            高速档 921600（快约 3 倍；失败自动回退 115200；出处 PROTOCOL.md P19）
+          </label>
+        </div>
+        <div id="flash-note" class="small dim" hidden></div>
+
+        <div id="progress-wrap" hidden>
+          <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
+          <div id="progress-text" class="small dim">0%</div>
+        </div>
+
+        <div id="manual-guide" class="alert alert-info" hidden>
+          <strong>自动进入下载模式失败</strong>
+          <p>请手动操作（BW16-Kit 板载按键）：</p>
+          <ol>
+            <li>按住 <strong>BURN</strong> 键不放</li>
+            <li>短按一下 <strong>RST</strong> 键</li>
+            <li>松开 <strong>BURN</strong> 键</li>
+          </ol>
+          <p>完成后点击下方按钮重试（剩余 <span id="manual-retries">3</span> 次）。</p>
+          <button id="btn-manual-retry" class="btn" type="button">已操作，重试</button>
+        </div>
+
+        <div id="flash-result" class="alert" hidden></div>
+      </div>
+    </section>
+
+  </div>
+
+  <div id="view-rescue" hidden>
+    <!-- 救砖恢复 (F7) -->
+    <section aria-label="救砖恢复">
+      <h2>救砖恢复</h2>
+      <div class="flash-panel">
+        <p class="small dim">
+          适用于设备"变砖"或需要恢复已知固件的场景：把三段镜像按固定地址写入
+          （km0@0x08000000 / km4@0x08004000 / 应用@0x08006000，出处 PROTOCOL.md P13）。
+          flashloader 自动使用内置副本，无需提供。
+        </p>
+        <div class="rescue-slot">
+          <span class="rescue-label">km0_boot_all.bin</span>
+          <input type="file" id="rescue-km0" accept=".bin">
+          <button class="btn btn-small" type="button" data-fill="km0_boot_all.bin">用 SDK 默认镜像</button>
+          <span class="small dim" data-state="km0_boot_all.bin"></span>
+        </div>
+        <div class="rescue-slot">
+          <span class="rescue-label">km4_boot_all.bin</span>
+          <input type="file" id="rescue-km4" accept=".bin">
+          <button class="btn btn-small" type="button" data-fill="km4_boot_all.bin">用 SDK 默认镜像</button>
+          <span class="small dim" data-state="km4_boot_all.bin"></span>
+        </div>
+        <div class="rescue-slot">
+          <span class="rescue-label">km0_km4_image2.bin（应用）</span>
+          <input type="file" id="rescue-image2" accept=".bin">
+          <span class="small dim" data-state="km0_km4_image2.bin"></span>
+        </div>
+        <label class="advanced-row">
+          <input type="checkbox" id="rescue-extended-erase" checked>
+          扩展擦除（变砖恢复建议勾选；出处 PROTOCOL.md P14 备注）
+        </label>
+        <div class="flash-actions">
+          <button id="btn-rescue-flash" class="btn btn-primary" type="button">连接并恢复</button>
+        </div>
+        <div id="rescue-progress-wrap" hidden>
+          <div class="progress-track"><div id="rescue-progress-bar" class="progress-bar"></div></div>
+          <div id="rescue-progress-text" class="small dim">0%</div>
+        </div>
+        <div id="rescue-result" class="alert" hidden></div>
+      </div>
+
+      <h2>官方 AT 固件恢复</h2>
+      <div class="flash-panel" id="rescue-at">
+        <!-- rescue.js 按清单内容填充 -->
+      </div>
+    </section>
+  </div>
+    <!-- 日志面板 (F8)：全局，两个视图共用 -->
+    <section id="log-section" hidden aria-label="日志">
+      <div class="log-head">
+        <h2>日志</h2>
+        <div class="log-actions">
+          <button id="btn-export-log" class="btn btn-small" type="button">导出 .log</button>
+          <button id="btn-export-stats" class="btn btn-small" type="button">导出统计 .json</button>
+          <button id="btn-clear-log" class="btn btn-small" type="button">清空</button>
+        </div>
+      </div>
+      <pre id="log-panel" class="log-panel" aria-live="polite"></pre>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>本工具与固件仅限<b>授权环境下</b>的安全研究与教学用途，请遵守当地法律法规。</p>
+    <p class="dim small">协议出处：<a href="docs/PROTOCOL.md">web/docs/PROTOCOL.md</a> ·
+      审查记录：<a href="docs/REVIEW_LOG.md">web/docs/REVIEW_LOG.md</a></p>
+  </footer>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,524 @@
+{
+  "generatedAt": "2026-09-15 03:12:38",
+  "device": "bw16",
+  "protocolRef": "web/docs/PROTOCOL.md (P8/P13)",
+  "flashloader": {
+    "path": "firmware/_common/imgtool_flashloader_amebad.bin",
+    "md5": "db71809057ae6638e6c6fc1f3712ac70",
+    "sha256": "9307121385cb390dfd2da64da2c6c515f17b5a9556b3d04021487c9b9f220b55",
+    "size": 4688,
+    "copiesChecked": 17
+  },
+  "firmware": [
+    {
+      "slug": "bw16-01",
+      "name": "断网",
+      "color": "G",
+      "colorLabel": "绿",
+      "colorCss": "#22c55e",
+      "sourcePath": "bw16/一键刷入2026断网",
+      "device": "bw16",
+      "files": {
+        "km0_boot_all.bin": {
+          "path": "firmware/bw16-01/km0_boot_all.bin",
+          "size": 4500,
+          "md5": "abf78d11cc0768c029f69adc4d902a0b",
+          "sha256": "453c880307fc389009aa8a39c63da3d715b207ad797206c896cc691426daaa64"
+        },
+        "km4_boot_all.bin": {
+          "path": "firmware/bw16-01/km4_boot_all.bin",
+          "size": 4456,
+          "md5": "b0adda4bd9a27304948a029119b7d717",
+          "sha256": "05fbf808d43113eaf7c11b75091c986b817135f0c52eb9fa94bb9fe9f34b062c"
+        },
+        "km0_km4_image2.bin": {
+          "path": "firmware/bw16-01/km0_km4_image2.bin",
+          "size": 831488,
+          "md5": "bfae06c14acf4ee73363ca6fe7e487ba",
+          "sha256": "a07622003e29cb43eec1690cfd290dc334e934ec5828dd708c95271eeb8fc212"
+        }
+      }
+    },
+    {
+      "slug": "bw16-02",
+      "name": "断网远程版",
+      "color": "G",
+      "colorLabel": "绿",
+      "colorCss": "#22c55e",
+      "sourcePath": "bw16/一键刷入2026断网远程版",
+      "device": "bw16",
+      "files": {
+        "km0_boot_all.bin": {
+          "path": "firmware/bw16-02/km0_boot_all.bin",
+          "size": 4500,
+          "md5": "abf78d11cc0768c029f69adc4d902a0b",
+          "sha256": "453c880307fc389009aa8a39c63da3d715b207ad797206c896cc691426daaa64"
+        },
+        "km4_boot_all.bin": {
+          "path": "firmware/bw16-02/km4_boot_all.bin",
+          "size": 4456,
+          "md5": "b0adda4bd9a27304948a029119b7d717",
+          "sha256": "05fbf808d43113eaf7c11b75091c986b817135f0c52eb9fa94bb9fe9f34b062c"
+        },
+        "km0_km4_image2.bin": {
+          "path": "firmware/bw16-02/km0_km4_image2.bin",
+          "size": 925696,
+          "md5": "281888c075ea77f6a64bd6cff2da8e1e",
+          "sha256": "3132f32e17a92423151540008f12dfd8c0bb594888948d59300ebd187460a364"
+        }
+      }
+    },
+    {
+      "slug": "bw16-03",
+      "name": "戒网瘾",
+      "color": "C",
+      "colorLabel": "青",
+      "colorCss": "#06b6d4",
+      "sourcePath": "bw16/一键刷入戒网瘾260517",
+      "device": "bw16",
+      "files": {
+        "km0_boot_all.bin": {
+          "path": "firmware/bw16-03/km0_boot_all.bin",
+          "size": 4500,
+          "md5": "abf78d11cc0768c029f69adc4d902a0b",
+          "sha256": "453c880307fc389009aa8a39c63da3d715b207ad797206c896cc691426daaa64"
+        },
+        "km4_boot_all.bin": {
+          "path": "firmware/bw16-03/km4_boot_all.bin",
+          "size": 4456,
+          "md5": "b0adda4bd9a27304948a029119b7d717",
+          "sha256": "05fbf808d43113eaf7c11b75091c986b817135f0c52eb9fa94bb9fe9f34b062c"
+        },
+        "km0_km4_image2.bin": {
+          "path": "firmware/bw16-03/km0_km4_image2.bin",
+          "size": 806912,
+          "md5": "78af799c8e7af98369477a7b5f3b5bef",
+          "sha256": "ca62248a03e6288b5e934227113cac0cae721db379d8299bc85af4a8e408662b"
+        }
+      }
+    },
+    {
+      "slug": "bw16-04",
+      "name": "戒网瘾优化版",
+      "color": "C",
+      "colorLabel": "青",
+      "colorCss": "#06b6d4",
+      "sourcePath": "bw16/刷入戒网瘾优化版",
+      "device": "bw16",
+      "files": {
+        "km0_boot_all.bin": {
+          "path": "firmware/bw16-04/km0_boot_all.bin",
+          "size": 4500,
+          "md5": "abf78d11cc0768c029f69adc4d902a0b",
+          "sha256": "453c880307fc389009aa8a39c63da3d715b207ad797206c896cc691426daaa64"
+        },
+        "km4_boot_all.bin": {
+          "path": "firmware/bw16-04/km4_boot_all.bin",
+          "size": 4456,
+          "md5": "b0adda4bd9a27304948a029119b7d717",
+          "sha256": "05fbf808d43113eaf7c11b75091c986b817135f0c52eb9fa94bb9fe9f34b062c"
+        },
+        "km0_km4_image2.bin": {
+          "path": "firmware/bw16-04/km0_km4_image2.bin",
+          "size": 794624,
+          "md5": "5d32a7bcfd105876f1babb193125a0a8",
+          "sha256": "2816ebb2b67b1cfe59446b2e4f5bb67167168b286853187a835149b99e83881e"
+        }
+      }
+    },
+    {
+      "slug": "bw16-05",
+      "name": "戒网瘾范围版",
+      "color": "C",
+      "colorLabel": "青",
+      "colorCss": "#06b6d4",
+      "sourcePath": "bw16/刷入戒网瘾范围版",
+      "device": "bw16",
+      "files": {
+        "km0_boot_all.bin": {
+          "path": "firmware/bw16-05/km0_boot_all.bin",
+          "size": 4500,
+          "md5": "abf78d11cc0768c029f69adc4d902a0b",
+          "sha256": "453c880307fc389009aa8a39c63da3d715b207ad797206c896cc691426daaa64"
+        },
+        "km4_boot_all.bin": {
+          "path": "firmware/bw16-05/km4_boot_all.bin",
+          "size": 4456,
+          "md5": "b0adda4bd9a27304948a029119b7d717",
+          "sha256": "05fbf808d43113eaf7c11b75091c986b817135f0c52eb9fa94bb9fe9f34b062c"
+        },
+        "km0_km4_image2.bin": {
+          "path": "firmware/bw16-05/km0_km4_image2.bin",
+          "size": 806912,
+          "md5": "85dbbbb90ec0a60c6719b400961787ed",
+          "sha256": "d97168db579372f9829abab7daa0bc3635646127393a569256fdf237710f89cc"
+        }
+      }
+    },
+    {
+      "slug": "bw16-06",
+      "name": "捕获握手包-客户端检测",
+      "color": "Y",
+      "colorLabel": "黄",
+      "colorCss": "#eab308",
+      "sourcePath": "bw16/刷入捕获握手包客户端检测-优化2",
+      "device": "bw16",
+      "files": {
+        "km0_boot_all.bin": {
+          "path": "firmware/bw16-06/km0_boot_all.bin",
+          "size": 4500,
+          "md5": "abf78d11cc0768c029f69adc4d902a0b",
+          "sha256": "453c880307fc389009aa8a39c63da3d715b207ad797206c896cc691426daaa64"
+        },
+        "km4_boot_all.bin": {
+          "path": "firmware/bw16-06/km4_boot_all.bin",
+          "size": 4456,
+          "md5": "b0adda4bd9a27304948a029119b7d717",
+          "sha256": "05fbf808d43113eaf7c11b75091c986b817135f0c52eb9fa94bb9fe9f34b062c"
+        },
+        "km0_km4_image2.bin": {
+          "path": "firmware/bw16-06/km0_km4_image2.bin",
+          "size": 847872,
+          "md5": "57cf9ec8c33c1f5d741cd66d5d855fe0",
+          "sha256": "3f0c24a12d19d69dfaf049afc3f8df5bc683ff0581a5d66c22f67628b3654fcd"
+        }
+      }
+    },
+    {
+      "slug": "bw16-07",
+      "name": "捕获握手包-厂商检测",
+      "color": "Y",
+      "colorLabel": "黄",
+      "colorCss": "#eab308",
+      "sourcePath": "bw16/一键刷入捕获握手包厂商检测260517",
+      "device": "bw16",
+      "files": {
+        "km0_boot_all.bin": {
+          "path": "firmware/bw16-07/km0_boot_all.bin",
+          "size": 4500,
+          "md5": "abf78d11cc0768c029f69adc4d902a0b",
+          "sha256": "453c880307fc389009aa8a39c63da3d715b207ad797206c896cc691426daaa64"
+        },
+        "km4_boot_all.bin": {
+          "path": "firmware/bw16-07/km4_boot_all.bin",
+          "size": 4456,
+          "md5": "b0adda4bd9a27304948a029119b7d717",
+          "sha256": "05fbf808d43113eaf7c11b75091c986b817135f0c52eb9fa94bb9fe9f34b062c"
+        },
+        "km0_km4_image2.bin": {
+          "path": "firmware/bw16-07/km0_km4_image2.bin",
+          "size": 1126400,
+          "md5": "d4b115a6ae755276cf5a608989711170",
+          "sha256": "f883a76e938a9bbea01286e325834729e10b0caf474df53e85649e1686b7d7c6"
+        }
+      }
+    },
+    {
+      "slug": "bw16-08",
+      "name": "捕获握手包-厂商检测隐藏版",
+      "color": "Y",
+      "colorLabel": "黄",
+      "colorCss": "#eab308",
+      "sourcePath": "bw16/一键刷入捕获握手包厂商检测隐藏捕获260524",
+      "device": "bw16",
+      "files": {
+        "km0_boot_all.bin": {
+          "path": "firmware/bw16-08/km0_boot_all.bin",
+          "size": 4500,
+          "md5": "abf78d11cc0768c029f69adc4d902a0b",
+          "sha256": "453c880307fc389009aa8a39c63da3d715b207ad797206c896cc691426daaa64"
+        },
+        "km4_boot_all.bin": {
+          "path": "firmware/bw16-08/km4_boot_all.bin",
+          "size": 4456,
+          "md5": "b0adda4bd9a27304948a029119b7d717",
+          "sha256": "05fbf808d43113eaf7c11b75091c986b817135f0c52eb9fa94bb9fe9f34b062c"
+        },
+        "km0_km4_image2.bin": {
+          "path": "firmware/bw16-08/km0_km4_image2.bin",
+          "size": 1126400,
+          "md5": "8d4377b3d610ae1e71d92846176e99d1",
+          "sha256": "7d9c27cfe7c19d1cfc2e29b7985e41f168842d4d8cfcad05c317142d4146a793"
+        }
+      }
+    },
+    {
+      "slug": "bw16-09",
+      "name": "握手包捕获20260527",
+      "color": "Y",
+      "colorLabel": "黄",
+      "colorCss": "#eab308",
+      "sourcePath": "bw16/握手包捕获20260527",
+      "device": "bw16",
+      "files": {
+        "km0_boot_all.bin": {
+          "path": "firmware/bw16-09/km0_boot_all.bin",
+          "size": 4500,
+          "md5": "abf78d11cc0768c029f69adc4d902a0b",
+          "sha256": "453c880307fc389009aa8a39c63da3d715b207ad797206c896cc691426daaa64"
+        },
+        "km4_boot_all.bin": {
+          "path": "firmware/bw16-09/km4_boot_all.bin",
+          "size": 4456,
+          "md5": "b0adda4bd9a27304948a029119b7d717",
+          "sha256": "05fbf808d43113eaf7c11b75091c986b817135f0c52eb9fa94bb9fe9f34b062c"
+        },
+        "km0_km4_image2.bin": {
+          "path": "firmware/bw16-09/km0_km4_image2.bin",
+          "size": 1126400,
+          "md5": "a1d977d0ef52d6925d2b4330a5a25c13",
+          "sha256": "db89dfec45ee9c004049fa5f6a981d9585ff74dd14d5f94c090c61ce2c7b7696"
+        }
+      }
+    },
+    {
+      "slug": "bw16-10",
+      "name": "握手包捕获20260527[英文版]",
+      "color": "Y",
+      "colorLabel": "黄",
+      "colorCss": "#eab308",
+      "sourcePath": "bw16/握手包捕获20260527英文版",
+      "device": "bw16",
+      "files": {
+        "km0_boot_all.bin": {
+          "path": "firmware/bw16-10/km0_boot_all.bin",
+          "size": 4500,
+          "md5": "abf78d11cc0768c029f69adc4d902a0b",
+          "sha256": "453c880307fc389009aa8a39c63da3d715b207ad797206c896cc691426daaa64"
+        },
+        "km4_boot_all.bin": {
+          "path": "firmware/bw16-10/km4_boot_all.bin",
+          "size": 4456,
+          "md5": "b0adda4bd9a27304948a029119b7d717",
+          "sha256": "05fbf808d43113eaf7c11b75091c986b817135f0c52eb9fa94bb9fe9f34b062c"
+        },
+        "km0_km4_image2.bin": {
+          "path": "firmware/bw16-10/km0_km4_image2.bin",
+          "size": 1134592,
+          "md5": "c86d921fed5279bdf75b514b187ec7f7",
+          "sha256": "a993130a5aa527934e7c2ccc54f17e8d97fba749b0a27afb9b4982b1baa6b0a5"
+        }
+      }
+    },
+    {
+      "slug": "bw16-11",
+      "name": "捕获握手包20260531",
+      "color": "G",
+      "colorLabel": "绿",
+      "colorCss": "#22c55e",
+      "sourcePath": "bw16/捕获握手包20260531",
+      "device": "bw16",
+      "files": {
+        "km0_boot_all.bin": {
+          "path": "firmware/bw16-11/km0_boot_all.bin",
+          "size": 4500,
+          "md5": "abf78d11cc0768c029f69adc4d902a0b",
+          "sha256": "453c880307fc389009aa8a39c63da3d715b207ad797206c896cc691426daaa64"
+        },
+        "km4_boot_all.bin": {
+          "path": "firmware/bw16-11/km4_boot_all.bin",
+          "size": 4456,
+          "md5": "b0adda4bd9a27304948a029119b7d717",
+          "sha256": "05fbf808d43113eaf7c11b75091c986b817135f0c52eb9fa94bb9fe9f34b062c"
+        },
+        "km0_km4_image2.bin": {
+          "path": "firmware/bw16-11/km0_km4_image2.bin",
+          "size": 1130496,
+          "md5": "cd79cc1de80618cff39ed4ca12939f3e",
+          "sha256": "907e2bc726f1bec7a7484d936a0a98280da1daf4856e7b8c407a0ac1f98d6725"
+        }
+      }
+    },
+    {
+      "slug": "bw16-12",
+      "name": "戒网瘾DEV2小范围版",
+      "color": "H",
+      "colorLabel": "品红",
+      "colorCss": "#d946ef",
+      "sourcePath": "bw16/刷入戒网瘾DEV2小范围版260525",
+      "device": "bw16",
+      "files": {
+        "km0_boot_all.bin": {
+          "path": "firmware/bw16-12/km0_boot_all.bin",
+          "size": 4500,
+          "md5": "abf78d11cc0768c029f69adc4d902a0b",
+          "sha256": "453c880307fc389009aa8a39c63da3d715b207ad797206c896cc691426daaa64"
+        },
+        "km4_boot_all.bin": {
+          "path": "firmware/bw16-12/km4_boot_all.bin",
+          "size": 4456,
+          "md5": "b0adda4bd9a27304948a029119b7d717",
+          "sha256": "05fbf808d43113eaf7c11b75091c986b817135f0c52eb9fa94bb9fe9f34b062c"
+        },
+        "km0_km4_image2.bin": {
+          "path": "firmware/bw16-12/km0_km4_image2.bin",
+          "size": 794624,
+          "md5": "e9c1462252b3d70d52ff50f17e2a5ced",
+          "sha256": "d94968c36241707697b3634fa74b832efc334e2543b4954017c853d7b87fa77b"
+        }
+      }
+    },
+    {
+      "slug": "bw16-13",
+      "name": "刷入戒网瘾DEV2小范围版260715",
+      "color": "H",
+      "colorLabel": "品红",
+      "colorCss": "#d946ef",
+      "sourcePath": "bw16/刷入戒网瘾DEV2小范围版260715",
+      "device": "bw16",
+      "files": {
+        "km0_boot_all.bin": {
+          "path": "firmware/bw16-13/km0_boot_all.bin",
+          "size": 4500,
+          "md5": "abf78d11cc0768c029f69adc4d902a0b",
+          "sha256": "453c880307fc389009aa8a39c63da3d715b207ad797206c896cc691426daaa64"
+        },
+        "km4_boot_all.bin": {
+          "path": "firmware/bw16-13/km4_boot_all.bin",
+          "size": 4456,
+          "md5": "b0adda4bd9a27304948a029119b7d717",
+          "sha256": "05fbf808d43113eaf7c11b75091c986b817135f0c52eb9fa94bb9fe9f34b062c"
+        },
+        "km0_km4_image2.bin": {
+          "path": "firmware/bw16-13/km0_km4_image2.bin",
+          "size": 794624,
+          "md5": "98163072905cf8389a508a96cf70ab81",
+          "sha256": "20ca3afdd28235e505cfc3c68a9ff733e20c570d71e36906ab5a0ed3261eda26"
+        }
+      }
+    },
+    {
+      "slug": "bw16-14",
+      "name": "戒网瘾最新版",
+      "color": "R",
+      "colorLabel": "红",
+      "colorCss": "#ef4444",
+      "sourcePath": "bw16/一键刷入戒网瘾20260601",
+      "device": "bw16",
+      "files": {
+        "km0_boot_all.bin": {
+          "path": "firmware/bw16-14/km0_boot_all.bin",
+          "size": 4500,
+          "md5": "abf78d11cc0768c029f69adc4d902a0b",
+          "sha256": "453c880307fc389009aa8a39c63da3d715b207ad797206c896cc691426daaa64"
+        },
+        "km4_boot_all.bin": {
+          "path": "firmware/bw16-14/km4_boot_all.bin",
+          "size": 4456,
+          "md5": "b0adda4bd9a27304948a029119b7d717",
+          "sha256": "05fbf808d43113eaf7c11b75091c986b817135f0c52eb9fa94bb9fe9f34b062c"
+        },
+        "km0_km4_image2.bin": {
+          "path": "firmware/bw16-14/km0_km4_image2.bin",
+          "size": 819200,
+          "md5": "c1249deafdfd3a139e27de027efb327e",
+          "sha256": "49be064cec13e1b9062dd061fad918e3dbaaea5eff8bf9b40749d9fa6b686642"
+        }
+      }
+    },
+    {
+      "slug": "bw16-15",
+      "name": "一键刷入戒网瘾20260604",
+      "color": "R",
+      "colorLabel": "红",
+      "colorCss": "#ef4444",
+      "sourcePath": "bw16/一键刷入戒网瘾20260604",
+      "device": "bw16",
+      "files": {
+        "km0_boot_all.bin": {
+          "path": "firmware/bw16-15/km0_boot_all.bin",
+          "size": 4500,
+          "md5": "abf78d11cc0768c029f69adc4d902a0b",
+          "sha256": "453c880307fc389009aa8a39c63da3d715b207ad797206c896cc691426daaa64"
+        },
+        "km4_boot_all.bin": {
+          "path": "firmware/bw16-15/km4_boot_all.bin",
+          "size": 4456,
+          "md5": "b0adda4bd9a27304948a029119b7d717",
+          "sha256": "05fbf808d43113eaf7c11b75091c986b817135f0c52eb9fa94bb9fe9f34b062c"
+        },
+        "km0_km4_image2.bin": {
+          "path": "firmware/bw16-15/km0_km4_image2.bin",
+          "size": 823296,
+          "md5": "b213614957232b4fc344b0e231b3d838",
+          "sha256": "6903e76e040682f69baa54d90e62d4dcbb88c0bb28b349cfc1f4cbc710a5a676"
+        }
+      }
+    },
+    {
+      "slug": "bw16-16",
+      "name": "捕获握手包20260610",
+      "color": "",
+      "colorLabel": "未分类",
+      "colorCss": "#94a3b8",
+      "sourcePath": "bw16/捕获握手包20260610",
+      "device": "bw16",
+      "files": {
+        "km0_boot_all.bin": {
+          "path": "firmware/bw16-16/km0_boot_all.bin",
+          "size": 4500,
+          "md5": "abf78d11cc0768c029f69adc4d902a0b",
+          "sha256": "453c880307fc389009aa8a39c63da3d715b207ad797206c896cc691426daaa64"
+        },
+        "km4_boot_all.bin": {
+          "path": "firmware/bw16-16/km4_boot_all.bin",
+          "size": 4456,
+          "md5": "b0adda4bd9a27304948a029119b7d717",
+          "sha256": "05fbf808d43113eaf7c11b75091c986b817135f0c52eb9fa94bb9fe9f34b062c"
+        },
+        "km0_km4_image2.bin": {
+          "path": "firmware/bw16-16/km0_km4_image2.bin",
+          "size": 1142784,
+          "md5": "a8c8c14c767b83d1044ca22f7fd89f9d",
+          "sha256": "fa6f4c98ba48b3718e1b744893568b3ef20cb1df74ea591c45eeba0a43cff263"
+        }
+      }
+    },
+    {
+      "slug": "bw16-17",
+      "name": "捕获握手包20260714",
+      "color": "",
+      "colorLabel": "未分类",
+      "colorCss": "#94a3b8",
+      "sourcePath": "bw16/捕获握手包20260714",
+      "device": "bw16",
+      "files": {
+        "km0_boot_all.bin": {
+          "path": "firmware/bw16-17/km0_boot_all.bin",
+          "size": 4500,
+          "md5": "abf78d11cc0768c029f69adc4d902a0b",
+          "sha256": "453c880307fc389009aa8a39c63da3d715b207ad797206c896cc691426daaa64"
+        },
+        "km4_boot_all.bin": {
+          "path": "firmware/bw16-17/km4_boot_all.bin",
+          "size": 4456,
+          "md5": "b0adda4bd9a27304948a029119b7d717",
+          "sha256": "05fbf808d43113eaf7c11b75091c986b817135f0c52eb9fa94bb9fe9f34b062c"
+        },
+        "km0_km4_image2.bin": {
+          "path": "firmware/bw16-17/km0_km4_image2.bin",
+          "size": 1171456,
+          "md5": "9e7e04713b7d19fcac43cb0b6e97dbeb",
+          "sha256": "543be2770c188419fa4457d8f68a2437790930a5eb5ceafc64ebc2258cb9c473"
+        }
+      }
+    }
+  ],
+  "sdkBackup": {
+    "km0_boot_all.bin": {
+      "path": "firmware/_sdk_backup/km0_boot_all.bin",
+      "size": 4500,
+      "sha256": "453c880307fc389009aa8a39c63da3d715b207ad797206c896cc691426daaa64"
+    },
+    "km4_boot_all.bin": {
+      "path": "firmware/_sdk_backup/km4_boot_all.bin",
+      "size": 4456,
+      "sha256": "05fbf808d43113eaf7c11b75091c986b817135f0c52eb9fa94bb9fe9f34b062c"
+    },
+    "km0_km4_image2.bin": {
+      "path": "firmware/_sdk_backup/km0_km4_image2.bin",
+      "size": 770048,
+      "sha256": "46826c7a53b0b7be84329d6d26f745027b09bb98b2dbf5f0f8f07e91f893171a"
+    }
+  }
+}

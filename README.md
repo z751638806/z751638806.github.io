@@ -5,7 +5,28 @@
 ## 网址
 
 - 默认：https://z751638806.github.io
-- 自定义域名：https://peipeidev.cn （需域名实名通过后配置 DNS，见下文）
+- 自定义域名：https://peipeidev.cn
+- 在线烧录：https://peipeidev.cn/flash/ （浏览器直刷 BW16 / ESP32-C3 固件）
+
+## 在线烧录（/flash/）
+
+`flash/` 目录是自包含的网页刷写工具（Chrome/Edge Web Serial，纯前端）：
+
+- BW16：自研协议实现（17 个固件，支持高速档 921600、救砖恢复、扩展擦除）
+- ESP32-C3：ESP Web Tools（2 个固件）
+- 无硬件演练：`https://peipeidev.cn/flash/?mock=1` 跑完整模拟流程
+- 源项目：本地 `BW16-ESP32-tool`（协议证据链见 `flash/docs/PROTOCOL.md`）
+
+### 更新刷写工具 / 固件
+
+在本地源项目 `web/` 中改动或更新固件后：
+
+```bash
+cd web && npm run build:dist        # 重建 dist（terser 压缩）
+# 把 web/dist/{css,js,manifests,firmware,docs,test,index.html} 覆盖到本仓库 flash/
+# ⚠️ 覆盖后必须把 manifests/bw16.json、manifests/esp32c3.json 里的
+#    "/firmware/ 替换为 "firmware/（线上部署在 /flash/ 子目录，需相对路径）
+```
 
 ## 如何更新内容
 
