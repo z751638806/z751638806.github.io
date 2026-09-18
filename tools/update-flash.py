@@ -39,6 +39,10 @@ PATCHES = {
          "适用于设备\"变砖\"或需要恢复已知固件的场景：选择三个镜像文件（或点\"用 SDK 默认镜像\"自动填充），再点\"连接并恢复\"，工具会自动完成清理与写入。引导程序已内置，无需额外提供。", 1),
         ("扩展擦除（变砖恢复建议勾选；出处 PROTOCOL.md P14 备注）",
          "全片擦除（变砖恢复建议勾选，较慢）", 1),
+        ("<span class=\"device-desc\">安信可 Ai-Thinker BW16（RTL8720DN）<br>Web Serial 直刷 · 17 个固件</span>",
+         "<span class=\"device-desc\">安信可 Ai-Thinker BW16（RTL8720DN）<br>Web Serial 直刷 · 2 个固件</span>", 1),
+        ("<span class=\"device-desc\">乐鑫 ESP32-C3 开发板<br>ESP Web Tools · 2 个固件</span>",
+         "<span class=\"device-desc\">乐鑫 ESP32-C3 开发板<br>固件即将上线</span>", 1),
         ('<p class="dim small">协议出处：<a href="docs/PROTOCOL.md">web/docs/PROTOCOL.md</a> ·\n      审查记录：<a href="docs/REVIEW_LOG.md">web/docs/REVIEW_LOG.md</a></p>',
          '<p class="dim small">使用遇到问题？观看 B 站视频教程，或通过 <a href="/">peipeidev.cn</a> 首页的联系方式联系我。</p>', 1),
     ],
@@ -133,6 +137,13 @@ MANIFEST_FIELD_PATCH = {
     },
 }
 
+# 线上固件白名单：只发布这些 slug（清单 + bin 文件都以此为准；本地项目不受影响）。
+# 空 list = 该设备暂不上线固件。
+FIRMWARE_WHITELIST = {
+    "bw16": ["bw16-01", "bw16-02"],
+    "esp32c3": [],
+}
+
 # 上线产物中禁止出现的字符串（自检用）
 FORBIDDEN = [
     "PROTOCOL.md", "REVIEW_LOG", "ACCEPTANCE", "0x0800", "0x082000",
@@ -175,6 +186,12 @@ def sanitize_manifest(path: Path) -> None:
                 walk(x)
 
     walk(d)
+    # 固件白名单：只保留线上发布的条目
+    allow = FIRMWARE_WHITELIST.get(d.get("device", ""))
+    if allow is not None and "firmware" in d:
+        before = len(d["firmware"])
+        d["firmware"] = [f for f in d["firmware"] if f.get("slug") in allow]
+        print(f"  · {path.name} 固件 {before} → {len(d['firmware'])}（白名单）")
     path.write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
@@ -195,8 +212,18 @@ def main() -> None:
 
         dist = tmp / "dist"
         (dist / "js").mkdir(parents=True)
-        for d in ["css", "manifests", "firmware", "test/helpers"]:
+        for d in ["css", "manifests", "test/helpers"]:
             shutil.copytree(work / d, dist / d)
+        # 固件目录按白名单选择：_common/_sdk_backup 公共件 + 白名单 slug（未上线的 bin 不发布）
+        fw_src = work / "firmware"
+        fw_dst = dist / "firmware"
+        fw_dst.mkdir(parents=True)
+        allowed = {"_common", "_sdk_backup"}
+        for device, slugs in FIRMWARE_WHITELIST.items():
+            allowed.update(slugs)
+        for entry in fw_src.iterdir():
+            if entry.is_dir() and entry.name in allowed:
+                shutil.copytree(entry, fw_dst / entry.name)
         shutil.copy(work / "index.html", dist / "index.html")
         for js in sorted((work / "js").glob("*.js")):
             out = dist / "js" / js.name
@@ -222,8 +249,14 @@ def main() -> None:
                 bad.append(f"{f.relative_to(OUT)} 含 {s!r}")
     if bad:
         sys.exit("✗ 自检失败：\n  " + "\n  ".join(bad))
+    # 自检：线上固件目录必须与白名单一致，多一个 bin 都不行
+    allowed_dirs = {"_common", "_sdk_backup"} | {s for slugs in FIRMWARE_WHITELIST.values() for s in slugs}
+    actual = {p.name for p in (OUT / "firmware").iterdir() if p.is_dir()}
+    extra = actual - allowed_dirs
+    if extra:
+        sys.exit(f"✗ 自检失败：firmware/ 存在白名单外的目录：{sorted(extra)}")
     size = sum(p.stat().st_size for p in OUT.rglob("*") if p.is_file())
-    print(f"③ 自检通过（{len(FORBIDDEN)} 项敏感串为零命中）")
+    print(f"③ 自检通过（{len(FORBIDDEN)} 项敏感串 + 固件白名单 {sorted(allowed_dirs)}）")
     print(f"✓ 上线产物就绪：{OUT}（{size / 1e6:.1f} MB）")
 
 
