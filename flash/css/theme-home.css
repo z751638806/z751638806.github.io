@@ -1,57 +1,66 @@
-/* theme-home.css · 与 peipeidev.cn 主页视觉同步的覆盖层（构建时生成）
-   色调：暖米灰低眩光，避免纯白刺眼 */
+/* theme-home.css · 深色极客风主题层（构建时生成） */
 :root {
-  --bg: #ebe9e4;
-  --bg-panel: #f7f6f2;
-  --bg-panel-2: #edebe5;
-  --border: #d9d6cf;
-  --text: #262521;
-  --text-dim: #75726b;
+  --bg: #0e1116;
+  --bg-panel: #151a21;
+  --bg-panel-2: #1b2129;
+  --border: #262e39;
+  --text: #d7dfe8;
+  --text-dim: #8b97a7;
   --accent: #FB7299;
   --accent-dark: #e05a85;
-  --radius: 6px;
+  --radius: 8px;
 }
 body { font: 15px/1.7 system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--text); }
 
-/* ---- 顶栏：同主页导航（深色 #111） ---- */
-.topbar { background: #111; border-bottom: 1px solid #2a2a2a; padding: 10px 20px; }
+/* ---- 顶栏 ---- */
+.topbar { background: #0b0e12; border-bottom: 1px solid #1c232c; padding: 10px 20px; }
 .topbar h1.logo { font-size: 15px; margin: 0; display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .3px; }
 .topbar h1.logo a { color: #fff; text-decoration: none; }
 .topbar h1.logo a span { color: #FB7299; }
 .topbar-title { color: #FB7299; font-size: 12px; font-weight: 600; padding: 2px 10px; border: 1px solid #FB7299; border-radius: 999px; }
-.view-tab { color: #aaa; border-color: #2a2a2a; background: transparent; }
-.view-tab:hover { color: #fff; }
-.view-tab.selected { color: #fff; border-color: #FB7299; background: rgba(251, 114, 153, .18); }
+.view-tab { color: var(--text-dim); border-color: #262e39; background: transparent; }
+.view-tab:hover { color: var(--text); }
+.view-tab.selected { color: #fff; border-color: #FB7299; background: rgba(251, 114, 153, .16); }
 .topbar-status { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .site-nav { display: flex; gap: 14px; }
-.site-nav a { color: #aaa; font-size: 13px; text-decoration: none; }
+.site-nav a { color: var(--text-dim); font-size: 13px; text-decoration: none; }
 .site-nav a:hover { color: #fff; }
-.topbar .badge { background: #1a1a1a; border-color: #333; }
-.topbar .badge-ok { color: #4ade80; border-color: #166534; }
-.topbar .badge-warn { color: #facc15; border-color: #713f12; }
-.topbar .badge-err { color: #f87171; border-color: #7f1d1d; }
-.topbar .badge-dim { color: #9ca3af; }
+.topbar .badge { background: #12161c; border-color: #262e39; }
+.topbar .badge-ok { color: #4ade80; border-color: #2c5c38; }
+.topbar .badge-warn { color: #facc15; border-color: #6b5416; }
+.topbar .badge-err { color: #f87171; border-color: #6b2b2b; }
+.topbar .badge-dim { color: #8b97a7; }
 
-/* ---- 小节标题：同主页 h2（大写字母间距 + 细线） ---- */
-h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #999; display: flex; align-items: center; gap: 10px; }
-h2::after { content: ""; flex: 1; height: 1px; background: #e0e0e0; }
+/* ---- 小节标题 ---- */
+h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--text-dim); display: flex; align-items: center; gap: 10px; }
+h2::after { content: ""; flex: 1; height: 1px; background: #262e39; }
 h2 small { letter-spacing: 0; text-transform: none; }
 
-/* ---- 按钮：同主页 .btn（暖白底描边 / 品牌粉主按钮） ---- */
-.btn { background: var(--bg-panel); color: var(--text); }
+/* ---- 按钮 ---- */
+.btn { background: var(--bg-panel-2); color: var(--text); }
 .btn:hover { border-color: #FB7299; }
-.btn-primary { background: #FB7299; border-color: #FB7299; color: #fff; }
-.btn-primary:hover:not(:disabled) { background: #e05a85; border-color: #e05a85; opacity: .92; }
+.btn-primary { background: #FB7299; border-color: #FB7299; color: #fff; font-weight: 600; }
+.btn-primary:hover:not(:disabled) { background: #ff86ab; border-color: #ff86ab; }
 
-/* ---- 提示块：粉色信息条 ---- */
-.alert-info { border-color: var(--accent); background: rgba(251, 114, 153, 0.08); }
+/* ---- 卡片选中态：粉色描边 + 微光 ---- */
+.device-card.selected, .fw-card.selected { box-shadow: 0 0 0 1px #FB7299, 0 0 18px rgba(251, 114, 153, .22); }
 
-/* ---- 日志：保留终端风（呼应主页 Hero 的命令行元素） ---- */
-.log-panel { background: #111; border-color: #2a2a2a; color: #9ca3af; }
-.log-line-sys { color: #d1d5db; }
+/* ---- 提示块 ---- */
+.alert-info { border-color: var(--accent); background: rgba(251, 114, 153, 0.1); }
+.alert-ok { background: rgba(34, 197, 94, 0.1); }
+.alert-warn { background: rgba(234, 179, 8, 0.1); }
+.alert-err { background: rgba(239, 68, 68, 0.1); }
 
-/* ---- 页脚：同主页页脚（深色通栏） ---- */
-.footer { max-width: none; background: #111; color: #777; border-top: none; margin-top: 40px; padding: 26px 20px 34px; text-align: center; }
+/* ---- 日志：终端风与页面融为一体 ---- */
+.log-panel { background: #0b0e12; border-color: #1c232c; color: #9ca3af; }
+.log-line-sys { color: #c6cfda; }
+
+/* ---- 进度条微光 ---- */
+.progress-track { box-shadow: inset 0 0 0 1px #262e39; }
+.progress-bar { background: linear-gradient(90deg, #e05a85, #FB7299); }
+
+/* ---- 页脚 ---- */
+.footer { max-width: none; background: #0b0e12; color: var(--text-dim); border-top: 1px solid #1c232c; margin-top: 40px; padding: 26px 20px 34px; text-align: center; }
 .footer a { color: #FB7299; text-decoration: none; }
 .footer a:hover { text-decoration: underline; }
-.footer .dim { color: #666; }
+.footer .dim { color: #5d6874; }
