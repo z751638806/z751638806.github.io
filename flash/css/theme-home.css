@@ -1,11 +1,12 @@
-/* theme-home.css · 与 peipeidev.cn 主页视觉同步的覆盖层（构建时生成） */
+/* theme-home.css · 与 peipeidev.cn 主页视觉同步的覆盖层（构建时生成）
+   色调：暖米灰低眩光，避免纯白刺眼 */
 :root {
-  --bg: #f5f5f5;
-  --bg-panel: #ffffff;
-  --bg-panel-2: #f0f0f0;
-  --border: #e0e0e0;
-  --text: #222222;
-  --text-dim: #777777;
+  --bg: #ebe9e4;
+  --bg-panel: #f7f6f2;
+  --bg-panel-2: #edebe5;
+  --border: #d9d6cf;
+  --text: #262521;
+  --text-dim: #75726b;
   --accent: #FB7299;
   --accent-dark: #e05a85;
   --radius: 6px;
@@ -36,8 +37,8 @@ h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacin
 h2::after { content: ""; flex: 1; height: 1px; background: #e0e0e0; }
 h2 small { letter-spacing: 0; text-transform: none; }
 
-/* ---- 按钮：同主页 .btn（白底描边 / 品牌粉主按钮） ---- */
-.btn { background: #fff; color: #222; }
+/* ---- 按钮：同主页 .btn（暖白底描边 / 品牌粉主按钮） ---- */
+.btn { background: var(--bg-panel); color: var(--text); }
 .btn:hover { border-color: #FB7299; }
 .btn-primary { background: #FB7299; border-color: #FB7299; color: #fff; }
 .btn-primary:hover:not(:disabled) { background: #e05a85; border-color: #e05a85; opacity: .92; }
