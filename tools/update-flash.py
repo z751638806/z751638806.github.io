@@ -29,8 +29,12 @@ PATCHES = {
     "index.html": [
         ("<title>BW16 / ESP32-C3 网页刷写工具</title>",
          "<title>在线烧录 · BW16 / ESP32-C3 网页刷写工具 — peipeidev.cn</title>", 1),
+        ("<link rel=\"stylesheet\" href=\"css/style.css\">",
+         "<link rel=\"stylesheet\" href=\"css/style.css\">\n  <link rel=\"stylesheet\" href=\"css/theme-home.css\">", 1),
+        ("<h1>⚡ BW16 / ESP32-C3 网页刷写工具</h1>",
+         "<h1 class=\"logo\"><a href=\"/\">peipei<span>.</span>dev</a><span class=\"topbar-title\">在线烧录</span></h1>", 1),
         ('    <div class="topbar-status">\n      <button id="btn-feedback"',
-         '    <div class="topbar-status">\n      <a class="btn" href="/" style="padding:2px 10px;font-size:12px;text-decoration:none;">← peipeidev.cn</a>\n      <button id="btn-feedback"', 1),
+         '    <div class="topbar-status">\n      <nav class="site-nav" aria-label="站点导航"><a href="/#videos">视频</a><a href="/#firmware">固件</a><a href="/#projects">项目</a><a href="/#about">关于</a></nav>\n      <button id="btn-feedback"', 1),
         ("扩展擦除（覆盖全部镜像区，较慢；出处 PROTOCOL.md P14 备注）",
          "全片擦除（更彻底但较慢；普通刷写无需勾选）", 1),
         ("高速档 921600（快约 3 倍；失败自动回退 115200；出处 PROTOCOL.md P19）",
@@ -165,6 +169,65 @@ FORBIDDEN = [
     '"/firmware/',
 ]
 
+# 主题覆盖层：与 peipeidev.cn 主页视觉同步（浅色内容 + 深色顶栏/页脚 + 品牌粉）
+THEME_CSS = """/* theme-home.css · 与 peipeidev.cn 主页视觉同步的覆盖层（构建时生成） */
+:root {
+  --bg: #f5f5f5;
+  --bg-panel: #ffffff;
+  --bg-panel-2: #f0f0f0;
+  --border: #e0e0e0;
+  --text: #222222;
+  --text-dim: #777777;
+  --accent: #FB7299;
+  --accent-dark: #e05a85;
+  --radius: 6px;
+}
+body { font: 15px/1.7 system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--text); }
+
+/* ---- 顶栏：同主页导航（深色 #111） ---- */
+.topbar { background: #111; border-bottom: 1px solid #2a2a2a; padding: 10px 20px; }
+.topbar h1.logo { font-size: 15px; margin: 0; display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .3px; }
+.topbar h1.logo a { color: #fff; text-decoration: none; }
+.topbar h1.logo a span { color: #FB7299; }
+.topbar-title { color: #FB7299; font-size: 12px; font-weight: 600; padding: 2px 10px; border: 1px solid #FB7299; border-radius: 999px; }
+.view-tab { color: #aaa; border-color: #2a2a2a; background: transparent; }
+.view-tab:hover { color: #fff; }
+.view-tab.selected { color: #fff; border-color: #FB7299; background: rgba(251, 114, 153, .18); }
+.topbar-status { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.site-nav { display: flex; gap: 14px; }
+.site-nav a { color: #aaa; font-size: 13px; text-decoration: none; }
+.site-nav a:hover { color: #fff; }
+.topbar .badge { background: #1a1a1a; border-color: #333; }
+.topbar .badge-ok { color: #4ade80; border-color: #166534; }
+.topbar .badge-warn { color: #facc15; border-color: #713f12; }
+.topbar .badge-err { color: #f87171; border-color: #7f1d1d; }
+.topbar .badge-dim { color: #9ca3af; }
+
+/* ---- 小节标题：同主页 h2（大写字母间距 + 细线） ---- */
+h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #999; display: flex; align-items: center; gap: 10px; }
+h2::after { content: ""; flex: 1; height: 1px; background: #e0e0e0; }
+h2 small { letter-spacing: 0; text-transform: none; }
+
+/* ---- 按钮：同主页 .btn（白底描边 / 品牌粉主按钮） ---- */
+.btn { background: #fff; color: #222; }
+.btn:hover { border-color: #FB7299; }
+.btn-primary { background: #FB7299; border-color: #FB7299; color: #fff; }
+.btn-primary:hover:not(:disabled) { background: #e05a85; border-color: #e05a85; opacity: .92; }
+
+/* ---- 提示块：粉色信息条 ---- */
+.alert-info { border-color: var(--accent); background: rgba(251, 114, 153, 0.08); }
+
+/* ---- 日志：保留终端风（呼应主页 Hero 的命令行元素） ---- */
+.log-panel { background: #111; border-color: #2a2a2a; color: #9ca3af; }
+.log-line-sys { color: #d1d5db; }
+
+/* ---- 页脚：同主页页脚（深色通栏） ---- */
+.footer { max-width: none; background: #111; color: #777; border-top: none; margin-top: 40px; padding: 26px 20px 34px; text-align: center; }
+.footer a { color: #FB7299; text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+.footer .dim { color: #666; }
+"""
+
 
 def apply_patches(root: Path) -> None:
     for rel, rules in PATCHES.items():
@@ -234,6 +297,7 @@ def main() -> None:
         (dist / "js").mkdir(parents=True)
         for d in ["css", "manifests", "test/helpers"]:
             shutil.copytree(work / d, dist / d)
+        (dist / "css" / "theme-home.css").write_text(THEME_CSS, encoding="utf-8")
         # 固件目录按白名单选择：_common/_sdk_backup 公共件 + 白名单 slug（未上线的 bin 不发布）
         fw_src = work / "firmware"
         fw_dst = dist / "firmware"
