@@ -43,11 +43,18 @@ img,svg{display:block;max-width:100%}
 }
 
 /* ============ 背景特效层：虚化渐变光斑 + 网格 ============ */
+/* 光斑用径向渐变软边实现（零 filter），移动端不掉帧、不发热 */
 .bg-fx{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
-.blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5;will-change:transform}
-.blob-1{width:520px;height:520px;left:-140px;top:-120px;background:rgba(251,114,153,.32);animation:drift1 22s ease-in-out infinite alternate}
-.blob-2{width:460px;height:460px;right:-120px;top:24%;background:rgba(139,157,252,.26);animation:drift2 26s ease-in-out infinite alternate}
-.blob-3{width:420px;height:420px;left:32%;bottom:-180px;background:rgba(95,212,245,.16);animation:drift1 30s ease-in-out infinite alternate-reverse}
+.blob{position:absolute;border-radius:50%;opacity:.55;will-change:transform;transform:translateZ(0)}
+.blob-1{width:560px;height:560px;left:-160px;top:-140px;
+  background:radial-gradient(circle closest-side,rgba(251,114,153,.34),rgba(251,114,153,0) 74%);
+  animation:drift1 22s ease-in-out infinite alternate}
+.blob-2{width:500px;height:500px;right:-140px;top:22%;
+  background:radial-gradient(circle closest-side,rgba(139,157,252,.28),rgba(139,157,252,0) 74%);
+  animation:drift2 26s ease-in-out infinite alternate}
+.blob-3{width:460px;height:460px;left:30%;bottom:-200px;
+  background:radial-gradient(circle closest-side,rgba(95,212,245,.18),rgba(95,212,245,0) 74%);
+  animation:drift1 30s ease-in-out infinite alternate-reverse}
 @keyframes drift1{to{transform:translate(70px,46px) scale(1.08)}}
 @keyframes drift2{to{transform:translate(-56px,60px) scale(.94)}}
 .grid-overlay{
@@ -219,13 +226,18 @@ footer a:hover{color:var(--pink)}
 .js .reveal.visible{opacity:1;transform:none}
 .js .reveal-d1{transition-delay:.08s}.js .reveal-d2{transition-delay:.16s}.js .reveal-d3{transition-delay:.24s}
 
-/* ============ 移动端 ============ */
+/* ============ 移动端：文字优先，动画缩量垫底 ============ */
 @media(max-width:820px){
-  .hero{padding:56px 16px 44px}
-  .hero-in{grid-template-columns:1fr}
-  .hero-art{order:-1}
-  .chip-wrap{width:min(240px,64vw)}
+  .hero{padding:44px 16px 32px}
+  .hero-in{grid-template-columns:1fr;gap:26px}
+  .hero-art{margin-top:2px}          /* 芯片移到文字下方，首屏让位给标题与按钮 */
+  .chip-wrap{width:min(216px,56vw);filter:none}
   h1{font-size:36px}
+  .blob-1{width:340px;height:340px;opacity:.45}
+  .blob-2{width:300px;height:300px;opacity:.4}
+  .blob-3{width:280px;height:280px;opacity:.32}
+  .grid-overlay{background-size:36px 36px}
+  .stats{margin-top:30px;padding-top:18px}
 }
 @media(max-width:600px){
   h1{font-size:29px}
@@ -234,6 +246,9 @@ footer a:hover{color:var(--pink)}
   .foot-in{grid-template-columns:1fr;gap:20px}
   .nav-links{gap:11px}
   .nav-links a{font-size:12px}
+  .chip-wrap{width:min(190px,52vw)}
+  .blob-1{width:280px;height:280px}
+  .blob-2{width:240px;height:240px}
 }
 </style>
 </head>
