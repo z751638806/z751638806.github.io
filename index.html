@@ -81,19 +81,24 @@ img,svg{display:block;max-width:100%}
 .nav-links a.nav-cta:hover{color:#ff86ab}
 
 /* ============ Hero ============ */
-.hero{position:relative;padding:84px 20px 64px}
+.hero{position:relative;padding:84px 20px 64px;overflow:hidden}
 .hero-in{max-width:960px;margin:0 auto;position:relative;z-index:1}
 
 /* ---- Hero 背景：星轨 SVG 高斯模糊 + 色相流转（动态渐变），径向遮罩渐隐 ---- */
 .hero-bg{position:absolute;z-index:-1;top:50%;right:-80px;width:min(660px,94vw);
-  transform:translateY(-52%);pointer-events:none;opacity:.55;overflow:visible;
-  filter:blur(2.5px) hue-rotate(0deg) saturate(1.15);
-  animation:hue 26s linear infinite;
+  transform:translateY(-52%);pointer-events:none;opacity:.68;overflow:visible;
+  filter:blur(1.3px) hue-rotate(0deg) saturate(1.15);
+  animation:hue 18s linear infinite;
   -webkit-mask-image:radial-gradient(closest-side,#000 34%,transparent 80%);
           mask-image:radial-gradient(closest-side,#000 34%,transparent 80%);
 }
 .hero-bg svg{width:100%;height:auto}
-@keyframes hue{to{filter:blur(2.5px) hue-rotate(360deg) saturate(1.15)}}
+@keyframes hue{to{filter:blur(1.3px) hue-rotate(360deg) saturate(1.15)}}
+
+/* 轨道系统缓慢进动：大尺度可感知运动（与电子的 SMIL 环绕叠加） */
+.orbit-spin{transform-origin:180px 180px;transform-box:view-box;animation:spin 48s linear infinite}
+.spin-b{animation-duration:36s;animation-direction:reverse}
+@keyframes spin{to{transform:rotate(360deg)}}
 .prompt{font:13px/1.9 var(--mono);background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;
   padding:12px 16px;margin-bottom:26px;color:var(--dim);position:relative;overflow:hidden}
 .prompt::before{content:"";position:absolute;inset:0 0 auto 0;height:1px;background:linear-gradient(90deg,transparent,rgba(251,114,153,.5),transparent)}
@@ -237,8 +242,8 @@ footer a:hover{color:var(--pink)}
 /* ============ 移动端：文字优先，动画缩量垫底 ============ */
 @media(max-width:820px){
   .hero{padding:44px 16px 32px}
-  .hero-bg{top:42%;right:-120px;width:460px;opacity:.42;
-    filter:blur(3px) hue-rotate(0deg) saturate(1.15);animation:none}
+  .hero-bg{top:42%;right:-120px;width:460px;opacity:.6;
+    filter:blur(1.8px) hue-rotate(0deg) saturate(1.15);animation:none}
   h1{font-size:36px}
   .blob-1{width:340px;height:340px;opacity:.45}
   .blob-2{width:300px;height:300px;opacity:.4}
@@ -338,6 +343,7 @@ footer a:hover{color:var(--pink)}
 
         <!-- 倾斜轨道 A（粉）+ 两颗电子 -->
         <g transform="rotate(-16 180 180)">
+         <g class="orbit-spin spin-a">
           <path id="orbitA" d="M330 180 A150 58 0 1 1 30 180 A150 58 0 1 1 330 180"
                 stroke="rgba(251,114,153,.32)" stroke-width="1.5" stroke-dasharray="4 7" fill="none"/>
           <g class="orb">
@@ -350,10 +356,12 @@ footer a:hover{color:var(--pink)}
             <circle r="2.6" fill="#fff"/>
             <animateMotion dur="13s" repeatCount="indefinite" begin="-6s"><mpath href="#orbitA"/></animateMotion>
           </g>
+         </g>
         </g>
 
         <!-- 倾斜轨道 B（蓝紫）+ 一颗电子 -->
         <g transform="rotate(12 180 180)">
+         <g class="orbit-spin spin-b">
           <path id="orbitB" d="M290 180 A110 42 0 1 1 70 180 A110 42 0 1 1 290 180"
                 stroke="rgba(139,157,252,.32)" stroke-width="1.5" stroke-dasharray="4 7" fill="none"/>
           <g class="orb">
@@ -361,6 +369,7 @@ footer a:hover{color:var(--pink)}
             <circle r="3.2" fill="#c7d2fe"/>
             <animateMotion dur="6.5s" repeatCount="indefinite" begin="-3s"><mpath href="#orbitB"/></animateMotion>
           </g>
+         </g>
         </g>
 
         <!-- WiFi 广播波纹：从核心周期性扩散 -->
