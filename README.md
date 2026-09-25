@@ -50,9 +50,13 @@ Safari / iOS / 微信内置浏览器不支持，页面会显示提示徽章）�
 
 - **BW16**：三镜像槽位（km0/km4 可一键填 SDK 默认镜像），复用生产 flashBw16 引擎
   （flashloader 内置并强制 SHA-256 校验、高速档自动回退、手动引导、?mock 演练）
+- **一键救砖恢复（免上传）**：救砖页勾选覆盖声明后一键刷写，自动使用内置三件套
+  （官方引导 km0/km4 + 出厂应用镜像，来自 `_sdk_backup/`），全程无需上传；
+  三槽位手动模式保留给高级用户（image2 也支持「用出厂镜像」填充）
 - **ESP32-C3**：多 bin + 可编辑烧录地址（如 0x0 引导 / 0x10000 应用），esptool-js
   官方库 esbuild 单文件**本地打包**（`flash/js/vendor/`），不依赖 CDN
-- 无硬件演练：`https://peipeidev.cn/flash/?mock=1&custombins`（自动填充假镜像跑全流程）
+- 无硬件演练：`https://peipeidev.cn/flash/?mock=1` 全流程；救砖页加
+  `&rescuebins=bw16-01` 用指定固件镜像演练；自定义页加 `&custombins` 自动填充
 - 维护：功能源码在 `tools/flash-custom/`（custom.js + vendor），构建时附加到
   `flash/js/`，**改动要改 tools/ 下的源，不要直接改 flash/js/custom.js**（会被覆盖）
 
