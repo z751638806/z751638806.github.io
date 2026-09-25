@@ -157,6 +157,10 @@ PATCHES = {
         # 一键救砖：勾选声明 → 从内置 sdkBackup 填充三镜像 → 复用现有恢复流程
         ("  $('btn-rescue-flash').addEventListener('click', onRescueClick);",
          "  $('btn-rescue-flash').addEventListener('click', onRescueClick);\n  $('btn-oneclick-rescue').addEventListener('click', async () => {\n    if (!$('oneclick-agree').checked) {\n      showResult('warn', '请先勾选「我已了解将覆盖板上固件」后再开始一键恢复。');\n      return;\n    }\n    setBusy(true);\n    try {\n      const at = state.manifests.firmware.find((f) => f.slug === 'bw16-at');\n      if (!at) throw new Error('官方 AT 固件未内置');\n      for (const name of Object.keys(SLOTS)) {\n        const meta = at.files[name];\n        if (!meta) throw new Error(`内置镜像缺失：${name}`);\n        markImage(name, await fetchBinary(meta.path), '官方 AT 固件');\n      }\n    } catch (e) {\n      setBusy(false);\n      showResult('err', `× 内置镜像加载失败：${e.message}`);\n      return;\n    }\n    setBusy(false);\n    await onRescueClick();\n  });", 1),
+        # M7 关联修复：setState 限定 #view-rescue 作用域（自定义视图引入同名槽位后，
+        #  无作用域 querySelector 会把救砖页的填充反馈写进隐藏的自定义视图槽位）
+        ("function setState(name, text) {\n  document.querySelector(`[data-state=\"${name}\"]`).textContent = text;\n}",
+         "function setState(name, text) {\n  const el = document.querySelector(`#view-rescue [data-state=\"${name}\"]`);\n  if (el) el.textContent = text;\n}", 1),
     ],
 }
 
