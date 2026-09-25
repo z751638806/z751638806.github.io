@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-15 03:12:38",
+  "generatedAt": "2026-09-26 03:15:33",
   "device": "bw16",
   "flashloader": {
     "path": "firmware/_common/imgtool_flashloader_amebad.bin",
@@ -68,6 +68,32 @@
         }
       },
       "connectNote": "刷写完成后，设备会释放 WiFi 热点「CMCC」，连接密码：12345678.（注意：末尾有一个英文句点）"
+    },
+    {
+      "slug": "bw16-at",
+      "name": "官方 AT 固件（救砖）",
+      "color": "",
+      "colorLabel": "未分类",
+      "colorCss": "#94a3b8",
+      "sourcePath": "佩佩队长固件库",
+      "device": "bw16",
+      "files": {
+        "km0_boot_all.bin": {
+          "path": "firmware/bw16-at/km0_boot_all.bin",
+          "size": 4096,
+          "md5": "8359578eb5397076509a075b0425e88e"
+        },
+        "km4_boot_all.bin": {
+          "path": "firmware/bw16-at/km4_boot_all.bin",
+          "size": 8192,
+          "md5": "3fb6f65401b2b88931657f3a4c2d677e"
+        },
+        "km0_km4_image2.bin": {
+          "path": "firmware/bw16-at/km0_km4_image2.bin",
+          "size": 890048,
+          "md5": "95c1b926d28412c26e685932fbcd65eb"
+        }
+      }
     }
   ],
   "sdkBackup": {

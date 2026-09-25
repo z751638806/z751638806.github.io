@@ -45,7 +45,7 @@ PATCHES = {
         ("扩展擦除（变砖恢复建议勾选；出处 PROTOCOL.md P14 备注）",
          "全片擦除（变砖恢复建议勾选，较慢）", 1),
         ("<span class=\"device-desc\">安信可 Ai-Thinker BW16（RTL8720DN）<br>Web Serial 直刷 · 17 个固件</span>",
-         "<span class=\"device-desc\">安信可 Ai-Thinker BW16（RTL8720DN）<br>Web Serial 直刷 · 2 个固件</span>", 1),
+         "<span class=\"device-desc\">安信可 Ai-Thinker BW16（RTL8720DN）<br>Web Serial 直刷 · 3 个固件</span>", 1),
         ("<span class=\"device-desc\">乐鑫 ESP32-C3 开发板<br>ESP Web Tools · 2 个固件</span>",
          "<span class=\"device-desc\">乐鑫 ESP32-C3 开发板<br>固件即将上线</span>", 1),
         ('<p class="dim small">协议出处：<a href="docs/PROTOCOL.md">web/docs/PROTOCOL.md</a> ·\n      审查记录：<a href="docs/REVIEW_LOG.md">web/docs/REVIEW_LOG.md</a></p>',
@@ -171,7 +171,7 @@ MANIFEST_FIELD_PATCH = {
 # 线上固件白名单：只发布这些 slug（清单 + bin 文件都以此为准；本地项目不受影响）。
 # 空 list = 该设备暂不上线固件。
 FIRMWARE_WHITELIST = {
-    "bw16": ["bw16-01", "bw16-02"],
+    "bw16": ["bw16-01", "bw16-02", "bw16-at"],
     "esp32c3": [],
 }
 
@@ -179,12 +179,15 @@ FIRMWARE_WHITELIST = {
 FIRMWARE_NAME_MAP = {
     "断网": "WiFi安全测试固件「2026」",
     "断网远程版": "WiFi安全测试固件-远程版「2026」",
+    "官方AT固件(本地)": "官方 AT 固件（救砖）",
 }
 
 # 线上固件连接提示（选中固件后显示在刷写面板；本地项目无此字段）
 # DEFAULT_CONNECT_NOTE 应用到所有上线固件；如某固件需要单独文案，加进下面的 override 表
 DEFAULT_CONNECT_NOTE = "刷写完成后，设备会释放 WiFi 热点「CMCC」，连接密码：12345678.（注意：末尾有一个英文句点）"
-FIRMWARE_CONNECT_NOTES_OVERRIDE = {}
+FIRMWARE_CONNECT_NOTES_OVERRIDE = {
+    "bw16-at": "",   # AT 固件不释放热点，不显示连接提示
+}
 
 # 上线产物中禁止出现的字符串（自检用）
 FORBIDDEN = [
