@@ -20,6 +20,7 @@
     <nav class="view-nav" aria-label="视图切换">
       <button id="nav-flash" class="view-tab selected" type="button">刷固件</button>
       <button id="nav-rescue" class="view-tab" type="button">救砖恢复</button>
+      <button id="nav-custom" class="view-tab" type="button">自定义固件</button>
     </nav>
     <div class="topbar-status">
       <nav class="site-nav" aria-label="站点导航"><a href="/#videos">视频</a><a href="/#firmware">固件</a><a href="/#projects">项目</a><a href="/#about">关于</a></nav>
@@ -201,6 +202,78 @@
       </div>
     </section>
 
+  </div>
+
+  <div id="view-custom" hidden>
+    <!-- 自定义固件刷写 (M7) -->
+    <section aria-label="自定义固件刷写">
+      <h2>自定义固件刷写</h2>
+      <div class="flash-panel">
+        <p class="small dim">
+          刷写自己的固件文件（本地选择，不会上传到任何服务器）。选设备类型后按提示操作：
+          BW16 需要三个镜像（可一键填充官方引导镜像）；ESP32-C3 支持一个或多个 .bin（可改烧录地址）。
+        </p>
+        <div class="auth-tabs" style="display:flex;gap:8px;margin:14px 0;">
+          <button class="view-tab selected" data-cdev="bw16" type="button">BW16</button>
+          <button class="view-tab" data-cdev="esp32c3" type="button">ESP32-C3</button>
+        </div>
+
+        <div id="custom-bw16">
+          <div class="rescue-slot">
+            <span class="rescue-label">km0_boot_all.bin</span>
+            <input type="file" id="custom-km0" accept=".bin">
+            <button class="btn btn-small" type="button" data-cfill="km0_boot_all.bin">用 SDK 默认镜像</button>
+            <span class="small dim" data-state="km0_boot_all.bin"></span>
+          </div>
+          <div class="rescue-slot">
+            <span class="rescue-label">km4_boot_all.bin</span>
+            <input type="file" id="custom-km4" accept=".bin">
+            <button class="btn btn-small" type="button" data-cfill="km4_boot_all.bin">用 SDK 默认镜像</button>
+            <span class="small dim" data-state="km4_boot_all.bin"></span>
+          </div>
+          <div class="rescue-slot">
+            <span class="rescue-label">km0_km4_image2.bin（应用）</span>
+            <input type="file" id="custom-image2" accept=".bin">
+            <span class="small dim" data-state="km0_km4_image2.bin"></span>
+          </div>
+          <label class="advanced-row">
+            <input type="checkbox" id="custom-high-speed" checked>
+            高速模式（约快 3 倍；连不上会自动改用标准速度）
+          </label>
+          <label class="advanced-row">
+            <input type="checkbox" id="custom-extended-erase">
+            全片擦除（会清空板上全部数据，较慢；一般无需勾选）
+          </label>
+          <div class="flash-actions">
+            <button id="btn-custom-flash" class="btn btn-primary" type="button">连接并刷写</button>
+          </div>
+          <div id="custom-progress-wrap" hidden>
+            <div class="progress-track"><div id="custom-progress-bar" class="progress-bar"></div></div>
+            <div id="custom-progress-text" class="small dim">0%</div>
+          </div>
+          <div id="custom-result" class="alert" hidden></div>
+        </div>
+
+        <div id="custom-esp" hidden>
+          <div class="rescue-slot">
+            <span class="rescue-label">添加固件文件（.bin，可多选）</span>
+            <input type="file" id="custom-esp-add" accept=".bin" multiple>
+          </div>
+          <div id="custom-esp-files"></div>
+          <p class="small dim">
+            烧录地址默认 0x0（单个应用镜像直刷）；多个文件时请按固件说明填写各自地址（如 0x0 引导 / 0x10000 应用）。
+          </p>
+          <div class="flash-actions">
+            <button id="btn-custom-esp-flash" class="btn btn-primary" type="button">连接并刷写</button>
+          </div>
+          <div id="custom-esp-progress-wrap" hidden>
+            <div class="progress-track"><div id="custom-esp-progress-bar" class="progress-bar"></div></div>
+            <div id="custom-esp-progress-text" class="small dim">0%</div>
+          </div>
+          <div id="custom-esp-result" class="alert" hidden></div>
+        </div>
+      </div>
+    </section>
   </div>
 
   <div id="view-rescue" hidden>

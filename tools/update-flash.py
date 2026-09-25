@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """上线净化构建：把本地 BW16-ESP32-tool 网页版发布为 peipeidev.cn/flash/。
 
 本地源项目保持原样（协议文档、调试日志照旧），本脚本在临时副本上打"用户视角"补丁：
@@ -49,6 +50,11 @@ PATCHES = {
          "<span class=\"device-desc\">乐鑫 ESP32-C3 开发板<br>固件即将上线</span>", 1),
         ('<p class="dim small">协议出处：<a href="docs/PROTOCOL.md">web/docs/PROTOCOL.md</a> ·\n      审查记录：<a href="docs/REVIEW_LOG.md">web/docs/REVIEW_LOG.md</a></p>',
          '<p class="dim small">使用遇到问题？观看 B 站视频教程，或通过 <a href="/">peipeidev.cn</a> 首页的联系方式联系我。</p>', 1),
+        # M7：自定义固件视图（导航页签 + 视图区块；custom.js 由 tools/flash-custom/ 附加）
+        ('<nav class="view-nav" aria-label="视图切换">\n      <button id="nav-flash" class="view-tab selected" type="button">刷固件</button>\n      <button id="nav-rescue" class="view-tab" type="button">救砖恢复</button>\n    </nav>',
+         '<nav class="view-nav" aria-label="视图切换">\n      <button id="nav-flash" class="view-tab selected" type="button">刷固件</button>\n      <button id="nav-rescue" class="view-tab" type="button">救砖恢复</button>\n      <button id="nav-custom" class="view-tab" type="button">自定义固件</button>\n    </nav>', 1),
+        ('  <div id="view-rescue" hidden>',
+         '  <div id="view-custom" hidden>\n    <!-- 自定义固件刷写 (M7) -->\n    <section aria-label="自定义固件刷写">\n      <h2>自定义固件刷写</h2>\n      <div class="flash-panel">\n        <p class="small dim">\n          刷写自己的固件文件（本地选择，不会上传到任何服务器）。选设备类型后按提示操作：\n          BW16 需要三个镜像（可一键填充官方引导镜像）；ESP32-C3 支持一个或多个 .bin（可改烧录地址）。\n        </p>\n        <div class="auth-tabs" style="display:flex;gap:8px;margin:14px 0;">\n          <button class="view-tab selected" data-cdev="bw16" type="button">BW16</button>\n          <button class="view-tab" data-cdev="esp32c3" type="button">ESP32-C3</button>\n        </div>\n\n        <div id="custom-bw16">\n          <div class="rescue-slot">\n            <span class="rescue-label">km0_boot_all.bin</span>\n            <input type="file" id="custom-km0" accept=".bin">\n            <button class="btn btn-small" type="button" data-cfill="km0_boot_all.bin">用 SDK 默认镜像</button>\n            <span class="small dim" data-state="km0_boot_all.bin"></span>\n          </div>\n          <div class="rescue-slot">\n            <span class="rescue-label">km4_boot_all.bin</span>\n            <input type="file" id="custom-km4" accept=".bin">\n            <button class="btn btn-small" type="button" data-cfill="km4_boot_all.bin">用 SDK 默认镜像</button>\n            <span class="small dim" data-state="km4_boot_all.bin"></span>\n          </div>\n          <div class="rescue-slot">\n            <span class="rescue-label">km0_km4_image2.bin（应用）</span>\n            <input type="file" id="custom-image2" accept=".bin">\n            <span class="small dim" data-state="km0_km4_image2.bin"></span>\n          </div>\n          <label class="advanced-row">\n            <input type="checkbox" id="custom-high-speed" checked>\n            高速模式（约快 3 倍；连不上会自动改用标准速度）\n          </label>\n          <label class="advanced-row">\n            <input type="checkbox" id="custom-extended-erase">\n            全片擦除（会清空板上全部数据，较慢；一般无需勾选）\n          </label>\n          <div class="flash-actions">\n            <button id="btn-custom-flash" class="btn btn-primary" type="button">连接并刷写</button>\n          </div>\n          <div id="custom-progress-wrap" hidden>\n            <div class="progress-track"><div id="custom-progress-bar" class="progress-bar"></div></div>\n            <div id="custom-progress-text" class="small dim">0%</div>\n          </div>\n          <div id="custom-result" class="alert" hidden></div>\n        </div>\n\n        <div id="custom-esp" hidden>\n          <div class="rescue-slot">\n            <span class="rescue-label">添加固件文件（.bin，可多选）</span>\n            <input type="file" id="custom-esp-add" accept=".bin" multiple>\n          </div>\n          <div id="custom-esp-files"></div>\n          <p class="small dim">\n            烧录地址默认 0x0（单个应用镜像直刷）；多个文件时请按固件说明填写各自地址（如 0x0 引导 / 0x10000 应用）。\n          </p>\n          <div class="flash-actions">\n            <button id="btn-custom-esp-flash" class="btn btn-primary" type="button">连接并刷写</button>\n          </div>\n          <div id="custom-esp-progress-wrap" hidden>\n            <div class="progress-track"><div id="custom-esp-progress-bar" class="progress-bar"></div></div>\n            <div id="custom-esp-progress-text" class="small dim">0%</div>\n          </div>\n          <div id="custom-esp-result" class="alert" hidden></div>\n        </div>\n      </div>\n    </section>\n  </div>\n\n  <div id="view-rescue" hidden>', 1),
     ],
     "js/ameba.js": [
         ("log(`已切到 ${baud} 8N1`);",
@@ -114,6 +120,14 @@ PATCHES = {
          "flasherLog.append('串口已连接', 'ok');", 1),
         ("flasherLog.append('请在浏览器弹窗中选择 BW16 对应串口（列出全部串口，选完自动校验）…', 'sys');",
          "flasherLog.append('请在弹出的窗口中选择你的开发板串口…', 'sys');", 1),
+        # M7：内嵌浏览器提示修正（127.0.0.1:8000 是本地开发地址，线上用户不可用）
+        ("'当前是 IDE 内嵌预览窗，弹不出系统串口列表。请复制 http://127.0.0.1:8000/ 到独立 Chrome/Edge 打开后再刷写（本窗口仍可用于 ?mock=1 演练）。'",
+         "'当前是 IDE 内嵌预览窗，弹不出系统串口列表。请复制当前页面地址，到独立的 Chrome / Edge 标签页打开后再刷写（本窗口仍可用于 ?mock=1 演练）。'", 1),
+        ("'当前是 IDE 内嵌预览窗（Electron），弹不出系统串口列表。请复制地址 http://127.0.0.1:8000/ 到独立 Chrome/Edge 打开后再刷写。'",
+         "'当前是 IDE 内嵌预览窗（Electron），弹不出系统串口列表。请复制当前页面地址，到独立的 Chrome / Edge 标签页打开后再刷写。'", 1),
+        # M7：初始化自定义固件模块（custom.js 由 tools/flash-custom/ 附加，随站点发布）
+        ("  await initRescue(bw16, flasherLog);\n}",
+         "  await initRescue(bw16, flasherLog);\n  try {\n    const custom = await import('./custom.js');\n    await custom.initCustom(state.manifests, flasherLog);\n  } catch (e) {\n    flasherLog.append('自定义固件模块加载失败：' + e.message, 'err');\n  }\n}", 1),
     ],
     "js/serial.js": [
         ("label = '指定字节'", "label = '设备应答'", 1),
@@ -357,6 +371,13 @@ def main() -> None:
                                capture_output=True, text=True)
             if r.returncode != 0:
                 sys.exit(f"✗ terser 失败 {js.name}: {r.stderr}")
+        # M7：自定义固件模块（按上线口径编写，直接附加；vendor 已是单文件压缩产物，不再 terser）
+        custom_dir = SITE / "tools" / "flash-custom"
+        if (custom_dir / "custom.js").exists():
+            shutil.copy(custom_dir / "custom.js", dist / "js" / "custom.js")
+            (dist / "js" / "vendor").mkdir(parents=True, exist_ok=True)
+            shutil.copy(custom_dir / "vendor" / "esptool-js.esm.js", dist / "js" / "vendor" / "esptool-js.esm.js")
+            print("  ✓ 自定义固件模块已附加（custom.js + esptool-js vendor）")
         for m in dist.glob("manifests/*.json"):
             sanitize_manifest(m)
         print("② 压缩 + 清单净化完成")
