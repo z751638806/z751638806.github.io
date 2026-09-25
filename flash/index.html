@@ -285,13 +285,18 @@
           适用于设备"变砖"或需要恢复已知固件的场景：选择三个镜像文件（或点"用 SDK 默认镜像"自动填充），再点"连接并恢复"，工具会自动完成清理与写入。引导程序已内置，无需额外提供。
         </p>
         <div class="alert alert-info" style="margin:2px 0 10px;">
-          <strong>⚡ 一键救砖（免上传）</strong>
-          <p class="small dim" style="margin:4px 0;">自动使用内置的官方引导 + 出厂应用镜像，把设备恢复到出厂可测试状态，全程无需上传任何文件。</p>
+          <strong>⚡ 一键救砖（免上传）· 先选恢复目标</strong>
+          <div style="display:flex;flex-direction:column;gap:6px;margin:8px 0;">
+            <label class="rescue-target"><input type="radio" name="rescue-target" value="factory" checked>
+              <span><b>出厂固件</b> — WiFi安全测试固件「2026」，恢复到你购买时的可用状态</span></label>
+            <label class="rescue-target"><input type="radio" name="rescue-target" value="at">
+              <span><b>官方 AT 固件</b> — 安信可原厂 ComboAT，干净的 AT 指令底座（二次开发用）</span></label>
+          </div>
           <label class="advanced-row" style="margin:8px 0;">
             <input type="checkbox" id="oneclick-agree">
             我已了解：刷写将<b>擦除并覆盖</b>板上现有固件数据（不可撤销）
           </label>
-          <button id="btn-oneclick-rescue" class="btn btn-primary" type="button">一键救砖恢复</button>
+          <button id="btn-oneclick-rescue" class="btn btn-primary" type="button">⚡ 一键恢复所选固件</button>
         </div>
         <div class="rescue-slot">
           <span class="rescue-label">km0_boot_all.bin</span>
@@ -325,10 +330,7 @@
         <div id="rescue-result" class="alert" hidden></div>
       </div>
 
-      <h2>官方 AT 固件恢复</h2>
-      <div class="flash-panel" id="rescue-at">
-        <!-- rescue.js 按清单内容填充 -->
-      </div>
+      <div id="rescue-at" hidden></div>
     </section>
   </div>
     <!-- 日志面板 (F8)：全局，两个视图共用 -->
