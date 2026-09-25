@@ -3,6 +3,7 @@
 import { $, fetchBinary, fmtBytes } from "./util.js";
 import { SerialSession, beginPortRequest } from "./serial.js";
 import { flashBw16 } from "./ameba.js";
+import { FlashLog } from "./log.js";
 import { classifyDeviceMatch } from "./guard.js";
 import { showManualGuide } from "./ui.js";
 import { isEmbeddedBrowser } from "./main.js";
@@ -174,7 +175,7 @@ async function flashCustomBw16() {
     $("custom-progress-bar").style.width = "0%";
     busy = false;
     setCustomBusy(false);
-    log.recordResult({
+    FlashLog.recordResult({
       device: "BW16",
       firmware: "自定义固件",
       port: portLabel,
@@ -329,7 +330,7 @@ async function flashCustomEsp() {
     $("custom-esp-progress-bar").style.width = "0%";
     $("btn-custom-esp-flash").disabled = false;
     busy = false;
-    log.recordResult({
+    FlashLog.recordResult({
       device: "ESP32-C3",
       firmware: "自定义固件",
       port: "Web Serial",

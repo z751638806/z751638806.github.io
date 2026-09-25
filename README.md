@@ -44,6 +44,18 @@ Safari / iOS / 微信内置浏览器不支持，页面会显示提示徽章）�
 线上只发布白名单内的固件（当前：**WiFi安全测试固件「2026」** 与 **…-远程版「2026」**），
 未上线的 bin 文件一并从站点移除，知道地址也无法下载。
 
+### 自定义固件刷写（/flash/ 第三个页签）
+
+用户刷**自己的** bin 文件（本地选择，不上传任何服务器）：
+
+- **BW16**：三镜像槽位（km0/km4 可一键填 SDK 默认镜像），复用生产 flashBw16 引擎
+  （flashloader 内置并强制 SHA-256 校验、高速档自动回退、手动引导、?mock 演练）
+- **ESP32-C3**：多 bin + 可编辑烧录地址（如 0x0 引导 / 0x10000 应用），esptool-js
+  官方库 esbuild 单文件**本地打包**（`flash/js/vendor/`），不依赖 CDN
+- 无硬件演练：`https://peipeidev.cn/flash/?mock=1&custombins`（自动填充假镜像跑全流程）
+- 维护：功能源码在 `tools/flash-custom/`（custom.js + vendor），构建时附加到
+  `flash/js/`，**改动要改 tools/ 下的源，不要直接改 flash/js/custom.js**（会被覆盖）
+
 ### 更新烧录工具 / 固件
 
 改本地源项目后，一条命令重建线上产物（本地项目保持原样，本脚本在临时副本上打补丁）：
