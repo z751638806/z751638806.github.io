@@ -89,12 +89,6 @@ h2 small { letter-spacing: 0; text-transform: none; }
 /* ---- 徽章：品牌粉调（与主页一致；顶栏徽章另有深色规则） ---- */
 main .badge, .flash-panel .badge { background: rgba(251, 114, 153, .12); border-color: rgba(251, 114, 153, .4); color: #ffb3ca; }
 
-/* ---- 一键救砖：恢复目标单选卡片 ---- */
-.rescue-target { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-panel-2); transition: border-color .2s; }
-.rescue-target:hover { border-color: var(--accent); }
-.rescue-target:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-.rescue-target input { margin-top: 4px; }
-.rescue-target b { color: var(--accent); }
 /* ---- 页脚 ---- */
 .footer { max-width: none; background: #0b0e12; color: var(--text-dim); border-top: none; margin-top: 40px; padding: 26px 20px 34px; text-align: center; position: relative; }
 .footer::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 1px;
