@@ -48,6 +48,9 @@ PATCHES = {
          "<span class=\"device-desc\">安信可 Ai-Thinker BW16（RTL8720DN）<br>Web Serial 直刷 · 2 个固件</span>", 1),
         ("<span class=\"device-desc\">乐鑫 ESP32-C3 开发板<br>ESP Web Tools · 2 个固件</span>",
          "<span class=\"device-desc\">乐鑫 ESP32-C3 开发板<br>固件即将上线</span>", 1),
+        # M2：ESP8266 设备卡片（第三张，实验性）
+        ("乐鑫 ESP32-C3 开发板<br>固件即将上线</span>\n        </button>",
+         "乐鑫 ESP32-C3 开发板<br>固件即将上线</span>\n        </button>\n        <button class=\"device-card\" data-device=\"esp8266\" type=\"button\">\n          <span class=\"device-icon\">📶</span>\n          <span class=\"device-name\">ESP8266</span>\n          <span class=\"device-desc\">乐鑫 ESP8266 / ESP8285（实验性）<br>自定义固件刷写 · 官方固件即将上线</span>\n        </button>", 1),
         ('<p class="dim small">协议出处：<a href="docs/PROTOCOL.md">web/docs/PROTOCOL.md</a> ·\n      审查记录：<a href="docs/REVIEW_LOG.md">web/docs/REVIEW_LOG.md</a></p>',
          '<p class="dim small">使用遇到问题？观看 B 站视频教程，或通过 <a href="/">peipeidev.cn</a> 首页的联系方式联系我。</p>', 1),
         # M7：自定义固件视图（导航页签 + 视图区块；custom.js 由 tools/flash-custom/ 附加）
@@ -115,6 +118,8 @@ PATCHES = {
          "'已勾选全片擦除（更彻底但较慢）'", 1),
         ("  const list = state.manifests[state.device]?.firmware ?? [];",
          "  const list = (state.manifests[state.device]?.firmware ?? []).filter((f) => !f.hideInList);", 1),
+        ("  $('firmware-count').textContent = `（${list.length} 个）`;\n  section.hidden = list.length === 0;",
+         "  $('firmware-count').textContent = `（${list.length} 个）`;\n  if (state.device === 'esp8266' && list.length === 0) {\n    section.hidden = false;\n    grid.innerHTML = '<div class=\"alert alert-info\" style=\"grid-column:1/-1;margin:0\">ESP8266 官方固件即将上线。现在就可以在「自定义固件」页刷写自己的固件（多 bin + 烧录地址编辑，实验性）。<br><button id=\"btn-go-custom\" class=\"btn btn-primary\" type=\"button\" style=\"margin-top:10px\">前往自定义固件刷写 →</button></div>';\n    document.getElementById('btn-go-custom').addEventListener('click', () => { document.getElementById('nav-custom').click(); document.querySelector('[data-cdev=\"esp8266\"]').click(); });\n  } else {\n    section.hidden = list.length === 0;\n  }", 1),
         ("  unmountEwtButton();\n  note.hidden = true;\n  if (!fw) {",
          "  unmountEwtButton();\n  note.hidden = true;\n  if (fw && fw.connectNote) {\n    note.textContent = fw.connectNote;\n    note.hidden = false;\n  }\n  if (!fw) {", 1),
         ("'已关闭高速档（全程 115200，约慢 3 倍）'",

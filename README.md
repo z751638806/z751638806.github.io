@@ -59,10 +59,10 @@ Safari / iOS / 微信内置浏览器不支持，页面会显示提示徽章）�
   重跑构建即可
 - **ESP32-C3**：多 bin + 可编辑烧录地址（如 0x0 引导 / 0x10000 应用），esptool-js
   官方库 esbuild 单文件**本地打包**（`flash/js/vendor/`，v0.7.0），不依赖 CDN
-- **ESP8266（实验性）**：自定义固件页新增 ESP8266 子页签，多 bin + 可编辑地址
-  （一体化固件 0x0 / 分段 boot 0x0 + app 0x10000），基于 esptool-js 0.7.0 的
-  ESP8266 目标（ROM 直刷，无压缩），需真机验证；刷写时让板子进下载模式
-  （按住 BOOT/FLASH → 短按 RST）
+- **ESP8266（实验性）**：设备卡片已上线（引导至自定义刷写）；自定义固件页 ESP8266
+  子页签支持多 bin + 可编辑地址（一体化固件 0x0 / 分段 boot 0x0 + app 0x10000），
+  基于 esptool-js 0.7.0 的 ESP8266 目标（ROM 直刷，无压缩），需真机验证；
+  刷写时让板子进下载模式（按住 BOOT/FLASH → 短按 RST）
 - 无硬件演练：`https://peipeidev.cn/flash/?mock=1` 全流程；救砖页加
   `&rescuebins=bw16-01` 用指定固件镜像演练；自定义页加 `&custombins` 自动填充
 - 维护：功能源码在 `tools/flash-custom/`（custom.js + vendor），构建时附加到
