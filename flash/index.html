@@ -216,6 +216,7 @@
         <div class="auth-tabs" style="display:flex;gap:8px;margin:14px 0;">
           <button class="view-tab selected" data-cdev="bw16" type="button">BW16</button>
           <button class="view-tab" data-cdev="esp32c3" type="button">ESP32-C3</button>
+            <button class="view-tab" data-cdev="esp8266" type="button">ESP8266</button>
         </div>
 
         <div id="custom-bw16">
@@ -271,6 +272,25 @@
             <div id="custom-esp-progress-text" class="small dim">0%</div>
           </div>
           <div id="custom-esp-result" class="alert" hidden></div>
+        </div>
+
+        <div id="custom-esp8266" hidden>
+          <div class="rescue-slot">
+            <span class="rescue-label">添加固件文件（.bin，可多选）</span>
+            <input type="file" id="custom-esp8266-add" accept=".bin" multiple>
+          </div>
+          <div id="custom-esp8266-files"></div>
+          <p class="small dim">
+            实验性支持：ESP8266 / ESP8285（NodeMCU、ESP-12 等）。烧录地址按固件说明填写：一体化固件一般为 0x0；带引导的分段固件为 boot 0x0 + 应用 0x10000。刷写时按提示让板子进入下载模式（按住 BOOT/FLASH → 短按 RST → 松开）。
+          </p>
+          <div class="flash-actions">
+            <button id="btn-custom-esp8266-flash" class="btn btn-primary" type="button">连接并刷写</button>
+          </div>
+          <div id="custom-esp8266-progress-wrap" hidden>
+            <div class="progress-track"><div id="custom-esp8266-progress-bar" class="progress-bar"></div></div>
+            <div id="custom-esp8266-progress-text" class="small dim">0%</div>
+          </div>
+          <div id="custom-esp8266-result" class="alert" hidden></div>
         </div>
       </div>
     </section>
