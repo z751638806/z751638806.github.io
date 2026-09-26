@@ -45,7 +45,7 @@ PATCHES = {
         ("扩展擦除（变砖恢复建议勾选；出处 PROTOCOL.md P14 备注）",
          "全片擦除（变砖恢复建议勾选，较慢）", 1),
         ("<span class=\"device-desc\">安信可 Ai-Thinker BW16（RTL8720DN）<br>Web Serial 直刷 · 17 个固件</span>",
-         "<span class=\"device-desc\">安信可 Ai-Thinker BW16（RTL8720DN）<br>Web Serial 直刷 · 3 个固件</span>", 1),
+         "<span class=\"device-desc\">安信可 Ai-Thinker BW16（RTL8720DN）<br>Web Serial 直刷 · 2 个固件</span>", 1),
         ("<span class=\"device-desc\">乐鑫 ESP32-C3 开发板<br>ESP Web Tools · 2 个固件</span>",
          "<span class=\"device-desc\">乐鑫 ESP32-C3 开发板<br>固件即将上线</span>", 1),
         ('<p class="dim small">协议出处：<a href="docs/PROTOCOL.md">web/docs/PROTOCOL.md</a> ·\n      审查记录：<a href="docs/REVIEW_LOG.md">web/docs/REVIEW_LOG.md</a></p>',
@@ -113,6 +113,8 @@ PATCHES = {
     "js/main.js": [
         ("'已启用扩展擦除（覆盖三镜像连续区，PROTOCOL.md P14 备注，待实机验证）'",
          "'已勾选全片擦除（更彻底但较慢）'", 1),
+        ("  const list = state.manifests[state.device]?.firmware ?? [];",
+         "  const list = (state.manifests[state.device]?.firmware ?? []).filter((f) => !f.hideInList);", 1),
         ("  unmountEwtButton();\n  note.hidden = true;\n  if (!fw) {",
          "  unmountEwtButton();\n  note.hidden = true;\n  if (fw && fw.connectNote) {\n    note.textContent = fw.connectNote;\n    note.hidden = false;\n  }\n  if (!fw) {", 1),
         ("'已关闭高速档（全程 115200，约慢 3 倍）'",
@@ -348,6 +350,9 @@ def sanitize_manifest(path: Path) -> None:
         d["firmware"] = [f for f in d["firmware"] if f.get("slug") in allow]
         # 线上专属连接提示：默认统一文案，override 表可按 slug 单独覆盖
         for f in d["firmware"]:
+            note = FIRMWARE_CONNECT_NOTES_OVERRIDE.get(f.get("slug"), DEFAULT_CONNECT_NOTE)
+            if f.get("slug") == "bw16-at":
+                f["hideInList"] = True   # AT 固件仅供救砖页一键恢复，不进普通刷写列表
             note = FIRMWARE_CONNECT_NOTES_OVERRIDE.get(f.get("slug"), DEFAULT_CONNECT_NOTE)
             if note:
                 f["connectNote"] = note

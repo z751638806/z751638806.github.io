@@ -93,7 +93,8 @@
           "size": 890048,
           "md5": "95c1b926d28412c26e685932fbcd65eb"
         }
-      }
+      },
+      "hideInList": true
     }
   ],
   "sdkBackup": {
