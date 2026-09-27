@@ -1,0 +1,40 @@
+{
+  "generatedAt": "2026-09-28 02:55:31",
+  "device": "esp32",
+  "firmware": [
+    {
+      "slug": "esp32-bruce-cyd",
+      "device": "esp32",
+      "name": "Bruce 多功能固件（CYD 屏版）",
+      "color": "B",
+      "colorCss": "#FB7299",
+      "files": [
+        {
+          "path": "firmware/esp32-bruce-cyd/esp32-bruce-cyd.bin",
+          "offset": 0,
+          "size": 3648096,
+          "sha256": "b0ed2710db5dfdd7117487b624ff742860614e1c3d8095d42b39b54f4ca18924"
+        }
+      ],
+      "connectNote": "设备端触摸屏操作 · 含 WiFi 测试/门户/文件管理等功能",
+      "attribution": "原项目 © Bruce 项目贡献者（AGPL-3.0）· 打包发行 无敌佩佩队长 · peipeidev.cn"
+    },
+    {
+      "slug": "esp32-micropython",
+      "device": "esp32",
+      "name": "MicroPython 教学固件（ESP32）",
+      "color": "B",
+      "colorCss": "#4ade80",
+      "files": [
+        {
+          "path": "firmware/esp32-micropython/esp32-micropython.bin",
+          "offset": 4096,
+          "size": 1734240,
+          "sha256": "5e442176c7e90347aa102915077dda59f795af190f907f3919ee1e4e57984716"
+        }
+      ],
+      "connectNote": "刷写后热点：MicroPython-xxxxxx（密码 micropythn）· WebREPL 地址 ws://192.168.4.1:8266",
+      "attribution": "原项目 © MicroPython 贡献者（MIT）· 打包发行 无敌佩佩队长 · peipeidev.cn"
+    }
+  ]
+}

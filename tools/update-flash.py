@@ -50,7 +50,7 @@ PATCHES = {
          "<span class=\"device-desc\">乐鑫 ESP32-C3 开发板<br>固件即将上线</span>", 1),
         # M2：ESP8266 设备卡片（第三张，实验性）
         ("乐鑫 ESP32-C3 开发板<br>固件即将上线</span>\n        </button>",
-         "乐鑫 ESP32-C3 开发板<br>固件即将上线</span>\n        </button>\n        <button class=\"device-card\" data-device=\"esp8266\" type=\"button\">\n          <span class=\"device-icon\">📶</span>\n          <span class=\"device-name\">ESP8266</span>\n          <span class=\"device-desc\">乐鑫 ESP8266 / ESP8285（实验性）<br>自定义固件刷写 · 官方固件即将上线</span>\n        </button>", 1),
+         "乐鑫 ESP32-C3 开发板<br>Web Serial 直刷 · 2 个固件</span>\n        </button>\n        <button class=\"device-card\" data-device=\"esp8266\" type=\"button\">\n          <span class=\"device-icon\">📶</span>\n          <span class=\"device-name\">ESP8266</span>\n          <span class=\"device-desc\">乐鑫 ESP8266 / ESP8285<br>Web Serial 直刷 · 4 个固件</span>\n        </button>\n        <button class=\"device-card\" data-device=\"esp32\" type=\"button\">\n          <span class=\"device-icon\">🔲</span>\n          <span class=\"device-name\">ESP32</span>\n          <span class=\"device-desc\">乐鑫 ESP32（经典款）<br>Web Serial 直刷 · 2 个固件</span>\n        </button>\n        <button class=\"device-card\" data-device=\"esp32s3\" type=\"button\">\n          <span class=\"device-icon\">🧩</span>\n          <span class=\"device-name\">ESP32-S3</span>\n          <span class=\"device-desc\">乐鑫 ESP32-S3<br>Web Serial 直刷 · 1 个固件</span>\n        </button>", 1),
         ('<p class="dim small">协议出处：<a href="docs/PROTOCOL.md">web/docs/PROTOCOL.md</a> ·\n      审查记录：<a href="docs/REVIEW_LOG.md">web/docs/REVIEW_LOG.md</a></p>',
          '<p class="dim small">使用遇到问题？观看 B 站视频教程，或通过 <a href="/">peipeidev.cn</a> 首页的联系方式联系我。</p>', 1),
         # M7：自定义固件视图（导航页签 + 视图区块；custom.js 由 tools/flash-custom/ 附加）
@@ -124,6 +124,8 @@ PATCHES = {
          "  unmountEwtButton();\n  note.hidden = true;\n  if (fw && fw.connectNote) {\n    note.textContent = fw.connectNote;\n    note.hidden = false;\n  }\n  if (!fw) {", 1),
         ("'已关闭高速档（全程 115200，约慢 3 倍）'",
          "'已使用标准速度（约慢 3 倍）'", 1),
+        ("  $('flash-target-meta').textContent =\n    `${fw.device === 'bw16' ? 'BW16' : 'ESP32-C3'} · ${fmtBytes(sizes)} · 来源 ${fw.sourcePath}`;",
+         "  $('flash-target-meta').textContent =\n    `${({ bw16: 'BW16', esp32c3: 'ESP32-C3', esp8266: 'ESP8266', esp32: 'ESP32', esp32s3: 'ESP32-S3' })[fw.device] ?? fw.device} · ${fmtBytes(sizes)} · 来源 ${fw.sourcePath}`;\n  if (fw.attribution) $('flash-target-meta').textContent += ' · ' + fw.attribution;", 1),
         (" · 来源 ${fw.sourcePath}", "", 1),
         ("flasherLog.append(`固件加载完成：flashloader ${fmtBytes(fl.length)} + 三镜像 ${fmtBytes(km0.length + km4.length + image2.length)}`, 'ok');",
          "flasherLog.append('固件文件校验完成，可以开始写入', 'ok');", 1),
@@ -146,6 +148,12 @@ PATCHES = {
         # M7 修复：switchView 同步第三个视图/页签，否则从「自定义固件」切回时旧页签保持高亮且视图叠加
         ("  $('view-rescue').hidden = view !== 'rescue';\n  $('nav-flash').classList.toggle('selected', view === 'flash');\n  $('nav-rescue').classList.toggle('selected', view === 'rescue');",
          "  $('view-rescue').hidden = view !== 'rescue';\n  $('view-custom').hidden = view !== 'custom';\n  $('nav-flash').classList.toggle('selected', view === 'flash');\n  $('nav-rescue').classList.toggle('selected', view === 'rescue');\n  $('nav-custom').classList.toggle('selected', view === 'custom');", 1),
+        ("  if (fw.device === 'esp32c3') {\n    // F1 防呆：ESP32-C3 固件只能经 ESP Web Tools 刷写，BW16 按钮不可用\n    btn.hidden = true;\n    $('advanced-row').hidden = true;\n    const speedRow = $('speed-row');\n    if (speedRow) speedRow.hidden = true;\n    if (fw.offsetNote) {\n      note.textContent = '偏移说明：' + fw.offsetNote;\n      note.hidden = false;\n    }\n    mountEwtButton(fw, (m, level) => {\n      $('log-section').hidden = false;\n      flasherLog.append(m, level ?? 'sys');\n    }).catch((err) => {\n      flasherLog.append(`ESP Web Tools 挂载失败：${err.message}`, 'err');\n    });\n  } else {",
+         "  if (fw.device === 'esp32c3') {\n    btn.hidden = false;\n    btn.disabled = false;\n    $('advanced-row').hidden = true;\n    const speedRow = $('speed-row');\n    if (speedRow) speedRow.hidden = true;\n    if (fw.offsetNote) {\n      note.textContent = '偏移说明：' + fw.offsetNote;\n      note.hidden = false;\n    }\n  } else {", 1),
+        ("  const fw = state.firmware;\n  if (fw.device !== 'bw16') return;   // ESP32-C3 由 espweb.js 的按钮处理（M4）",
+         "  const fw = state.firmware;\n  if (fw.device !== 'bw16') {\n    const esp = await import('./esp-flash.js');\n    $('log-section').hidden = false;\n    await esp.flashEspFirmware(fw, flasherLog);\n    return;\n  }", 1),
+        ("  const [bw16, esp32c3] = await Promise.all([\n    backendLoadCatalog(),\n    fetchJson('manifests/esp32c3.json'),\n  ]);\n  state.manifests.bw16 = bw16;\n  state.manifests.esp32c3 = esp32c3;",
+         "  const [bw16, esp32c3, esp8266, esp32, esp32s3] = await Promise.all([\n    backendLoadCatalog(),\n    fetchJson('manifests/esp32c3.json'),\n    fetchJson('manifests/esp8266.json'),\n    fetchJson('manifests/esp32.json'),\n    fetchJson('manifests/esp32s3.json'),\n  ]);\n  state.manifests.bw16 = bw16;\n  state.manifests.esp32c3 = esp32c3;\n  state.manifests.esp8266 = esp8266;\n  state.manifests.esp32 = esp32;\n  state.manifests.esp32s3 = esp32s3;", 1),
     ],
     "js/serial.js": [
         ("label = '指定字节'", "label = '设备应答'", 1),
@@ -186,7 +194,10 @@ MANIFEST_FIELD_PATCH = {
 # 空 list = 该设备暂不上线固件。
 FIRMWARE_WHITELIST = {
     "bw16": ["bw16-01", "bw16-02", "bw16-at"],
-    "esp32c3": [],
+    "esp32c3": ["esp32c3-1", "esp32c3-2"],
+    "esp8266": ["esp8266-deauther", "esp8266-tasmota", "esp8266-micropython", "esp8266-wled"],
+    "esp32": ["esp32-bruce-cyd", "esp32-micropython"],
+    "esp32s3": ["esp32s3-bruce-devkit"],
 }
 
 # 线上显示名映射（本地项目保留原名；slug 不变，只改清单里的 name 字段）
@@ -201,6 +212,14 @@ FIRMWARE_NAME_MAP = {
 DEFAULT_CONNECT_NOTE = "刷写完成后，设备会释放 WiFi 热点「CMCC」，连接密码：12345678.（注意：末尾有一个英文句点）"
 FIRMWARE_CONNECT_NOTES_OVERRIDE = {
     "bw16-at": "",   # AT 固件不释放热点，不显示连接提示
+    "esp32c3-1": "刷写后热点：ManagementAP（密码 mgmtadmin）· 管理后台 http://192.168.4.1",
+    "esp32c3-2": "设备端操作（配套 Flipper 蓝牙工具使用）",
+}
+
+# 署名表（按 slug 注入清单；ESP 系固件在 ESP_FIRMWARES 内自带）
+ATTRIBUTION_OVERRIDE = {
+    "esp32c3-1": "原项目 © risinek（MIT）· 打包发行 无敌佩佩队长 · peipeidev.cn",
+    "esp32c3-2": "来源：佩佩队长固件库 · 打包发行 无敌佩佩队长 · peipeidev.cn",
 }
 
 # 上线产物中禁止出现的字符串（自检用）
@@ -326,6 +345,93 @@ def apply_patches(root: Path) -> None:
         print(f"  ✓ 补丁 {rel}（{len(rules)} 条）")
 
 
+# ESP 系官方固件发行规格（来源与许可证存证见 tools/esp-firmware/SOURCES.md）
+ESP_FIRMWARES = [
+    {
+        "slug": "esp8266-deauther", "device": "esp8266",
+        "name": "WiFi安全测试固件（Deauther v2）",
+        "file": "esp8266/deauther-2.6.1-nodemcu.bin", "offset": 0x0,
+        "colorCss": "#FB7299",
+        "connectNote": "刷写后热点：pwned（密码 deauther）· 管理后台 http://192.168.4.1 · 需 1MB 以上 flash（NodeMCU/D1 mini）",
+        "attribution": "原项目 © Spacehuhn Technologies（MIT）· 打包发行 无敌佩佩队长 · peipeidev.cn",
+    },
+    {
+        "slug": "esp8266-tasmota", "device": "esp8266",
+        "name": "智能家居固件（Tasmota）",
+        "file": "esp8266/tasmota-15.6.0.bin", "offset": 0x0,
+        "colorCss": "#38bdf8",
+        "connectNote": "刷写后热点：tasmota-XXXXXX（开放网络）· 管理后台 http://192.168.4.1",
+        "attribution": "原项目 © Theo Arendst 与 Tasmota 贡献者（GPL-3.0）· 打包发行 无敌佩佩队长 · peipeidev.cn",
+    },
+    {
+        "slug": "esp8266-micropython", "device": "esp8266",
+        "name": "MicroPython 教学固件",
+        "file": "esp8266/micropython-v1.23.0.bin", "offset": 0x0,
+        "colorCss": "#4ade80",
+        "connectNote": "刷写后热点：MicroPython-xxxxxx（密码 micropythn）· WebREPL 地址 ws://192.168.4.1:8266",
+        "attribution": "原项目 © MicroPython 贡献者（MIT）· 打包发行 无敌佩佩队长 · peipeidev.cn",
+    },
+    {
+        "slug": "esp8266-wled", "device": "esp8266",
+        "name": "灯效固件（WLED）",
+        "file": "esp8266/wled-16.0.1.bin", "offset": 0x0,
+        "colorCss": "#a78bfa",
+        "connectNote": "刷写后热点：WLED-AP（密码 wled1234）· 管理后台 http://192.168.4.1 · 需 1MB 以上 flash",
+        "attribution": "原项目 © WLED 项目与贡献者（EUPL-1.2）· 打包发行 无敌佩佩队长 · peipeidev.cn",
+    },
+    {
+        "slug": "esp32-bruce-cyd", "device": "esp32",
+        "name": "Bruce 多功能固件（CYD 屏版）",
+        "file": "esp32/bruce-cyd-2432s028.bin", "offset": 0x0,
+        "colorCss": "#FB7299",
+        "connectNote": "设备端触摸屏操作 · 含 WiFi 测试/门户/文件管理等功能",
+        "attribution": "原项目 © Bruce 项目贡献者（AGPL-3.0）· 打包发行 无敌佩佩队长 · peipeidev.cn",
+    },
+    {
+        "slug": "esp32-micropython", "device": "esp32",
+        "name": "MicroPython 教学固件（ESP32）",
+        "file": "esp32/micropython-esp32-v1.23.0.bin", "offset": 0x1000,
+        "colorCss": "#4ade80",
+        "connectNote": "刷写后热点：MicroPython-xxxxxx（密码 micropythn）· WebREPL 地址 ws://192.168.4.1:8266",
+        "attribution": "原项目 © MicroPython 贡献者（MIT）· 打包发行 无敌佩佩队长 · peipeidev.cn",
+    },
+    {
+        "slug": "esp32s3-bruce-devkit", "device": "esp32s3",
+        "name": "Bruce 多功能固件（ESP32-S3 DevKit）",
+        "file": "esp32s3/bruce-s3-devkitc.bin", "offset": 0x0,
+        "colorCss": "#FB7299",
+        "connectNote": "设备端操作 · 含 WiFi 测试/门户/文件管理等功能",
+        "attribution": "原项目 © Bruce 项目贡献者（AGPL-3.0）· 打包发行 无敌佩佩队长 · peipeidev.cn",
+    },
+]
+
+def build_esp_manifests(dist: Path) -> None:
+    """ESP 系官方固件：从 tools/esp-firmware 生成各设备清单（含署名/热点提示/SHA-256）。"""
+    import hashlib
+    from datetime import datetime
+    groups = {}
+    for e in ESP_FIRMWARES:
+        if e["slug"] not in FIRMWARE_WHITELIST.get(e["device"], []):
+            continue
+        data = (SITE / "tools" / "esp-firmware" / e["file"]).read_bytes()
+        slug = e["slug"]
+        out_dir = dist / "firmware" / slug
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / (slug + ".bin")).write_bytes(data)
+        groups.setdefault(e["device"], []).append({
+            "slug": slug, "device": e["device"], "name": e["name"],
+            "color": "B", "colorCss": e["colorCss"],
+            "files": [{"path": f"firmware/{slug}/{slug}.bin", "offset": e["offset"],
+                        "size": len(data), "sha256": hashlib.sha256(data).hexdigest()}],
+            "connectNote": e["connectNote"], "attribution": e["attribution"],
+        })
+    for device, items in groups.items():
+        (dist / "manifests" / (device + ".json")).write_text(
+            json.dumps({"generatedAt": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "device": device, "firmware": items}, ensure_ascii=False, indent=2),
+            encoding="utf-8")
+        print(f"  · {device}.json：{len(items)} 个固件（ESP 系官方直刷）")
+
 def sanitize_manifest(path: Path) -> None:
     d = json.loads(path.read_text(encoding="utf-8"))
 
@@ -355,12 +461,14 @@ def sanitize_manifest(path: Path) -> None:
         d["firmware"] = [f for f in d["firmware"] if f.get("slug") in allow]
         # 线上专属连接提示：默认统一文案，override 表可按 slug 单独覆盖
         for f in d["firmware"]:
-            note = FIRMWARE_CONNECT_NOTES_OVERRIDE.get(f.get("slug"), DEFAULT_CONNECT_NOTE)
             if f.get("slug") == "bw16-at":
                 f["hideInList"] = True   # AT 固件仅供救砖页一键恢复，不进普通刷写列表
-            note = FIRMWARE_CONNECT_NOTES_OVERRIDE.get(f.get("slug"), DEFAULT_CONNECT_NOTE)
+            default_note = DEFAULT_CONNECT_NOTE if d.get("device") == "bw16" else ""
+            note = FIRMWARE_CONNECT_NOTES_OVERRIDE.get(f.get("slug"), default_note)
             if note:
                 f["connectNote"] = note
+            if f.get("slug") in ATTRIBUTION_OVERRIDE:
+                f["attribution"] = ATTRIBUTION_OVERRIDE[f["slug"]]
         print(f"  · {path.name} 固件 {before} → {len(d['firmware'])}（白名单）")
     path.write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
 
@@ -409,6 +517,11 @@ def main() -> None:
             (dist / "js" / "vendor").mkdir(parents=True, exist_ok=True)
             shutil.copy(custom_dir / "vendor" / "esptool-js.esm.js", dist / "js" / "vendor" / "esptool-js.esm.js")
             print("  ✓ 自定义固件模块已附加（custom.js + esptool-js vendor）")
+        build_esp_manifests(dist)
+        esp_dir = SITE / "tools" / "flash-esp"
+        if (esp_dir / "esp-flash.js").exists():
+            shutil.copy(esp_dir / "esp-flash.js", dist / "js" / "esp-flash.js")
+            print("  ✓ ESP 系直刷模块已附加（esp-flash.js）")
         for m in dist.glob("manifests/*.json"):
             sanitize_manifest(m)
         print("② 压缩 + 清单净化完成")

@@ -1,0 +1,74 @@
+{
+  "generatedAt": "2026-09-28 02:55:31",
+  "device": "esp8266",
+  "firmware": [
+    {
+      "slug": "esp8266-deauther",
+      "device": "esp8266",
+      "name": "WiFi安全测试固件（Deauther v2）",
+      "color": "B",
+      "colorCss": "#FB7299",
+      "files": [
+        {
+          "path": "firmware/esp8266-deauther/esp8266-deauther.bin",
+          "offset": 0,
+          "size": 833552,
+          "sha256": "3f1c182f864d0a02ce97791553c79be5bd60f484287c41133ef1626ced5a7ef1"
+        }
+      ],
+      "connectNote": "刷写后热点：pwned（密码 deauther）· 管理后台 http://192.168.4.1 · 需 1MB 以上 flash（NodeMCU/D1 mini）",
+      "attribution": "原项目 © Spacehuhn Technologies（MIT）· 打包发行 无敌佩佩队长 · peipeidev.cn"
+    },
+    {
+      "slug": "esp8266-tasmota",
+      "device": "esp8266",
+      "name": "智能家居固件（Tasmota）",
+      "color": "B",
+      "colorCss": "#38bdf8",
+      "files": [
+        {
+          "path": "firmware/esp8266-tasmota/esp8266-tasmota.bin",
+          "offset": 0,
+          "size": 666720,
+          "sha256": "1d2ce2dab00c352e7a1c0c54a454538e4e6dd95a9d8458161c52522678d18598"
+        }
+      ],
+      "connectNote": "刷写后热点：tasmota-XXXXXX（开放网络）· 管理后台 http://192.168.4.1",
+      "attribution": "原项目 © Theo Arendst 与 Tasmota 贡献者（GPL-3.0）· 打包发行 无敌佩佩队长 · peipeidev.cn"
+    },
+    {
+      "slug": "esp8266-micropython",
+      "device": "esp8266",
+      "name": "MicroPython 教学固件",
+      "color": "B",
+      "colorCss": "#4ade80",
+      "files": [
+        {
+          "path": "firmware/esp8266-micropython/esp8266-micropython.bin",
+          "offset": 0,
+          "size": 633048,
+          "sha256": "eaeec5305ba43146290296b126df3b15159b33c4ec2483bba6a3351e81dc9974"
+        }
+      ],
+      "connectNote": "刷写后热点：MicroPython-xxxxxx（密码 micropythn）· WebREPL 地址 ws://192.168.4.1:8266",
+      "attribution": "原项目 © MicroPython 贡献者（MIT）· 打包发行 无敌佩佩队长 · peipeidev.cn"
+    },
+    {
+      "slug": "esp8266-wled",
+      "device": "esp8266",
+      "name": "灯效固件（WLED）",
+      "color": "B",
+      "colorCss": "#a78bfa",
+      "files": [
+        {
+          "path": "firmware/esp8266-wled/esp8266-wled.bin",
+          "offset": 0,
+          "size": 935680,
+          "sha256": "d684acec09b01cd841094c6cd2bc64b94d8c281213939bea93c869cd4bd0c35c"
+        }
+      ],
+      "connectNote": "刷写后热点：WLED-AP（密码 wled1234）· 管理后台 http://192.168.4.1 · 需 1MB 以上 flash",
+      "attribution": "原项目 © WLED 项目与贡献者（EUPL-1.2）· 打包发行 无敌佩佩队长 · peipeidev.cn"
+    }
+  ]
+}
