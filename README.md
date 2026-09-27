@@ -9,6 +9,11 @@
 | 在线烧录 | https://peipeidev.cn/flash/ |
 | 设备 OTA 清单 | https://peipeidev.cn/fw/firmware.json |
 
+支持的开发板（Web Serial 直刷）：**BW16（RTL8720DN）/ ESP8266 / ESP32 / ESP32-S3 / ESP32-C3**。
+ESP 系官方固件发行规格在 `tools/update-flash.py` 的 `ESP_FIRMWARES`（bin 存于 `tools/esp-firmware/`，
+来源/许可证/默认热点存证见 `tools/esp-firmware/SOURCES.md`）；署名统一为
+「原项目 © 作者（许可证）· 打包发行 无敌佩佩队长 · peipeidev.cn」（清单+界面呈现，不改二进制）。
+
 ## 站点结构
 
 ```
