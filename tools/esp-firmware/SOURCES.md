@@ -18,9 +18,19 @@
 | esp32s3/bruce-s3-devkitc.bin | Bruce | 1.16.1 | AGPL-3.0 | 0x0（合并镜像） | 设备端 UI |
 | esp32/marauder-kit-LOCAL-STUDY.bin | [justcallmekoko/ESP32Marauder](https://github.com/justcallmekoko/ESP32Marauder) | 1.17.0 | ⚠️ 无协议 | — | Marauder / justcallmekoko / 192.168.4.1 |
 | esp32s3/marauder-mini-LOCAL-STUDY.bin | 同上 | 1.17.0 | ⚠️ 无协议 | — | 同上 |
+| esp32/esp32div-cyd-1.7.2.bin | [cifertech/ESP32-DIV](https://github.com/cifertech/ESP32-DIV) | 1.7.2 | MIT | 0x0（合并镜像，官方 merged 版） | 设备端触摸屏 UI |
+| esp32/ghost-cyd-2.2.bin | [GhostESP-Revival/GhostESP](https://github.com/GhostESP-Revival/GhostESP) | 2.2-pre4 | GPL-3.0 | 0x0（合并镜像） | 设备端触摸屏 UI |
+| esp32s3/ghost-cardputeradv-2.2.bin | GhostESP-Revival/GhostESP | 2.2-pre4 | GPL-3.0 | 0x0（合并镜像） | 设备端键盘 UI |
+| esp8266/captive-portal-1.1.bin | [adamff-dev/ESP8266-Captive-Portal](https://github.com/adamff-dev/ESP8266-Captive-Portal) | 1.1 | MIT | 0x0 | 开放热点 · 管理 172.0.0.1（/pass /ssid） |
 | _repos/DeauthDetector/（含 DSTIKE v3 预编译 bin 261KB） | [SpacehuhnTech/DeauthDetector](https://github.com/SpacehuhnTech/DeauthDetector) | — | MIT | 0x0 | 无 AP（LED 报警） |
 
 注：
 - `LOCAL-STUDY` 后缀 = 无许可证固件，仅本地研究，**未经作者许可不对外分发**
 - 本地项目另有 ESP32-C3 三件套两套（WiFi渗透工具 MIT / BLE工具），清单在 BW16-ESP32-tool
 - ESP32/S3 镜像偏移以接入时解析镜像头（E9/分区表 0xAA）实测为准
+
+## 本地编译产物
+
+| 文件 | 来源项目 | 版本 | 许可证 | 说明 |
+|------|---------|------|--------|------|
+| （本地工具）bw16/双频断网Deauther/flash/a/ 三件套 → 线上 bw16-18 | [tesa-klebeband/RTL8720dn-Deauther](https://github.com/tesa-klebeband/RTL8720dn-Deauther) | main@8e722c7 | GPL-3.0 | arduino-cli 编译（realtek:AmebaD:Ai-Thinker_BW16, core 3.1.7），bootloader 用标准 SDK 件；热点 RTL8720dn-Deauther / 0123456789 / 后台 192.168.1.1 |

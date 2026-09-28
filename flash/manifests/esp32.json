@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-28 02:55:31",
+  "generatedAt": "2026-09-28 11:59:51",
   "device": "esp32",
   "firmware": [
     {
@@ -35,6 +35,40 @@
       ],
       "connectNote": "刷写后热点：MicroPython-xxxxxx（密码 micropythn）· WebREPL 地址 ws://192.168.4.1:8266",
       "attribution": "原项目 © MicroPython 贡献者（MIT）· 打包发行 无敌佩佩队长 · peipeidev.cn"
+    },
+    {
+      "slug": "esp32-div-cyd",
+      "device": "esp32",
+      "name": "多频无线工具箱（ESP32-DIV）",
+      "color": "B",
+      "colorCss": "#FB7299",
+      "files": [
+        {
+          "path": "firmware/esp32-div-cyd/esp32-div-cyd.bin",
+          "offset": 0,
+          "size": 1891088,
+          "sha256": "02509a368b3bcb6e0099bdcc11806317cb9c92ed4870c76394f4057d6995bebd"
+        }
+      ],
+      "connectNote": "设备端触摸屏操作 · WiFi断网/泛洪/包监视/断网检测 + BLE/SubGHz/RFID/IR · CYD 触摸屏",
+      "attribution": "原项目 © cifertech（MIT）· 打包发行 无敌佩佩队长 · peipeidev.cn"
+    },
+    {
+      "slug": "esp32-ghost-cyd",
+      "device": "esp32",
+      "name": "Ghost 无线研究平台（CYD 版）",
+      "color": "B",
+      "colorCss": "#a78bfa",
+      "files": [
+        {
+          "path": "firmware/esp32-ghost-cyd/esp32-ghost-cyd.bin",
+          "offset": 0,
+          "size": 3478320,
+          "sha256": "9ca3bed9589b637ca58ff67375b9b63afe930a1f82a8435d2c992dda6a7aa91d"
+        }
+      ],
+      "connectNote": "设备端触摸屏操作 · WiFi/BLE 攻防与探针 · 可配 Flipper/Ghost App 联动",
+      "attribution": "原项目 © GhostESP-Revival 贡献者（GPL-3.0）· 打包发行 无敌佩佩队长 · peipeidev.cn"
     }
   ]
 }

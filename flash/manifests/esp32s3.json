@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-28 02:55:31",
+  "generatedAt": "2026-09-28 11:59:51",
   "device": "esp32s3",
   "firmware": [
     {
@@ -18,6 +18,23 @@
       ],
       "connectNote": "设备端操作 · 含 WiFi 测试/门户/文件管理等功能",
       "attribution": "原项目 © Bruce 项目贡献者（AGPL-3.0）· 打包发行 无敌佩佩队长 · peipeidev.cn"
+    },
+    {
+      "slug": "esp32s3-ghost-cardputeradv",
+      "device": "esp32s3",
+      "name": "Ghost 无线研究平台（Cardputer ADV）",
+      "color": "B",
+      "colorCss": "#a78bfa",
+      "files": [
+        {
+          "path": "firmware/esp32s3-ghost-cardputeradv/esp32s3-ghost-cardputeradv.bin",
+          "offset": 0,
+          "size": 3865392,
+          "sha256": "488f2c67c97b37cd9b56ec6db2bd72436b6497e1c7e1d39a1bcdebdb84eabb54"
+        }
+      ],
+      "connectNote": "设备端键盘操作 · WiFi/BLE 攻防与探针 · 可配 Flipper/Ghost App 联动",
+      "attribution": "原项目 © GhostESP-Revival 贡献者（GPL-3.0）· 打包发行 无敌佩佩队长 · peipeidev.cn"
     }
   ]
 }

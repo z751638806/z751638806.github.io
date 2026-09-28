@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-28 02:55:31",
+  "generatedAt": "2026-09-28 11:59:51",
   "device": "esp8266",
   "firmware": [
     {
@@ -69,6 +69,23 @@
       ],
       "connectNote": "刷写后热点：WLED-AP（密码 wled1234）· 管理后台 http://192.168.4.1 · 需 1MB 以上 flash",
       "attribution": "原项目 © WLED 项目与贡献者（EUPL-1.2）· 打包发行 无敌佩佩队长 · peipeidev.cn"
+    },
+    {
+      "slug": "esp8266-captive-portal",
+      "device": "esp8266",
+      "name": "钓鱼门户演示（Captive Portal）",
+      "color": "B",
+      "colorCss": "#eab308",
+      "files": [
+        {
+          "path": "firmware/esp8266-captive-portal/esp8266-captive-portal.bin",
+          "offset": 0,
+          "size": 302864,
+          "sha256": "28a57bba5635e9909198e5ccae1029145e34a40edf8868dc700d0d7274fcb818"
+        }
+      ],
+      "connectNote": "刷写后开放一个开放的演示热点 · 管理地址 172.0.0.1（/pass 查看记录 · /ssid 改热点名）",
+      "attribution": "原项目 © adamff-dev（MIT）· 打包发行 无敌佩佩队长 · peipeidev.cn"
     }
   ]
 }

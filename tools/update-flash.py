@@ -45,12 +45,12 @@ PATCHES = {
         ("扩展擦除（变砖恢复建议勾选；出处 PROTOCOL.md P14 备注）",
          "全片擦除（变砖恢复建议勾选，较慢）", 1),
         ("<span class=\"device-desc\">安信可 Ai-Thinker BW16（RTL8720DN）<br>Web Serial 直刷 · 17 个固件</span>",
-         "<span class=\"device-desc\">安信可 Ai-Thinker BW16（RTL8720DN）<br>Web Serial 直刷 · 2 个固件</span>", 1),
+         "<span class=\"device-desc\">安信可 Ai-Thinker BW16（RTL8720DN）<br>Web Serial 直刷 · 3 个固件</span>", 1),
         ("<span class=\"device-desc\">乐鑫 ESP32-C3 开发板<br>ESP Web Tools · 2 个固件</span>",
          "<span class=\"device-desc\">乐鑫 ESP32-C3 开发板<br>固件即将上线</span>", 1),
         # M2：ESP8266 设备卡片（第三张，实验性）
         ("乐鑫 ESP32-C3 开发板<br>固件即将上线</span>\n        </button>",
-         "乐鑫 ESP32-C3 开发板<br>Web Serial 直刷 · 2 个固件</span>\n        </button>\n        <button class=\"device-card\" data-device=\"esp8266\" type=\"button\">\n          <span class=\"device-icon\">📶</span>\n          <span class=\"device-name\">ESP8266</span>\n          <span class=\"device-desc\">乐鑫 ESP8266 / ESP8285<br>Web Serial 直刷 · 4 个固件</span>\n        </button>\n        <button class=\"device-card\" data-device=\"esp32\" type=\"button\">\n          <span class=\"device-icon\">🔲</span>\n          <span class=\"device-name\">ESP32</span>\n          <span class=\"device-desc\">乐鑫 ESP32（经典款）<br>Web Serial 直刷 · 2 个固件</span>\n        </button>\n        <button class=\"device-card\" data-device=\"esp32s3\" type=\"button\">\n          <span class=\"device-icon\">🧩</span>\n          <span class=\"device-name\">ESP32-S3</span>\n          <span class=\"device-desc\">乐鑫 ESP32-S3<br>Web Serial 直刷 · 1 个固件</span>\n        </button>", 1),
+         "乐鑫 ESP32-C3 开发板<br>Web Serial 直刷 · 2 个固件</span>\n        </button>\n        <button class=\"device-card\" data-device=\"esp8266\" type=\"button\">\n          <span class=\"device-icon\">📶</span>\n          <span class=\"device-name\">ESP8266</span>\n          <span class=\"device-desc\">乐鑫 ESP8266 / ESP8285<br>Web Serial 直刷 · 5 个固件</span>\n        </button>\n        <button class=\"device-card\" data-device=\"esp32\" type=\"button\">\n          <span class=\"device-icon\">🔲</span>\n          <span class=\"device-name\">ESP32</span>\n          <span class=\"device-desc\">乐鑫 ESP32（经典款）<br>Web Serial 直刷 · 4 个固件</span>\n        </button>\n        <button class=\"device-card\" data-device=\"esp32s3\" type=\"button\">\n          <span class=\"device-icon\">🧩</span>\n          <span class=\"device-name\">ESP32-S3</span>\n          <span class=\"device-desc\">乐鑫 ESP32-S3<br>Web Serial 直刷 · 2 个固件</span>\n        </button>", 1),
         ('<p class="dim small">协议出处：<a href="docs/PROTOCOL.md">web/docs/PROTOCOL.md</a> ·\n      审查记录：<a href="docs/REVIEW_LOG.md">web/docs/REVIEW_LOG.md</a></p>',
          '<p class="dim small">使用遇到问题？观看 B 站视频教程，或通过 <a href="/">peipeidev.cn</a> 首页的联系方式联系我。</p>', 1),
         # M7：自定义固件视图（导航页签 + 视图区块；custom.js 由 tools/flash-custom/ 附加）
@@ -193,11 +193,11 @@ MANIFEST_FIELD_PATCH = {
 # 线上固件白名单：只发布这些 slug（清单 + bin 文件都以此为准；本地项目不受影响）。
 # 空 list = 该设备暂不上线固件。
 FIRMWARE_WHITELIST = {
-    "bw16": ["bw16-01", "bw16-02", "bw16-at"],
+    "bw16": ["bw16-01", "bw16-02", "bw16-18", "bw16-at"],
     "esp32c3": ["esp32c3-1", "esp32c3-2"],
-    "esp8266": ["esp8266-deauther", "esp8266-tasmota", "esp8266-micropython", "esp8266-wled"],
-    "esp32": ["esp32-bruce-cyd", "esp32-micropython"],
-    "esp32s3": ["esp32s3-bruce-devkit"],
+    "esp8266": ["esp8266-deauther", "esp8266-tasmota", "esp8266-micropython", "esp8266-wled", "esp8266-captive-portal"],
+    "esp32": ["esp32-bruce-cyd", "esp32-micropython", "esp32-div-cyd", "esp32-ghost-cyd"],
+    "esp32s3": ["esp32s3-bruce-devkit", "esp32s3-ghost-cardputeradv"],
 }
 
 # 线上显示名映射（本地项目保留原名；slug 不变，只改清单里的 name 字段）
@@ -205,6 +205,7 @@ FIRMWARE_NAME_MAP = {
     "断网": "WiFi安全测试固件「2026」",
     "断网远程版": "WiFi安全测试固件-远程版「2026」",
     "官方AT固件(本地)": "官方 AT 固件（救砖）",
+    "双频断网Deauther": "双频断网固件（2.4G/5G）",
 }
 
 # 线上固件连接提示（选中固件后显示在刷写面板；本地项目无此字段）
@@ -214,6 +215,7 @@ FIRMWARE_CONNECT_NOTES_OVERRIDE = {
     "bw16-at": "",   # AT 固件不释放热点，不显示连接提示
     "esp32c3-1": "刷写后热点：ManagementAP（密码 mgmtadmin）· 管理后台 http://192.168.4.1",
     "esp32c3-2": "设备端操作（配套 Flipper 蓝牙工具使用）",
+    "bw16-18": "刷写后热点：RTL8720dn-Deauther（密码 0123456789）· 管理后台 http://192.168.1.1 · 支持双频 2.4G/5G",
 }
 
 # 署名表（按 slug 注入清单；ESP 系固件在 ESP_FIRMWARES 内自带）
@@ -402,6 +404,38 @@ ESP_FIRMWARES = [
         "colorCss": "#FB7299",
         "connectNote": "设备端操作 · 含 WiFi 测试/门户/文件管理等功能",
         "attribution": "原项目 © Bruce 项目贡献者（AGPL-3.0）· 打包发行 无敌佩佩队长 · peipeidev.cn",
+    },
+    {
+        "slug": "esp32-div-cyd", "device": "esp32",
+        "name": "多频无线工具箱（ESP32-DIV）",
+        "file": "esp32/esp32div-cyd-1.7.2.bin", "offset": 0x0,
+        "colorCss": "#FB7299",
+        "connectNote": "设备端触摸屏操作 · WiFi断网/泛洪/包监视/断网检测 + BLE/SubGHz/RFID/IR · CYD 触摸屏",
+        "attribution": "原项目 © cifertech（MIT）· 打包发行 无敌佩佩队长 · peipeidev.cn",
+    },
+    {
+        "slug": "esp32-ghost-cyd", "device": "esp32",
+        "name": "Ghost 无线研究平台（CYD 版）",
+        "file": "esp32/ghost-cyd-2.2.bin", "offset": 0x0,
+        "colorCss": "#a78bfa",
+        "connectNote": "设备端触摸屏操作 · WiFi/BLE 攻防与探针 · 可配 Flipper/Ghost App 联动",
+        "attribution": "原项目 © GhostESP-Revival 贡献者（GPL-3.0）· 打包发行 无敌佩佩队长 · peipeidev.cn",
+    },
+    {
+        "slug": "esp32s3-ghost-cardputeradv", "device": "esp32s3",
+        "name": "Ghost 无线研究平台（Cardputer ADV）",
+        "file": "esp32s3/ghost-cardputeradv-2.2.bin", "offset": 0x0,
+        "colorCss": "#a78bfa",
+        "connectNote": "设备端键盘操作 · WiFi/BLE 攻防与探针 · 可配 Flipper/Ghost App 联动",
+        "attribution": "原项目 © GhostESP-Revival 贡献者（GPL-3.0）· 打包发行 无敌佩佩队长 · peipeidev.cn",
+    },
+    {
+        "slug": "esp8266-captive-portal", "device": "esp8266",
+        "name": "钓鱼门户演示（Captive Portal）",
+        "file": "esp8266/captive-portal-1.1.bin", "offset": 0x0,
+        "colorCss": "#eab308",
+        "connectNote": "刷写后开放一个开放的演示热点 · 管理地址 172.0.0.1（/pass 查看记录 · /ssid 改热点名）",
+        "attribution": "原项目 © adamff-dev（MIT）· 打包发行 无敌佩佩队长 · peipeidev.cn",
     },
 ]
 
