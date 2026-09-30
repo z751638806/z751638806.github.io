@@ -39,7 +39,7 @@ ESP 系官方固件发行规格在 `tools/update-flash.py` 的 `ESP_FIRMWARES`�
 ├── tools/
 │   ├── update-flash.py   一键构建：本地工具 → 线上净化版（见下文）
 │   ├── flash-pickup/     付费固件取件模块源码（备用，PAID_FIRMWARE 非空时才附加）
-│   ├── flash-api/        烧录站后台 Worker（统计/反馈/公告/激活码/备用取件体系）
+│   ├── flash-api/        网站后台 Worker（统计/反馈/公告/激活码/备用取件/用户/额度卡密/固件目录/主站内容）
 │   └── esp-firmware/     ESP 系官方固件存证与 bin
 ├── .nojekyll             禁用 GitHub Pages 的 Jekyll（否则下划线目录 _common/_sdk_backup 会 404）
 └── CNAME                 peipeidev.cn
@@ -111,18 +111,30 @@ git add -A && git commit -m "..." && git push   # push 后 1-2 分钟 Pages 生�
 发布新版本：把新 bin 放入 `fw/`，更新 `firmware.json` 的 `versions` 顶部条目、`notice`
 公告与 `version.txt`，推送即可。
 
-## 烧录站后台（admin.peipeidev.cn，Cloudflare Worker + D1 + KV，零月费）
+## 网站后台（admin.peipeidev.cn，Cloudflare Worker + D1 + KV，零月费）
 
 - **管理后台**：https://admin.peipeidev.cn/admin （ADMIN_TOKEN 登录，凭据见 `~/Desktop/AI-Accounts/api-keys.md`；
   「激活码」= 真实 keygen 一机一码体系（api.peipeidev.cn，MAC→绑定码，固件端离线验证））
-- 能力：刷写统计看板（30 天量/成功率/失败 Top）/ 用户反馈收件箱 / 公告编辑
-  （烧录页实时显示）/ 激活码生成与核销（公开核销接口 `POST /api/redeem`，可绑定固件 slug）/
-  **付费固件取件（M6，备用未启用）**：注册、bin 上传 KV、取件码生成与禁用、取件记录
+- 能力（v2，8 个页签）：刷写统计看板（30 天量/成功率/失败 Top）/ 用户反馈收件箱 / 公告编辑
+  （烧录页实时显示）/ 激活码生成与核销（公开核销接口 `POST /api/redeem`）/
+  付费固件取件（M6，备用未启用）：注册、bin 上传 KV、取件码生成与禁用、取件记录 /
+  **用户管理**（api 模式注册账号：查询·额度调整·禁用·重置密码）/
+  **额度卡密**（兑换 +N 次刷写额度，与取件码独立）/
+  **固件目录**（api 模式下发清单 + bin 上传登记 sha256）/
+  **主站内容**（peipeidev.cn 主页在线更新）
+- **用户与额度体系**：烧录页 api 模式注册/登录（`/api/auth/*`，PBKDF2 密码哈希 + HMAC 签名
+  会话 cookie），BW16 刷写经 `/api/flash/begin` 扣 1 次额度换一次性镜像链接（指纹绑定、
+  单次核销），失败/中止自动退还，注册赠送 1 次
+- **api 模式契约**：`flash/js/backend.js` 是权威定义（health 握手 service=`bw16-flash-api`、
+  错误体 `{detail}`、`/api/flash/begin` 返回 `{文件名: 链接}` 且链接必须自带 `?…`）——改后端先读它
 - 前端接入：烧录页每次刷写结束匿名上报统计（`tools/flash-telemetry/telemetry.js`，
-  仅生产域名生效）；顶栏「反馈」按钮直投后台
-- 源码：`tools/flash-api/`（Worker + admin 页面 + D1 schema + test/ 本地测试与开发服务器）；
-  部署 `cd tools/flash-api && HTTPS_PROXY=… npx wrangler deploy`
-- 待做批次：M7 固件投稿审核
+  仅生产域名生效）；顶栏「反馈」按钮直投后台；主页 `index.html` 尾部水合脚本
+  （支持 `?api=` 覆盖联调）从 `/api/site/content` 拉内容块，接口不可达时静态内容兜底
+- 源码：`tools/flash-api/`（Worker + admin 页面 + D1 schema + test/ 本地测试与开发服务器 +
+  scripts/sync-catalog.mjs 目录批量接入）；
+  部署 `cd tools/flash-api && npx wrangler d1 execute peipei-flash-db --remote --file schema.sql
+  && HTTPS_PROXY=… npx wrangler deploy`（schema 全部 CREATE IF NOT EXISTS，可重复执行）
+- 待做批次：M7 固件投稿审核；烧录页 api 模式生产激活（同源 `/api/*` 路由或前端指定基址）
 
 ### 付费固件的收费模式（第一性原理）
 
@@ -140,13 +152,22 @@ git add -A && git commit -m "..." && git push   # push 后 1-2 分钟 Pages 生�
 本地验证（无需 Cloudflare 账号）：
 
 ```bash
-node tools/flash-api/test/worker.test.mjs      # Worker 逻辑测试（32 项断言）
-node tools/flash-api/test/devserver.mjs        # 本地后台 :8787（备用取件体系联调用）
-python3 -m http.server 8765                    # 烧录页 :8765
+node tools/flash-api/test/worker.test.mjs      # Worker 逻辑测试（71 项断言，M5/M6 回归 + v2 全链路）
+node tools/flash-api/test/devserver.mjs        # 本地后台 :8787（伺服真实 /admin 页 + 预置数据：
+#                                               demo/demo12345、额度卡密、bw16-19 目录、notice 示例）
+python3 -m http.server 8765                    # 站点 :8765
+# 烧录页 api 模式联调：http://127.0.0.1:8765/flash/?api=http://127.0.0.1:8787
+# 主页水合联调：      http://127.0.0.1:8765/?api=http://127.0.0.1:8787
+# 后台控制台：        http://127.0.0.1:8787/admin（token 见启动输出）
+# 真实固件批量接入后台目录：ADMIN_TOKEN=… node tools/flash-api/scripts/sync-catalog.mjs
 # 无硬件演练：http://127.0.0.1:8765/flash/?mock=1（全固件全流程，付费固件无特殊处理）
 ```
 
 ## 主页内容更新
+
+**在线方式（推荐）**：admin.peipeidev.cn/admin → 「主站内容」页签 → 选块编辑 JSON 保存，
+主页即时水合生效（静态内容兜底，删除块即回落）。可用 key：`notice`（顶部公告条）/`videos`
+（视频卡片数组）/`firmware_rows`（固件行数组）/`timeline`（时间线数组）/`stats`（统计数字对象）。
 
 直接编辑 `index.html`（单文件含全部样式与脚本）。常用位置：
 

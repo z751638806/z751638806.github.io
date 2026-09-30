@@ -40,7 +40,7 @@ button:hover{border-color:var(--pink)}
 <body>
 <div id="login" class="card">
   <h1>烧录站管理后台</h1>
-  <p class="dim">peipeidev.cn · 在线烧录（统计 / 反馈 / 公告 / 激活码 / 付费固件）</p>
+  <p class="dim">peipeidev.cn 网站后台（统计 / 反馈 / 公告 / 激活码 / 付费固件 / 用户 / 固件目录 / 主站内容）</p>
   <div class="row"><input id="tk" class="fw" type="password" placeholder="ADMIN_TOKEN" onkeydown="if(event.key==='Enter')login()"></div>
   <div class="row"><button class="pri fw" onclick="login()">进入</button></div>
   <p class="dim" id="lerr"></p>
@@ -54,6 +54,9 @@ button:hover{border-color:var(--pink)}
     <button class="tab" data-t="an" onclick="go('an')">📢 公告</button>
     <button class="tab" data-t="code" onclick="go('code')">🔑 激活码</button>
     <button class="tab" data-t="paid" onclick="go('paid')">📦 付费固件</button>
+    <button class="tab" data-t="user" onclick="go('user')">👤 用户</button>
+    <button class="tab" data-t="catalog" onclick="go('catalog')">📂 固件目录</button>
+    <button class="tab" data-t="site" onclick="go('site')">📝 主站内容</button>
   </div>
 
   <div id="v-stats">
@@ -142,6 +145,74 @@ button:hover{border-color:var(--pink)}
       <div id="pdGrantList" style="margin-top:8px"></div>
     </div>
   </div>
+
+  <div id="v-user" hidden>
+    <div class="card">
+      <b>用户（烧录页注册账号，api 模式）</b>
+      <div class="row">
+        <input id="uQ" placeholder="搜索登录标识" style="min-width:200px" onkeydown="if(event.key==='Enter')loadUser()">
+        <button onclick="loadUser()">搜索</button>
+        <span class="dim" id="uTotal"></span>
+      </div>
+      <div id="uList" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <b>额度卡密（兑换 +N 次刷写额度，与 M6 取件码相互独立）</b>
+      <p class="dim">买家在烧录页登录后输入卡密，即时到账；刷写失败自动退还当次额度。</p>
+      <div class="row">
+        <input id="ccCount" type="number" value="1" min="1" max="100" style="width:70px" title="张数">
+        <label class="dim">面值 <input id="ccCredits" type="number" value="1" min="1" max="1000" style="width:70px"> 次/张</label>
+        <input id="ccNote" placeholder="备注（渠道/订单）" style="min-width:180px">
+        <button class="pri" onclick="genCC()">生成卡密</button>
+      </div>
+      <div class="dim" id="ccOut" style="white-space:pre-wrap;user-select:all;color:var(--pink);font-size:15px"></div>
+    </div>
+    <div class="card"><b>卡密记录</b><div id="ccList" style="margin-top:8px"></div></div>
+  </div>
+
+  <div id="v-catalog" hidden>
+    <div class="card">
+      <b>固件目录（api 模式下发清单，bin 存后台存储）</b>
+      <p class="dim">slug 与站点清单一致；bin 上传后自动登记 size/sha256。烧录页 api 模式经 /api/catalog 拉目录、/api/flash/begin 换一次性镜像链接（扣额度、失败退回）。批量接入用 tools/flash-api/scripts/sync-catalog.mjs。</p>
+      <div class="row">
+        <input id="ctSlug" placeholder="slug（如 bw16-01）" style="width:150px">
+        <input id="ctName" placeholder="显示名" style="min-width:220px">
+        <select id="ctDev"><option>bw16</option><option>esp8266</option><option>esp32</option><option>esp32s3</option><option>esp32c3</option></select>
+        <input id="ctSort" type="number" value="0" style="width:70px" title="排序权重">
+        <button class="pri" onclick="saveCat()">保存</button>
+      </div>
+      <div class="row">
+        <select id="ctUpSlug" style="min-width:160px"></select>
+        <input id="ctUpFile" type="file" accept=".bin" multiple>
+        <button class="pri" onclick="uploadCat()">上传 bin</button>
+      </div>
+      <p class="dim" id="ctUpOut" style="white-space:pre-wrap"></p>
+    </div>
+    <div class="card"><b>目录清单</b><div id="ctList" style="margin-top:8px"></div></div>
+  </div>
+
+  <div id="v-site" hidden>
+    <div class="card">
+      <b>主站内容块（peipeidev.cn 主页在线更新）</b>
+      <p class="dim">主页静态内容始终兜底；此处保存后主页即时水合显示，删除块即回落静态。数据为 JSON（数组或对象）。主页水合脚本见 index.html 尾部。</p>
+      <div class="row">
+        <select id="scKey" onchange="$('scKeyCustom').hidden=this.value!==''">
+          <option value="notice">notice（主页顶部公告条）</option>
+          <option value="videos">videos（视频卡片数组）</option>
+          <option value="firmware_rows">firmware_rows（固件行数组）</option>
+          <option value="timeline">timeline（时间线数组）</option>
+          <option value="stats">stats（统计数字对象）</option>
+          <option value="">自定义 key…</option>
+        </select>
+        <input id="scKeyCustom" placeholder="key" style="width:140px" hidden>
+        <button onclick="loadSiteBlock()">载入</button>
+        <button class="pri" onclick="saveSiteBlock()">保存</button>
+        <button onclick="delSiteBlock()">删除块</button>
+      </div>
+      <textarea id="scData" rows="14" placeholder='JSON 内容，如 [{"title":"…","url":"…"}]' style="width:100%;font-family:monospace;font-size:13px"></textarea>
+      <p class="dim" id="scOut"></p>
+    </div>
+  </div>
 </main>
 <div id="toast"></div>
 <script>
@@ -156,7 +227,7 @@ async function login(){TK=$("tk").value.trim();if(!TK)return;try{await api("/api
 function logout(){TK="";localStorage.removeItem("admin_tk");location.reload()}
 if(TK){(async()=>{try{await api("/api/admin/stats?days=1");$("login").hidden=true;$("main").hidden=false;go("stats")}catch{}})()}
 
-function go(t){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("sel",b.dataset.t===t));["stats","fb","an","code","paid"].forEach(v=>$("v-"+v).hidden=v!==t);({stats:loadStats,fb:loadFb,an:loadAn,code:loadKg,paid:loadPaid})[t]()}
+function go(t){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("sel",b.dataset.t===t));["stats","fb","an","code","paid","user","catalog","site"].forEach(v=>$("v-"+v).hidden=v!==t);({stats:loadStats,fb:loadFb,an:loadAn,code:loadKg,paid:loadPaid,user:loadUser,catalog:loadCat,site:loadSiteBlock})[t]()}
 
 async function loadStats(){
   const d=await api("/api/admin/stats?days=30");
@@ -281,6 +352,98 @@ async function genPickupCodes(){
   $("pdCodeOut").textContent=(d.codes||[]).join("\n");loadPaid();
 }
 async function disableCode(id){await api("/api/admin/codes/disable",{method:"POST",body:JSON.stringify({id})});loadPaid()}
+
+/* ---------- 用户 / 额度卡密（v2） ---------- */
+async function loadUser(){
+  const q=$("uQ").value.trim();
+  const d=await api("/api/admin/users?limit=200"+(q?`&q=${encodeURIComponent(q)}`:""));
+  $("uTotal").textContent=`共 ${d.total?.n||0} 人 · 总额度 ${d.total?.q||0}`;
+  $("uList").innerHTML=(d.users||[]).length?"<table><tr><th>登录标识</th><th>额度</th><th>状态</th><th>注册</th><th>最近登录</th><th></th></tr>"+d.users.map(u=>`<tr>
+    <td>${esc(u.login_id)}</td><td>${u.quota}</td>
+    <td><span class="tag ${u.status==="active"?"u":"d"}">${u.status==="active"?"正常":"禁用"}</span></td>
+    <td class="dim">${ts(u.created_ts)}</td><td class="dim">${u.last_login_ts?ts(u.last_login_ts):"—"}</td>
+    <td>
+      <button style="padding:2px 10px;font-size:12px" onclick="adjQuota(${u.id})">±额度</button>
+      <button style="padding:2px 10px;font-size:12px" onclick="setUserStatus(${u.id},'${u.status==="active"?"disabled":"active"}')">${u.status==="active"?"禁用":"启用"}</button>
+      <button style="padding:2px 10px;font-size:12px" onclick="resetPw(${u.id})">重置密码</button>
+    </td></tr>`).join("")+"</table>":'<p class="dim">暂无用户</p>';
+}
+async function adjQuota(id){
+  const v=prompt("调整额度（正数加 / 负数减，如 5 或 -1）","1");if(!v)return;
+  const d=await api("/api/admin/users/quota",{method:"POST",body:JSON.stringify({id,delta:Number(v)||0})});
+  toast(d.ok?`已调整，剩余 ${d.quota}`:(d.error==="quota_underflow"?"不能扣到负数":"失败"));loadUser();
+}
+async function setUserStatus(id,status){await api("/api/admin/users/status",{method:"POST",body:JSON.stringify({id,status})});loadUser()}
+async function resetPw(id){
+  const v=prompt("为该用户设置新密码（至少 8 位）");if(!v)return;
+  if(v.length<8)return toast("密码至少 8 位");
+  await api("/api/admin/users/reset-pw",{method:"POST",body:JSON.stringify({id,password:v})});toast("已重置");
+}
+async function genCC(){
+  const d=await api("/api/admin/ccodes",{method:"POST",body:JSON.stringify({count:Number($("ccCount").value)||1,credits:Number($("ccCredits").value)||1,note:$("ccNote").value.trim()})});
+  $("ccOut").textContent=(d.codes||[]).join("\n");loadCC();
+}
+async function loadCC(){
+  const d=await api("/api/admin/ccodes?limit=100");
+  $("ccList").innerHTML=(d.codes||[]).length?"<table><tr><th>时间</th><th>卡密</th><th>面值</th><th>状态</th><th>备注</th><th></th></tr>"+d.codes.map(c=>{
+    const cls=c.status==="unused"?"u":(c.status==="redeemed"?"r":"d");
+    const label=c.status==="unused"?"未用":(c.status==="redeemed"?"已兑换":"禁用");
+    return `<tr><td class="dim">${ts(c.created_ts)}</td><td style="user-select:all;font-family:monospace;color:var(--pink)">${esc(c.code)}</td><td>+${c.credits} 次</td><td><span class="tag ${cls}">${label}</span></td><td class="dim">${esc(c.note||"")}</td><td>${c.status==="unused"?`<button style="padding:2px 10px;font-size:12px" onclick="disCC(${c.id})">禁用</button>`:""}</td></tr>`;
+  }).join("")+"</table>":'<p class="dim">暂无卡密</p>';
+}
+async function disCC(id){await api("/api/admin/ccodes/disable",{method:"POST",body:JSON.stringify({id})});loadCC()}
+
+/* ---------- 固件目录（v2） ---------- */
+async function loadCat(){
+  const d=await api("/api/admin/catalog");
+  const list=d.catalog||[];
+  $("ctUpSlug").innerHTML=list.length?list.map(p=>`<option>${esc(p.slug)}</option>`).join(""):'<option value="">先保存 slug</option>';
+  $("ctList").innerHTML=list.length?"<table><tr><th>slug</th><th>显示名</th><th>设备</th><th>文件</th><th>状态</th><th></th></tr>"+list.map(p=>{
+    const fs=Object.entries(JSON.parse(p.files||"{}"));
+    return `<tr><td style="font-family:monospace">${esc(p.slug)}</td><td>${esc(p.name)}</td><td>${esc(p.device)}</td><td>${fs.length?fs.map(([f,m])=>`${esc(f)}（${fmtMB(m.size)}）`).join("<br>"):'<span class="dim">未上传</span>'}</td><td><span class="tag ${p.active?"u":"r"}">${p.active?"上架":"下架"}</span></td><td><button style="padding:2px 10px;font-size:12px" onclick="toggleCat('${esc(p.slug)}',${p.active?0:1})">${p.active?"下架":"上架"}</button></td></tr>`;
+  }).join("")+"</table>":'<p class="dim">目录为空 —— 用 tools/flash-api/scripts/sync-catalog.mjs 从站点清单批量接入</p>';
+}
+async function saveCat(){
+  const slug=$("ctSlug").value.trim();if(!slug)return toast("先填 slug");
+  await api("/api/admin/catalog",{method:"POST",body:JSON.stringify({slug,name:$("ctName").value.trim(),device:$("ctDev").value,sort:Number($("ctSort").value)||0,active:true})});
+  $("ctSlug").value="";$("ctName").value="";loadCat();toast("已保存");
+}
+async function toggleCat(slug,active){await api("/api/admin/catalog",{method:"POST",body:JSON.stringify({slug,active:!!active})});loadCat()}
+async function uploadCat(){
+  const slug=$("ctUpSlug").value;if(!slug)return toast("先保存 slug");
+  const fs=$("ctUpFile").files;if(!fs.length)return toast("选择要上传的 .bin");
+  const out=[];
+  for(const f of fs){
+    try{
+      const r=await fetch(`/api/admin/catalog/upload/${encodeURIComponent(slug)}/${encodeURIComponent(f.name)}`,{method:"PUT",headers:{Authorization:"Bearer "+TK},body:f});
+      const d=await r.json();
+      out.push(r.ok?`✓ ${f.name}（${fmtMB(d.size)}）sha256=${d.sha256.slice(0,12)}…`:`× ${f.name}：${d.error||r.status}`);
+    }catch(e){out.push(`× ${f.name}：${e.message}`)}
+  }
+  $("ctUpOut").textContent=out.join("\n");loadCat();
+}
+
+/* ---------- 主站内容（v2） ---------- */
+function scKey(){const v=$("scKey").value;$("scKeyCustom").hidden=v!=="";return v||$("scKeyCustom").value.trim()}
+async function loadSiteBlock(){
+  const key=scKey();if(!key)return;
+  const d=await api("/api/admin/site/content");
+  const v=(d.content||{})[key];
+  $("scData").value=v===undefined?"":JSON.stringify(v,null,2);
+  $("scOut").textContent=v===undefined?"（该 key 尚无内容，主页显示静态兜底）":`已载入 · 更新于 ${ts((d.updatedAt||{})[key]||Date.now())}`;
+}
+async function saveSiteBlock(){
+  const key=scKey();if(!key)return toast("先选或填 key");
+  let data;try{data=JSON.parse($("scData").value)}catch(e){return toast("JSON 格式错误："+e.message)}
+  await api("/api/admin/site/content",{method:"POST",body:JSON.stringify({key,data})});
+  $("scOut").textContent="已保存，主页水合即时生效";toast("已保存");
+}
+async function delSiteBlock(){
+  const key=scKey();if(!key)return;
+  if(!confirm(`确认删除内容块「${key}」？主页将回落到静态内容。`))return;
+  await api("/api/admin/site/content",{method:"POST",body:JSON.stringify({key,data:null})});
+  $("scData").value="";$("scOut").textContent="已删除，主页回落静态内容";toast("已删除");
+}
 </script>
 </body>
 </html>

@@ -631,6 +631,70 @@ footer a:hover{color:var(--pink)}
 })();
 </script>
 <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<script>
+/* 主站内容水合：peipeidev.cn 网站后台（admin.peipeidev.cn Worker）→ 在线更新主页内容块。
+   静态内容始终兜底：后台无数据 / 接口不可达时，本脚本不做任何事。后台「主站内容」页签编辑。 */
+(function(){
+  "use strict";
+  var API = (new URLSearchParams(location.search).get("api") || "https://admin.peipeidev.cn") + "/api/site/content";
+  function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  function hydrate(c){
+    /* notice：主页顶部公告条（仅后台配置了才出现） */
+    if (c.notice && (c.notice.text || c.notice.title)) {
+      var bar = document.createElement("div");
+      bar.id = "site-notice";
+      bar.style.cssText = "position:sticky;top:0;z-index:50;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;padding:9px 20px;background:rgba(251,114,153,.12);border-bottom:1px solid rgba(251,114,153,.35);font:13px/1.6 system-ui,-apple-system,'PingFang SC',sans-serif;color:#e8eef5;backdrop-filter:blur(8px)";
+      bar.innerHTML = "<b style='color:#FB7299'>📢 " + esc(c.notice.title || "公告") + "</b><span>" + esc(c.notice.text || "") + "</span>"
+        + "<span style='margin-left:auto;display:inline-flex;gap:12px;align-items:baseline'>"
+        + (c.notice.url ? "<a href='" + esc(c.notice.url) + "' target='_blank' rel='noopener' style='color:#8b9dfc'>查看 →</a>" : "")
+        + "<button aria-label='关闭' style='background:none;border:0;color:#8b97a7;cursor:pointer;font-size:15px;padding:0 2px'>×</button></span>";
+      bar.querySelector("button").onclick = function(){ bar.remove(); };
+      document.body.insertBefore(bar, document.body.firstChild);
+    }
+    /* videos：[{title, meta, url, go}] */
+    if (Array.isArray(c.videos) && c.videos.length) {
+      var grid = document.querySelector("#videos .vid-grid");
+      if (grid) grid.innerHTML = c.videos.map(function(v, i){
+        return '<div class="card"><div class="t">' + esc(v.title) + '</div><div class="m">' + esc(v.meta || "") + '</div>'
+          + '<a class="go" href="' + esc(v.url || "https://space.bilibili.com/") + '" target="_blank" rel="noopener">' + esc(v.go || "去B站观看") + ' <span>→</span></a></div>';
+      }).join("");
+    }
+    /* firmware_rows：[{name, desc, badge, date, url, action}] */
+    if (Array.isArray(c.firmware_rows) && c.firmware_rows.length) {
+      var fw = document.querySelector("#firmware .fw");
+      if (fw) fw.innerHTML = c.firmware_rows.map(function(r){
+        return '<div class="fw-row"><div class="fw-name">' + esc(r.name) + (r.desc ? "<small>" + esc(r.desc) + "</small>" : "") + '</div>'
+          + '<div class="fw-meta">' + (r.badge ? '<span class="badge">' + esc(r.badge) + "</span>" : "")
+          + "<span>" + esc(r.date || "") + "</span>"
+          + '<a class="fw-dl" href="' + esc(r.url || "/flash/") + '">' + esc(r.action || "获取") + " →</a></div></div>";
+      }).join("");
+    }
+    /* timeline：[{date, title, desc}]（后台给出的顺序即显示顺序） */
+    if (Array.isArray(c.timeline) && c.timeline.length) {
+      var tl = document.querySelector("#timeline .tl");
+      if (tl) tl.innerHTML = c.timeline.map(function(t){
+        return '<div class="tl-item"><div class="tl-date">' + esc(t.date) + '</div><div class="tl-title">' + esc(t.title) + '</div><div class="tl-desc">' + esc(t.desc || "") + "</div></div>";
+      }).join("");
+    }
+    /* stats：{videos, series, projects, fans}（按主页现有四格语义覆盖） */
+    if (c.stats && typeof c.stats === "object") {
+      var map = [["videos","技术视频"],["series","固件系列"],["projects","开源项目"],["fans","B站粉丝"]];
+      document.querySelectorAll(".stat").forEach(function(el, idx){
+        var key = c.stats.__order ? c.stats.__order[idx] : (map[idx] ? map[idx][0] : null);
+        if (key && c.stats[key] != null) {
+          var b = el.querySelector("b");
+          b.textContent = String(c.stats[key]);
+          b.setAttribute("data-count", parseInt(c.stats[key], 10) || 0);
+          if (map[idx] && c.stats.__labels && c.stats.__labels[key]) el.querySelector("span").textContent = c.stats.__labels[key];
+        }
+      });
+    }
+  }
+  fetch(API, { cache: "no-store" }).then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){ if (d && d.ok && d.content) hydrate(d.content); })
+    .catch(function(){ /* 后台不可达 → 静态兜底，静默 */ });
+})();
+</script>
 
 </body>
 </html>

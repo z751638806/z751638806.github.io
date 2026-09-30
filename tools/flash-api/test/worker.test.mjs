@@ -178,6 +178,110 @@ async function main() {
     ok(kvGot.status === 200 && kvBytes.length === 4 && kvBytes[0] === 9, "KV 存储：回源字节正确（适配器双兼容）");
   }
 
+  console.log("v2 完整后台：health 握手 / 注册 / 登录 / 会话");
+  {
+    const h = await j(await worker.fetch(req("/api/health"), env));
+    ok(h.service === "bw16-flash-api", "health service=bw16-flash-api（backend.js 握手契约）");
+    const sess = await worker.fetch(req("/api/session", { method: "POST" }), env);
+    ok(sess.status === 200, "/api/session 200（api 模式激活检查）");
+
+    const badPw = await worker.fetch(req("/api/auth/register", { method: "POST", body: { loginId: "alice", password: "short" } }), env);
+    ok(badPw.status === 400 && (await badPw.json()).detail, "弱密码 400 + detail 契约");
+    const reg = await worker.fetch(req("/api/auth/register", { method: "POST", body: { loginId: "alice", password: "password8" } }), env);
+    const regD = await j(reg);
+    ok(regD.ok && regD.quota === 1, "注册成功赠 1 次额度");
+    const cookie = (reg.headers.get("Set-Cookie") || "").split(";")[0];
+    ok(cookie.startsWith("peipei_s=") && /HttpOnly/.test(reg.headers.get("Set-Cookie")), "注册下发会话 cookie（HttpOnly）");
+    const dup = await worker.fetch(req("/api/auth/register", { method: "POST", body: { loginId: "alice", password: "password8" } }), env);
+    ok(dup.status === 409, "重复注册 409");
+    const badLogin = await j(await worker.fetch(req("/api/auth/login", { method: "POST", body: { loginId: "alice", password: "wrong-pass" } }), env));
+    ok(badLogin.detail && !badLogin.ok, "错误密码 401 + detail");
+    const me1 = await worker.fetch(req("/api/auth/me", { headers: { Cookie: cookie } }), env);
+    ok(me1.status === 200 && (await me1.json()).loginId === "alice", "me 带 cookie 返回用户");
+    ok((await worker.fetch(req("/api/auth/me"), env)).status === 401, "me 无 cookie 401（前端判定未登录）");
+    const login = await worker.fetch(req("/api/auth/login", { method: "POST", body: { loginId: "alice", password: "password8" } }), env);
+    ok((await j(login)).ok, "登录成功");
+
+    console.log("v2 固件目录 + 一次性镜像取件 + 额度闭环");
+    await worker.fetch(req("/api/admin/catalog", { method: "POST", token: T, body: { slug: "bw16-01", name: "WiFi安全测试固件「2026」", device: "bw16", sort: 10, colorCss: "#FB7299" } }), env);
+    const catUp = await j(await worker.fetch(new Request("https://admin.peipeidev.cn/api/admin/catalog/upload/bw16-01/imgtool_flashloader_amebad.bin",
+      { method: "PUT", headers: { Authorization: `Bearer ${T}` }, body: new Uint8Array(2048).fill(3) }), env));
+    ok(catUp.ok && /^[0-9a-f]{64}$/.test(catUp.sha256), "目录固件上传回填 sha256");
+    const cat = await j(await worker.fetch(req("/api/catalog"), env));
+    const entry = (cat.firmware || []).find((f) => f.slug === "bw16-01");
+    ok(entry && entry.files["imgtool_flashloader_amebad.bin"]?.size === 2048 && entry.sourcePath === "线上目录", "/api/catalog 契约（firmware[].files 元数据）");
+
+    const anon401 = await worker.fetch(req("/api/flash/begin", { method: "POST", body: { slug: "bw16-01", fingerprint: "fpA" } }), env);
+    ok(anon401.status === 401 && (await anon401.json()).detail, "未登录 flash/begin 401");
+    await worker.fetch(req("/api/admin/catalog/upload/bw16-01/km0_boot_all.bin", { method: "PUT", token: T }), env); // 空 body → 400，占位不生效
+    await worker.fetch(new Request("https://admin.peipeidev.cn/api/admin/catalog/upload/bw16-01/km0_boot_all.bin",
+      { method: "PUT", headers: { Authorization: `Bearer ${T}` }, body: new Uint8Array(512).fill(4) }), env);
+    const begin = await worker.fetch(req("/api/flash/begin", { method: "POST", body: { slug: "bw16-01", fingerprint: "fpA" }, headers: { Cookie: cookie } }), env);
+    const beginD = await j(begin);
+    ok(beginD.ok && beginD.flashSessionId && beginD.files["km0_boot_all.bin"]?.includes("?g="), "flash/begin 换一次性链接（files 对象 + ?g= 契约）");
+    const me2 = await j(await worker.fetch(req("/api/auth/me", { headers: { Cookie: cookie } }), env));
+    ok(me2.quota === 0, "刷写扣减额度 1→0");
+    const again403 = await j(await worker.fetch(req("/api/flash/begin", { method: "POST", body: { slug: "bw16-01", fingerprint: "fpA" }, headers: { Cookie: cookie } }), env));
+    ok(again403.detail && again403.detail.includes("额度不足"), "额度不足 403");
+
+    const fileUrl = beginD.files["km0_boot_all.bin"];
+    const fpMiss = await j(await worker.fetch(req(`${fileUrl}&fp=wrong`), env));
+    ok(fpMiss.detail === "指纹不匹配", "镜像链接指纹不匹配拒绝");
+    const got2 = await worker.fetch(req(`${fileUrl}&fp=fpA`), env);
+    const got2Bytes = new Uint8Array(await got2.arrayBuffer());
+    ok(got2.status === 200 && got2Bytes.length === 512 && got2Bytes[0] === 4, "镜像回源字节正确");
+    const reuse = await j(await worker.fetch(req(`${fileUrl}&fp=fpA`), env));
+    ok(reuse.detail === "链接已使用", "镜像链接一次性");
+
+    const endFail = await j(await worker.fetch(req("/api/flash/end", { method: "POST", body: { flashSessionId: beginD.flashSessionId, result: "failed", durationS: 3.2, failStage: "下载阶段" } }), env));
+    ok(endFail.ok, "flash/end 失败上报");
+    const me3 = await j(await worker.fetch(req("/api/auth/me", { headers: { Cookie: cookie } }), env));
+    ok(me3.quota === 1, "失败退还额度 0→1");
+    const st = await j(await worker.fetch(req("/api/admin/stats?days=1", { token: T }), env));
+    ok((st.byFirmware || []).some((f) => f.firmware === "WiFi安全测试固件「2026」"), "flash/end 落统计看板（与 M5 同表）");
+
+    console.log("v2 额度卡密 / 用户管理 / 主站内容 / 反馈新契约");
+    const fb2 = await j(await worker.fetch(req("/api/feedback", { method: "POST", body: { type: "flash_fail", body: "刷写失败反馈内容", sessionPublicId: "s1", extra: { stage: "x" } } }), env));
+    ok(fb2.ok, "反馈 v2 契约（type/body/extra）");
+    const fbShort = await worker.fetch(req("/api/feedback", { method: "POST", body: { type: "t", body: "短" } }), env);
+    ok(fbShort.status === 400 && (await fbShort.json()).detail, "反馈过短 400 + detail");
+
+    const noLogin = await j(await worker.fetch(req("/api/redeem", { method: "POST", body: { code: "AAAA-BBBB-CCCC-DDDD" } }), env));
+    ok(noLogin.ok === false && noLogin.error === "invalid_code", "未知卡密不误伤：走 M6 回落返回 invalid_code");
+    const cc = (await j(await worker.fetch(req("/api/admin/ccodes", { method: "POST", token: T, body: { count: 2, credits: 5, note: "测试卡密" } }), env)));
+    ok(cc.codes?.length === 2 && cc.credits === 5, "批量生成额度卡密");
+    const rdNoUser = await worker.fetch(req("/api/redeem", { method: "POST", body: { code: cc.codes[0] } }), env);
+    ok(rdNoUser.status === 401 && (await rdNoUser.json()).detail, "未登录兑换卡密 401（前端转登录）");
+    const rd = await j(await worker.fetch(req("/api/redeem", { method: "POST", body: { code: cc.codes[0] }, headers: { Cookie: cookie } }), env));
+    ok(rd.ok && rd.credited === 5 && rd.quota === 6, "兑换卡密 +5 额度（契约 {credited,quota}）");
+    const rd2 = await j(await worker.fetch(req("/api/redeem", { method: "POST", body: { code: cc.codes[0] }, headers: { Cookie: cookie } }), env));
+    ok(rd2.detail === "卡密已被使用", "卡密一次性");
+
+    const ul = await j(await worker.fetch(req("/api/admin/users", { token: T }), env));
+    ok(ul.users?.length >= 1 && ul.total.n >= 1, "用户列表 + 总数");
+    const uid = ul.users[0].id;
+    const adj = await j(await worker.fetch(req("/api/admin/users/quota", { method: "POST", token: T, body: { id: uid, delta: -100 } }), env));
+    ok(adj.error === "quota_underflow", "额度扣到负数被拒");
+    const adj2 = await j(await worker.fetch(req("/api/admin/users/quota", { method: "POST", token: T, body: { id: uid, delta: 2, note: "补偿" } }), env));
+    ok(adj2.ok && adj2.quota === 8, "管理员调整额度 6→8");
+    const dis2 = await j(await worker.fetch(req("/api/admin/users/status", { method: "POST", token: T, body: { id: uid, status: "disabled" } }), env));
+    ok(dis2.ok, "禁用用户");
+    ok((await worker.fetch(req("/api/auth/me", { headers: { Cookie: cookie } }), env)).status === 401, "禁用后会话立即失效");
+    await worker.fetch(req("/api/admin/users/status", { method: "POST", token: T, body: { id: uid, status: "active" } }), env);
+    const rp = await j(await worker.fetch(req("/api/admin/users/reset-pw", { method: "POST", token: T, body: { id: uid, password: "newpassword9" } }), env));
+    ok(rp.ok && (await j(await worker.fetch(req("/api/auth/login", { method: "POST", body: { loginId: "alice", password: "newpassword9" } }), env))).ok, "重置密码后新密码可登录");
+
+    const scSave = await j(await worker.fetch(req("/api/admin/site/content", { method: "POST", token: T, body: { key: "videos", data: [{ title: "新视频", bvid: "BV1" }] } }), env));
+    ok(scSave.ok, "保存主站内容块");
+    const scPub = await j(await worker.fetch(req("/api/site/content"), env));
+    ok(scPub.content?.videos?.[0]?.title === "新视频", "公开主站内容接口（主页水合数据源）");
+    const corsRes = await worker.fetch(req("/api/site/content", { headers: { Origin: "https://peipeidev.cn" } }), env);
+    ok(corsRes.headers.get("Access-Control-Allow-Origin") === "https://peipeidev.cn" && corsRes.headers.get("Access-Control-Allow-Credentials") === "true", "CORS 回显 Origin + 凭据（credentials:include 契约）");
+    await worker.fetch(req("/api/admin/site/content", { method: "POST", token: T, body: { key: "tmp", data: { a: 1 } } }), env);
+    const scDel = await j(await worker.fetch(req("/api/admin/site/content", { method: "POST", token: T, body: { key: "tmp", data: null } }), env));
+    ok(scDel.deleted && !((await j(await worker.fetch(req("/api/site/content"), env))).content ?? {}).hasOwnProperty?.("tmp"), "删除内容块");
+  }
+
   console.log(`\n结果：${passed} 通过，${failed} 失败`);
   if (failed) process.exit(1);
 }
