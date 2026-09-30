@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-09-28 11:58:44",
+  "generatedAt": "2026-10-01 01:08:13",
   "device": "bw16",
   "flashloader": {
     "path": "firmware/_common/imgtool_flashloader_amebad.bin",
     "md5": "db71809057ae6638e6c6fc1f3712ac70",
     "sha256": "9307121385cb390dfd2da64da2c6c515f17b5a9556b3d04021487c9b9f220b55",
     "size": 4688,
-    "copiesChecked": 18
+    "copiesChecked": 19
   },
   "firmware": [
     {
@@ -98,6 +98,36 @@
         }
       },
       "connectNote": "刷写后热点：RTL8720dn-Deauther（密码 0123456789）· 管理后台 http://192.168.1.1 · 支持双频 2.4G/5G"
+    },
+    {
+      "slug": "bw16-19",
+      "name": "WiFi安全测试固件-远程版「20261001」",
+      "color": "G",
+      "colorLabel": "绿",
+      "colorCss": "#22c55e",
+      "sourcePath": "佩佩队长固件库",
+      "device": "bw16",
+      "files": {
+        "km0_boot_all.bin": {
+          "path": "firmware/bw16-19/km0_boot_all.bin",
+          "size": 4500,
+          "md5": "abf78d11cc0768c029f69adc4d902a0b",
+          "sha256": "453c880307fc389009aa8a39c63da3d715b207ad797206c896cc691426daaa64"
+        },
+        "km4_boot_all.bin": {
+          "path": "firmware/bw16-19/km4_boot_all.bin",
+          "size": 4456,
+          "md5": "b0adda4bd9a27304948a029119b7d717",
+          "sha256": "05fbf808d43113eaf7c11b75091c986b817135f0c52eb9fa94bb9fe9f34b062c"
+        },
+        "km0_km4_image2.bin": {
+          "path": "firmware/bw16-19/km0_km4_image2.bin",
+          "size": 942080,
+          "md5": "0d0415e267e3d83071103293ccab49d0",
+          "sha256": "b86319074db334f706eb88b06b877a577b6b0b943ce131abb08e9d9cec72850d"
+        }
+      },
+      "connectNote": "刷写后热点：CMCC（密码 12345678.，末尾为英文句点）· 此固件需要激活码，请联系开发者购买"
     },
     {
       "slug": "bw16-at",
