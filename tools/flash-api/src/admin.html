@@ -81,16 +81,19 @@ button:hover{border-color:var(--pink)}
 
   <div id="v-code" hidden>
     <div class="card">
-      <b>生成激活码</b>
+      <b>固件激活码（一机一码）</b>
+      <p class="dim">买家提供设备 MAC → 生成绑定该设备的激活码（与 bw16-keygen 同源同算法，固件端离线验证）</p>
       <div class="row">
-        <input id="cdSlug" placeholder="绑定固件 slug（bw16-19 / * 通用）" style="min-width:220px">
-        <input id="cdN" type="number" value="1" min="1" max="100" style="width:80px" title="数量">
-        <input id="cdNote" placeholder="备注（买家/订单号，可选）" style="min-width:180px">
-        <button class="pri" onclick="genCodes()">生成</button>
+        <input id="kgTk" placeholder="keygen 访问令牌（BW16_ACCESS_TOKEN）" style="min-width:240px" type="password">
+        <button onclick="saveKgTk()">保存令牌</button>
       </div>
-      <div class="dim" id="cdOut" style="white-space:pre-wrap;user-select:all;color:var(--ok)"></div>
+      <div class="row">
+        <input id="kgMac" placeholder="设备 MAC（如 001A2B3C4D5E 或 00:1A:2B:3C:4D:5E）" style="min-width:280px">
+        <button class="pri" onclick="genOne()">生成激活码</button>
+      </div>
+      <div class="dim" id="kgOut" style="white-space:pre-wrap;user-select:all;color:var(--pink);font-size:16px"></div>
     </div>
-    <div class="card" id="cdlist"></div>
+    <div class="card"><b>生成记录（keygen D1）</b><div id="kgList" style="margin-top:8px"></div></div>
   </div>
 </main>
 <div id="toast"></div>
@@ -106,7 +109,7 @@ async function login(){TK=$("tk").value.trim();if(!TK)return;try{await api("/api
 function logout(){TK="";localStorage.removeItem("admin_tk");location.reload()}
 if(TK){(async()=>{try{await api("/api/admin/stats?days=1");$("login").hidden=true;$("main").hidden=false;go("stats")}catch{}})()}
 
-function go(t){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("sel",b.dataset.t===t));["stats","fb","an","code"].forEach(v=>$("v-"+v).hidden=v!==t);({stats:loadStats,fb:loadFb,an:loadAn,code:loadCodes})[t]()}
+function go(t){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("sel",b.dataset.t===t));["stats","fb","an","code"].forEach(v=>$("v-"+v).hidden=v!==t);({stats:loadStats,fb:loadFb,an:loadAn,code:loadKg})[t]()}
 
 async function loadStats(){
   const d=await api("/api/admin/stats?days=30");
@@ -157,17 +160,28 @@ async function saveAn(){
 }
 async function toggleAn(id,active){await api("/api/admin/announcements",{method:"POST",body:JSON.stringify({id,active:!!active})});loadAn()}
 
-async function genCodes(){
-  const d=await api("/api/admin/codes",{method:"POST",body:JSON.stringify({slug:$("cdSlug").value.trim()||"*",count:Number($("cdN").value)||1,note:$("cdNote").value.trim()})});
-  $("cdOut").textContent=d.codes.join("\n");loadCodes();toast("已生成 "+d.codes.length+" 个");
+const KG="https://api.peipeidev.cn";
+let KGT=localStorage.getItem("kg_tk")||"";
+function saveKgTk(){KGT=$("kgTk").value.trim();localStorage.setItem("kg_tk",KGT);toast("keygen 令牌已保存")}
+if(KGT)$("kgTk").value=KGT;
+const kgApi=async(p,o={})=>{const r=await fetch(KG+p,{...o,headers:{Authorization:"Bearer "+KGT,"Content-Type":"application/json",...(o.headers||{})}});return r.json()};
+async function genOne(){
+  if(!KGT)return toast("先填 keygen 访问令牌");
+  const mac=$("kgMac").value.trim();if(!mac)return toast("先填设备 MAC");
+  try{
+    const d=await kgApi("/api/generate",{method:"POST",body:JSON.stringify({mac})});
+    if(d.error)return $("kgOut").textContent="× "+d.error;
+    $("kgOut").textContent=d.result.code+"\n设备："+d.result.mac;
+    loadKg();
+  }catch(e){$("kgOut").textContent="× 网络错误 "+e.message}
 }
-async function loadCodes(){
-  const d=await api("/api/admin/codes?limit=200");
-  $("cdlist").innerHTML=d.codes.length?"<table><tr><th>码</th><th>绑定</th><th>状态</th><th>备注</th><th>生成时间</th><th>核销时间</th><th></th></tr>"+d.codes.map(c=>`<tr>
-    <td style="user-select:all;font-family:monospace;color:var(--pink)">${c.code}</td><td>${esc(c.slug)}</td>
-    <td><span class="tag ${c.status==="unused"?"u":c.status==="redeemed"?"r":"d"}">${{unused:"未使用",redeemed:"已核销",disabled:"已禁用"}[c.status]||c.status}</span></td>
-    <td class="dim">${esc(c.note||"")}</td><td class="dim">${ts(c.created_ts)}</td><td class="dim">${c.redeemed_ts?ts(c.redeemed_ts):"-"}</td>
-    </tr>`).join("")+"</table>":'<p class="dim">暂无激活码</p>';
+async function loadKg(){
+  if(!KGT){$("kgList").innerHTML='<p class="dim">填令牌后显示</p>';return}
+  try{
+    const d=await kgApi("/api/records?limit=50");
+    const rs=d.records||d.result||[];
+    $("kgList").innerHTML=rs.length?"<table><tr><th>设备 MAC</th><th>激活码</th><th>时间</th></tr>"+rs.map(r=>`<tr><td>${esc(r.mac)}</td><td style="user-select:all;font-family:monospace;color:var(--pink)">${esc(r.code)}</td><td class="dim">${esc(String(r.created_at||r.createdAt||""))}</td></tr>`).join("")+"</table>":'<p class="dim">暂无记录</p>';
+  }catch(e){$("kgList").innerHTML='<p class="dim">记录加载失败：'+esc(e.message)+'</p>'}
 }
 </script>
 </body>

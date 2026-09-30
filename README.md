@@ -105,9 +105,10 @@ git add -A && git commit -m "..." && git push   # push 后 1-2 分钟 Pages 生�
 发布新版本：把新 bin 放入 `fw/`，更新 `firmware.json` 的 `versions` 顶部条目、`notice`
 公告与 `version.txt`，推送即可。
 
-## 烧录站后台（api.peipeidev.cn，Cloudflare Worker + D1，零月费）
+## 烧录站后台（admin.peipeidev.cn，Cloudflare Worker + D1，零月费）
 
-- **管理后台**：https://api.peipeidev.cn/admin （ADMIN_TOKEN 登录，凭据见 `~/Desktop/AI-Accounts/api-keys.md`）
+- **管理后台**：https://admin.peipeidev.cn/admin （ADMIN_TOKEN 登录，凭据见 `~/Desktop/AI-Accounts/api-keys.md`；
+  「激活码」= 真实 keygen 一机一码体系（api.peipeidev.cn，MAC→绑定码，固件端离线验证））
 - 能力：刷写统计看板（30 天量/成功率/失败 Top）/ 用户反馈收件箱 / 公告编辑
   （烧录页实时显示）/ 激活码生成与核销（公开核销接口 `POST /api/redeem`，可绑定固件 slug）
 - 前端接入：烧录页每次刷写结束匿名上报统计（`tools/flash-telemetry/telemetry.js`，

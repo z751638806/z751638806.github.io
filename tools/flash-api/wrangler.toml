@@ -6,7 +6,7 @@ workers_dev = false
 account_id = "83799c18cdfa00512d34fdeb4a4d7de4"
 
 [[routes]]
-pattern = "api.peipeidev.cn"
+pattern = "admin.peipeidev.cn"
 custom_domain = true
 
 [[d1_databases]]

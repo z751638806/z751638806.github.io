@@ -2,7 +2,7 @@
 // - reportFlashResult：刷写结果匿名上报（由 log.js 的 recordResult 触发，仅生产域名）
 // - 公告条：轮询 /api/announcements 展示（复用现有 announce-bar DOM）
 // - 反馈面板：顶部按钮 + 弹窗（可附最近刷写摘要）
-const API = "https://api.peipeidev.cn";
+const API = "https://admin.peipeidev.cn";
 
 const enabled = () => location.hostname.endsWith("peipeidev.cn");
 
