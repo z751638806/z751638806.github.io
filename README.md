@@ -27,9 +27,10 @@ ESP 系官方固件发行规格在 `tools/update-flash.py` 的 `ESP_FIRMWARES`�
 ├── flash/                在线烧录工具（自包含子站，Chrome/Edge Web Serial）
 │   ├── index.html
 │   ├── css/              style.css（原工具样式）+ theme-home.css（线上主题层，构建生成）
-│   ├── js/               刷写协议与界面（terser 压缩版）
+│   ├── js/               刷写协议与界面（terser 压缩版；pickup.js 为付费固件取件模块）
 │   ├── manifests/        bw16.json / esp32c3.json（固件清单，相对路径 + 净化后）
-│   ├── firmware/         固件 bin（仅白名单固件 + _common 引导程序 + _sdk_backup 救砖镜像）
+│   ├── firmware/         固件 bin（仅白名单固件 + _common 引导程序 + _sdk_backup 救砖镜像；
+│   │                     付费固件 bin 不在此发布，经后台 R2 取件）
 │   ├── test/helpers/     mock-device.js（?mock=1 演练模式依赖）
 │   └── （不含 docs/ —— 协议文档只在本地项目，不随站点发布）
 ├── fw/                   设备端 OTA 通道（设备自主检查 firmware.json 下载升级）
@@ -37,7 +38,10 @@ ESP 系官方固件发行规格在 `tools/update-flash.py` 的 `ESP_FIRMWARES`�
 │   ├── version.txt       当前版本号
 │   └── fw_*.bin          各版本 OTA 镜像
 ├── tools/
-│   └── update-flash.py   一键构建：本地工具 → 线上净化版（见下文）
+│   ├── update-flash.py   一键构建：本地工具 → 线上净化版（见下文）
+│   ├── flash-pickup/     付费固件取件模块源码（构建时附加到 flash/js/）
+│   ├── flash-api/        烧录站后台 Worker（统计/反馈/公告/激活码/付费固件 R2 取件）
+│   └── esp-firmware/     ESP 系官方固件存证与 bin
 ├── .nojekyll             禁用 GitHub Pages 的 Jekyll（否则下划线目录 _common/_sdk_backup 会 404）
 └── CNAME                 peipeidev.cn
 ```
@@ -48,7 +52,8 @@ ESP 系官方固件发行规格在 `tools/update-flash.py` 的 `ESP_FIRMWARES`�
 Safari / iOS / 微信内置浏览器不支持，页面会显示提示徽章）。
 
 - **BW16**：自研协议 JS 实现，高速档 921600 自动回退、救砖恢复、扩展擦除
-- **ESP32-C3**：ESP Web Tools（unpkg CDN）；当前固件未上线，通道保留
+- **ESP 系（8266/32/S3/C3）**：esptool-js 本地打包（不依赖 CDN）直刷，官方固件清单见文首
+- **付费固件**：需取件码（选中后页面出现取件面板，见下文「付费固件取件」）
 - **无硬件演练**：`https://peipeidev.cn/flash/?mock=1` 跑完整模拟刷写流程
 - **用户视角净化**：默认界面与日志不含地址/指令/协议细节，协议文档不出网
 
@@ -93,8 +98,9 @@ git add -A && git commit -m "..." && git push   # push 后 1-2 分钟 Pages 生�
 
 | 配置 | 作用 |
 |------|------|
-| `PATCHES` | 源码文案补丁表：界面/日志净化、品牌化（标题、主页链接、设备卡片文案等 45 条） |
+| `PATCHES` | 源码文案补丁表：界面/日志净化、品牌化（标题、主页链接、设备卡片文案等） |
 | `FIRMWARE_WHITELIST` | 线上固件白名单（slug），未列出的固件清单与 bin 均不发布 |
+| `PAID_FIRMWARE` | 付费固件 slug（如 bw16-19）：保留清单卡片但 **bin 不发布**，烧录页经取件码换一次性链接（M6） |
 | `FIRMWARE_NAME_MAP` | 线上显示名映射（本地保留原名） |
 | `DEFAULT_CONNECT_NOTE` / `FIRMWARE_CONNECT_NOTES_OVERRIDE` | 选中固件后的连接提示（热点名/密码），默认统一文案、可按 slug 覆盖 |
 | `FORBIDDEN` | 自检黑名单：敏感串零命中才算构建成功 |
@@ -105,17 +111,49 @@ git add -A && git commit -m "..." && git push   # push 后 1-2 分钟 Pages 生�
 发布新版本：把新 bin 放入 `fw/`，更新 `firmware.json` 的 `versions` 顶部条目、`notice`
 公告与 `version.txt`，推送即可。
 
-## 烧录站后台（admin.peipeidev.cn，Cloudflare Worker + D1，零月费）
+## 烧录站后台（admin.peipeidev.cn，Cloudflare Worker + D1 + R2，零月费）
 
 - **管理后台**：https://admin.peipeidev.cn/admin （ADMIN_TOKEN 登录，凭据见 `~/Desktop/AI-Accounts/api-keys.md`；
   「激活码」= 真实 keygen 一机一码体系（api.peipeidev.cn，MAC→绑定码，固件端离线验证））
 - 能力：刷写统计看板（30 天量/成功率/失败 Top）/ 用户反馈收件箱 / 公告编辑
-  （烧录页实时显示）/ 激活码生成与核销（公开核销接口 `POST /api/redeem`，可绑定固件 slug）
+  （烧录页实时显示）/ 激活码生成与核销（公开核销接口 `POST /api/redeem`，可绑定固件 slug）/
+  **付费固件取件（M6）**：付费固件注册、bin 上传到 R2、取件码生成与禁用、取件记录
 - 前端接入：烧录页每次刷写结束匿名上报统计（`tools/flash-telemetry/telemetry.js`，
   仅生产域名生效）；顶栏「反馈」按钮直投后台
-- 源码：`tools/flash-api/`（Worker + admin 页面 + D1 schema）；部署
-  `cd tools/flash-api && HTTPS_PROXY=… npx wrangler deploy`
-- 待做批次：M6 付费固件防盗链（R2 + 签名取件）、M7 固件投稿审核
+- 源码：`tools/flash-api/`（Worker + admin 页面 + D1 schema + test/ 本地测试与开发服务器）；
+  部署 `cd tools/flash-api && HTTPS_PROXY=… npx wrangler deploy`
+- 待做批次：M7 固件投稿审核
+
+### 付费固件取件（M6）
+
+付费固件（当前 `bw16-19`）的 **bin 不发布在公开仓库**（构建时由 `PAID_FIRMWARE` 排除，
+知道地址也下载不到），改存后台 R2（`peipei-flash-pickup` bucket）。买家流程：
+
+1. 购买获得**取件码**（后台「付费固件」页签生成，绑定固件 slug，与设备端激活码相互独立）
+2. 烧录页选中付费固件 → 输入取件码 → `POST /api/pickup/begin` 校验并签发**一次性下载链接**
+   （10 分钟有效、单次核销、绑定浏览器指纹；核销后 24h 内可重试，应对刷写失败重下）
+3. 浏览器并行下载三镜像并做 SHA-256 校验 → 点「连接并刷写」正常刷写
+
+本地验证（无需 Cloudflare 账号）：
+
+```bash
+node tools/flash-api/test/worker.test.mjs      # Worker 逻辑测试（30 项断言）
+node tools/flash-api/test/devserver.mjs        # 本地后台 :8787，预置 bw16-19 + 测试取件码
+python3 -m http.server 8765                    # 烧录页 :8765
+# 联调地址：http://127.0.0.1:8765/flash/?api=http://127.0.0.1:8787
+# 无硬件演练：http://127.0.0.1:8765/flash/?mock=1（付费固件用模拟数据走全流程）
+```
+
+**上线顺序（重要）**：后台先上、站点后上，顺序反了付费固件会暂时刷不了——
+
+```bash
+cd tools/flash-api
+HTTPS_PROXY=… npx wrangler r2 bucket create peipei-flash-pickup   # ① 建 R2 bucket（仅一次）
+HTTPS_PROXY=… npx wrangler d1 execute peipei-flash-db --remote --file=schema.sql  # ② 建表
+HTTPS_PROXY=… npx wrangler deploy                                  # ③ 部署 Worker
+# ④ 后台 → 付费固件：注册 bw16-19 → 上传三个 bin → 生成取件码
+# ⑤ 回到仓库根目录重跑 python3 tools/update-flash.py（bin 从站点移除）→ commit → push
+```
 
 ## 主页内容更新
 

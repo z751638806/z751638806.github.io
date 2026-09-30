@@ -40,7 +40,7 @@ button:hover{border-color:var(--pink)}
 <body>
 <div id="login" class="card">
   <h1>烧录站管理后台</h1>
-  <p class="dim">peipeidev.cn · 在线烧录（统计 / 反馈 / 公告 / 激活码）</p>
+  <p class="dim">peipeidev.cn · 在线烧录（统计 / 反馈 / 公告 / 激活码 / 付费固件）</p>
   <div class="row"><input id="tk" class="fw" type="password" placeholder="ADMIN_TOKEN" onkeydown="if(event.key==='Enter')login()"></div>
   <div class="row"><button class="pri fw" onclick="login()">进入</button></div>
   <p class="dim" id="lerr"></p>
@@ -53,6 +53,7 @@ button:hover{border-color:var(--pink)}
     <button class="tab" data-t="fb" onclick="go('fb')">💬 反馈</button>
     <button class="tab" data-t="an" onclick="go('an')">📢 公告</button>
     <button class="tab" data-t="code" onclick="go('code')">🔑 激活码</button>
+    <button class="tab" data-t="paid" onclick="go('paid')">📦 付费固件</button>
   </div>
 
   <div id="v-stats">
@@ -95,6 +96,51 @@ button:hover{border-color:var(--pink)}
     </div>
     <div class="card"><b>生成记录（keygen D1）</b><div id="kgList" style="margin-top:8px"></div></div>
   </div>
+
+  <div id="v-paid" hidden>
+    <div class="card">
+      <b>付费固件注册（bin 存 R2，不在公开仓库发布）</b>
+      <p class="dim">slug 需与站点清单一致（如 bw16-19）。注册后用下方「上传 bin」回填文件清单；上传成功后烧录页输入取件码即可取件刷写。</p>
+      <div class="row">
+        <input id="pdSlug" placeholder="slug（如 bw16-19）" style="width:160px">
+        <input id="pdName" placeholder="显示名（如 WiFi安全测试固件-远程版「20261001」）" style="min-width:260px">
+        <select id="pdDev"><option>bw16</option><option>esp8266</option><option>esp32</option><option>esp32s3</option><option>esp32c3</option></select>
+        <button class="pri" onclick="savePaid()">保存注册</button>
+      </div>
+    </div>
+    <div class="card">
+      <b>上传 bin 到 R2</b>
+      <div class="row">
+        <select id="pdUpSlug" style="min-width:160px"></select>
+        <input id="pdUpFile" type="file" accept=".bin" multiple>
+        <button class="pri" onclick="uploadPaid()">上传</button>
+      </div>
+      <p class="dim" id="pdUpOut" style="white-space:pre-wrap"></p>
+    </div>
+    <div class="card">
+      <b>固件注册表</b>
+      <div id="pdList" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <b>取件码（控制 bin 下载，与设备端激活码相互独立）</b>
+      <p class="dim">买家在烧录页输入取件码换取一次性固件下载链接；取件码核销后 24h 内可重试（应对刷写失败重下）。设备端运行激活仍走 keygen 激活码。</p>
+      <div class="row">
+        <select id="pdCodeSlug" style="min-width:160px"><option value="*">*（通用）</option></select>
+        <input id="pdCodeCount" type="number" value="1" min="1" max="100" style="width:70px">
+        <input id="pdCodeNote" placeholder="备注（买家/订单）" style="min-width:180px">
+        <button class="pri" onclick="genPickupCodes()">生成取件码</button>
+      </div>
+      <div class="dim" id="pdCodeOut" style="white-space:pre-wrap;user-select:all;color:var(--pink);font-size:15px"></div>
+    </div>
+    <div class="card">
+      <b>取件码记录</b>
+      <div id="pdCodeList" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <b>最近取件（一次性链接核销记录）</b>
+      <div id="pdGrantList" style="margin-top:8px"></div>
+    </div>
+  </div>
 </main>
 <div id="toast"></div>
 <script>
@@ -109,7 +155,7 @@ async function login(){TK=$("tk").value.trim();if(!TK)return;try{await api("/api
 function logout(){TK="";localStorage.removeItem("admin_tk");location.reload()}
 if(TK){(async()=>{try{await api("/api/admin/stats?days=1");$("login").hidden=true;$("main").hidden=false;go("stats")}catch{}})()}
 
-function go(t){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("sel",b.dataset.t===t));["stats","fb","an","code"].forEach(v=>$("v-"+v).hidden=v!==t);({stats:loadStats,fb:loadFb,an:loadAn,code:loadKg})[t]()}
+function go(t){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("sel",b.dataset.t===t));["stats","fb","an","code","paid"].forEach(v=>$("v-"+v).hidden=v!==t);({stats:loadStats,fb:loadFb,an:loadAn,code:loadKg,paid:loadPaid})[t]()}
 
 async function loadStats(){
   const d=await api("/api/admin/stats?days=30");
@@ -183,6 +229,57 @@ async function loadKg(){
     $("kgList").innerHTML=rs.length?"<table><tr><th>设备 MAC</th><th>激活码</th><th>时间</th></tr>"+rs.map(r=>`<tr><td>${esc(r.mac)}</td><td style="user-select:all;font-family:monospace;color:var(--pink)">${esc(r.code)}</td><td class="dim">${esc(String(r.created_at||r.createdAt||""))}</td></tr>`).join("")+"</table>":'<p class="dim">暂无记录</p>';
   }catch(e){$("kgList").innerHTML='<p class="dim">记录加载失败：'+esc(e.message)+'</p>'}
 }
+
+/* ---------- 付费固件（M6） ---------- */
+const fmtMB=n=>n>=1048576?(n/1048576).toFixed(1)+" MB":Math.round(n/1024)+" KB";
+async function loadPaid(){
+  const [d,cd]=await Promise.all([api("/api/admin/paid"),api("/api/admin/codes?limit=50").catch(()=>({codes:[]}))]);
+  const list=d.paid||[];
+  $("pdUpSlug").innerHTML=list.length?list.map(p=>`<option>${esc(p.slug)}</option>`).join(""):'<option value="">先注册 slug</option>';
+  $("pdCodeSlug").innerHTML='<option value="*">*（通用）</option>'+list.map(p=>`<option>${esc(p.slug)}</option>`).join("");
+  $("pdList").innerHTML=list.length?"<table><tr><th>slug</th><th>设备</th><th>文件</th><th>状态</th><th>更新</th><th></th></tr>"+list.map(p=>{
+    const fs=Object.entries(JSON.parse(p.files||"{}"));
+    return `<tr><td style="font-family:monospace">${esc(p.slug)}</td><td>${esc(p.device)}</td><td>${fs.length?fs.map(([f,m])=>`${esc(f)}（${fmtMB(m.size)}）`).join("<br>"):'<span class="dim">未上传</span>'}</td><td><span class="tag ${p.active?"u":"r"}">${p.active?"上线":"下线"}</span></td><td class="dim">${ts(p.updated_ts)}</td><td><button style="padding:2px 10px;font-size:12px" onclick="togglePaid('${esc(p.slug)}',${p.active?0:1})">${p.active?"下线":"上线"}</button></td></tr>`;
+  }).join("")+"</table>":'<p class="dim">暂无注册，先在上方保存一个 slug</p>';
+  $("pdCodeList").innerHTML=renderCodeTable(cd.codes);
+  $("pdGrantList").innerHTML=(d.grants||[]).length?"<table><tr><th>时间</th><th>slug</th><th>文件</th><th>状态</th><th>指纹</th></tr>"+d.grants.map(g=>{
+    const st=g.used_ts?'<span class="tag r">已核销</span>':(Date.now()>g.exp_ts?'<span class="tag d">已过期</span>':'<span class="tag u">有效</span>');
+    return `<tr><td class="dim">${ts(g.created_ts)}</td><td style="font-family:monospace">${esc(g.slug)}</td><td>${esc(g.file)}</td><td>${st}</td><td class="dim">${esc(String(g.fp||"").slice(0,8))||"—"}</td></tr>`;
+  }).join("")+"</table>":'<p class="dim">暂无取件记录</p>';
+}
+function renderCodeTable(codes){
+  const list=codes||[];
+  return list.length?"<table><tr><th>时间</th><th>取件码</th><th>绑定 slug</th><th>状态</th><th>备注</th><th></th></tr>"+list.map(c=>{
+    const cls=c.status==="unused"?"u":(c.status==="redeemed"?"r":"d");
+    const label=c.status==="unused"?"未用":(c.status==="redeemed"?"已核销":"禁用");
+    return `<tr><td class="dim">${ts(c.created_ts)}</td><td style="user-select:all;font-family:monospace;color:var(--pink)">${esc(c.code)}</td><td style="font-family:monospace">${esc(c.slug)}</td><td><span class="tag ${cls}">${label}</span></td><td class="dim">${esc(c.note||"")}</td><td>${c.status!=="disabled"?`<button style="padding:2px 10px;font-size:12px" onclick="disableCode(${c.id})">禁用</button>`:""}</td></tr>`;
+  }).join("")+"</table>":'<p class="dim">暂无取件码</p>';
+}
+async function savePaid(){
+  const slug=$("pdSlug").value.trim();if(!slug)return toast("先填 slug");
+  await api("/api/admin/paid",{method:"POST",body:JSON.stringify({slug,name:$("pdName").value.trim(),device:$("pdDev").value,active:true})});
+  $("pdSlug").value="";$("pdName").value="";loadPaid();toast("已注册");
+}
+async function togglePaid(slug,active){await api("/api/admin/paid",{method:"POST",body:JSON.stringify({slug,active:!!active})});loadPaid()}
+async function uploadPaid(){
+  const slug=$("pdUpSlug").value;if(!slug)return toast("先注册 slug");
+  const fs=$("pdUpFile").files;if(!fs.length)return toast("选择要上传的 .bin");
+  const out=[];
+  for(const f of fs){
+    try{
+      const r=await fetch(`/api/admin/paid/upload/${encodeURIComponent(slug)}/${encodeURIComponent(f.name)}`,{method:"PUT",headers:{Authorization:"Bearer "+TK},body:f});
+      const d=await r.json();
+      out.push(r.ok?`✓ ${f.name}（${fmtMB(d.size)}）sha256=${d.sha256.slice(0,12)}…`:`× ${f.name}：${d.error||r.status}`);
+    }catch(e){out.push(`× ${f.name}：${e.message}`)}
+  }
+  $("pdUpOut").textContent=out.join("\n");loadPaid();
+}
+async function genPickupCodes(){
+  const body={slug:$("pdCodeSlug").value,count:Number($("pdCodeCount").value)||1,note:$("pdCodeNote").value.trim()};
+  const d=await api("/api/admin/codes",{method:"POST",body:JSON.stringify(body)});
+  $("pdCodeOut").textContent=(d.codes||[]).join("\n");loadPaid();
+}
+async function disableCode(id){await api("/api/admin/codes/disable",{method:"POST",body:JSON.stringify({id})});loadPaid()}
 </script>
 </body>
 </html>

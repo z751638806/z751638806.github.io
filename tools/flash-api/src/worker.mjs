@@ -1,9 +1,13 @@
-// peipei-flash-api — peipeidev.cn 在线烧录后台 API（Cloudflare Worker + D1）
+// peipei-flash-api — peipeidev.cn 在线烧录后台 API（Cloudflare Worker + D1 + R2）
 // 能力：刷写统计 / 用户反馈 / 公告 / 激活码（M5）/ 付费固件签名取件（M6）
 // 部署：cd tools/flash-api && HTTPS_PROXY=… npx wrangler deploy
 // 管理：Header Authorization: Bearer <ADMIN_TOKEN secret>
+// M6：bin 实体存 R2（PICKUP 绑定）；/api/pickup/begin 换一次性取件链接（10 分钟、单次核销、指纹绑定）
 
 import { adminPage } from "./admin.mjs";
+
+const PICKUP_TTL_MS = 10 * 60 * 1000;      // 取件链接有效期
+const PICKUP_RETRY_MS = 24 * 60 * 60 * 1000; // 已核销取件码的重试窗口（刷写失败重下）
 
 export default {
   async fetch(request, env) {
@@ -11,12 +15,12 @@ export default {
     const path = url.pathname;
     const cors = {
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+      "Access-Control-Allow-Methods": "GET,POST,PUT,OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type,Authorization",
       "Access-Control-Max-Age": "86400",
     };
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
-    if (request.method !== "GET" && request.method !== "POST")
+    if (request.method !== "GET" && request.method !== "POST" && request.method !== "PUT")
       return json({ error: "method" }, 405, cors);
 
     try {
@@ -27,6 +31,9 @@ export default {
       if (path === "/api/event" && request.method === "POST") return await reportEvent(request, env, cors);
       if (path === "/api/feedback" && request.method === "POST") return await postFeedback(request, env, cors);
       if (path === "/api/announcements") return await listAnnouncements(env, cors);
+      // 公开：付费固件取件——M6
+      if (path === "/api/pickup/begin" && request.method === "POST") return await pickupBegin(request, env, cors);
+      if (path.startsWith("/pickup/") && request.method === "GET") return await pickupFetch(path.slice("/pickup/".length), url, env, cors);
 
       // ---- 管理接口（Bearer ADMIN_TOKEN）----
       if (path.startsWith("/api/admin/")) {
@@ -38,6 +45,16 @@ export default {
         if (path === "/api/admin/announcements" && request.method === "POST") return await upsertAnnouncement(request, env, cors);
         if (path === "/api/admin/codes" && request.method === "POST") return await genCodes(request, env, cors);
         if (path === "/api/admin/codes" && request.method === "GET") return await listCodes(env, url, cors);
+        if (path === "/api/admin/codes/disable" && request.method === "POST") return await disableCode(request, env, cors);
+        if (path === "/api/admin/paid" && request.method === "GET") return await listPaid(env, cors);
+        if (path === "/api/admin/paid" && request.method === "POST") return await upsertPaid(request, env, cors);
+        if (path.startsWith("/api/admin/paid/upload/") && request.method === "PUT") {
+          const rest = path.slice("/api/admin/paid/upload/".length);   // <slug>/<file>
+          const slash = rest.indexOf("/");
+          if (slash > 0 && slash < rest.length - 1)
+            return await uploadPaidBin(decodeURIComponent(rest.slice(0, slash)), decodeURIComponent(rest.slice(slash + 1)), request, env, cors);
+          return json({ error: "bad_request" }, 400, cors);
+        }
         return json({ error: "not_found" }, 404, cors);
       }
       return json({ error: "not_found" }, 404, cors);
@@ -183,4 +200,125 @@ async function listCodes(env, url, cors) {
     "SELECT * FROM codes ORDER BY id DESC LIMIT ?"
   ).bind(limit).all();
   return json({ codes: results || [] }, 200, cors);
+}
+
+async function disableCode(request, env, cors) {
+  const b = await body(request);
+  if (!b.id && !b.code) return json({ error: "bad_request" }, 400, cors);
+  if (b.id) await env.DB.prepare("UPDATE codes SET status='disabled' WHERE id=?").bind(b.id).run();
+  else await env.DB.prepare("UPDATE codes SET status='disabled' WHERE code=?").bind(b.code).run();
+  return json({ ok: true }, 200, cors);
+}
+
+/* ---------- M6：付费固件（R2 取件） ---------- */
+function randomHex(nBytes) {
+  const a = new Uint8Array(nBytes);
+  crypto.getRandomValues(a);
+  return [...a].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+async function sha256Hex(buf) {
+  const d = await crypto.subtle.digest("SHA-256", buf);
+  return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function listPaid(env, cors) {
+  const { results: paid } = await env.DB.prepare("SELECT * FROM paid_fw ORDER BY slug").all();
+  const { results: grants } = await env.DB.prepare(
+    "SELECT jti, slug, file, code_id, fp, created_ts, exp_ts, used_ts FROM pickup_grants ORDER BY created_ts DESC LIMIT 50"
+  ).all();
+  return json({ paid: paid || [], grants: grants || [] }, 200, cors);
+}
+
+async function upsertPaid(request, env, cors) {
+  const b = await body(request);
+  const slug = clean(b.slug, 60);
+  if (!slug) return json({ error: "bad_request" }, 400, cors);
+  await env.DB.prepare(
+    `INSERT INTO paid_fw (slug, device, name, active, updated_ts) VALUES (?,?,?,?,?)
+     ON CONFLICT(slug) DO UPDATE SET device=excluded.device, name=excluded.name,
+       active=excluded.active, updated_ts=excluded.updated_ts`
+  ).bind(slug, clean(b.device, 20) || "bw16", clean(b.name, 120), b.active === false ? 0 : 1, Date.now()).run();
+  return json({ ok: true, slug }, 200, cors);
+}
+
+// 管理端上传 bin 到 R2（PUT 原始字节流），并回填注册表 size/sha256
+async function uploadPaidBin(slug, file, request, env, cors) {
+  if (!/^[a-z0-9][a-z0-9._-]{0,58}$/i.test(slug) || !/^[A-Za-z0-9._-]{1,80}$/.test(file))
+    return json({ error: "bad_name" }, 400, cors);
+  const reg = await env.DB.prepare("SELECT * FROM paid_fw WHERE slug=?").bind(slug).first();
+  if (!reg) return json({ error: "slug_not_registered" }, 404, cors);
+  const buf = new Uint8Array(await request.arrayBuffer());
+  if (!buf.length) return json({ error: "empty_body" }, 400, cors);
+  await env.PICKUP.put(`${slug}/${file}`, buf);
+  const files = JSON.parse(reg.files || "{}");
+  files[file] = { size: buf.length, sha256: await sha256Hex(buf) };
+  await env.DB.prepare("UPDATE paid_fw SET files=?, updated_ts=? WHERE slug=?")
+    .bind(JSON.stringify(files), Date.now(), slug).run();
+  return json({ ok: true, slug, file, size: buf.length, sha256: files[file].sha256 }, 200, cors);
+}
+
+// 公开：取件码 + slug → 一次性取件链接（每文件一条）
+async function pickupBegin(request, env, cors) {
+  const b = await body(request);
+  const code = clean(b.code, 32);
+  const slug = clean(b.slug, 60);
+  const fp = clean(b.fp, 128);
+  if (!code || !slug) return json({ error: "bad_request" }, 400, cors);
+
+  const paid = await env.DB.prepare("SELECT * FROM paid_fw WHERE slug=? AND active=1").bind(slug).first();
+  if (!paid) return json({ ok: false, error: "not_available" }, 200, cors);
+  const files = JSON.parse(paid.files || "{}");
+  const names = Object.keys(files);
+  if (!names.length) return json({ ok: false, error: "not_uploaded" }, 200, cors);
+
+  const row = await env.DB.prepare("SELECT * FROM codes WHERE code=?").bind(code).first();
+  if (!row || row.status === "disabled") return json({ ok: false, error: "invalid_code" }, 200, cors);
+  if (row.slug !== "*" && row.slug !== slug) return json({ ok: false, error: "slug_mismatch" }, 200, cors);
+  if (row.status === "redeemed") {
+    const withinRetry = row.redeemed_ts && Date.now() - row.redeemed_ts < PICKUP_RETRY_MS;
+    if (!withinRetry) return json({ ok: false, error: "already_redeemed", redeemedTs: row.redeemed_ts }, 200, cors);
+  } else {
+    const r = await env.DB.prepare(
+      "UPDATE codes SET status='redeemed', redeemed_ts=? WHERE id=? AND status='unused'"
+    ).bind(Date.now(), row.id).run();
+    if (!r.meta.changes) return json({ ok: false, error: "already_redeemed" }, 200, cors);
+  }
+
+  const expTs = Date.now() + PICKUP_TTL_MS;
+  const out = [];
+  for (const name of names) {
+    const jti = randomHex(16);
+    await env.DB.prepare(
+      "INSERT INTO pickup_grants (jti, slug, file, code_id, fp, created_ts, exp_ts) VALUES (?,?,?,?,?,?,?)"
+    ).bind(jti, slug, name, row.id, fp, Date.now(), expTs).run();
+    out.push({ file: name, url: `/pickup/${jti}`, size: files[name].size, sha256: files[name].sha256 });
+  }
+  return json({ ok: true, slug, name: paid.name, files: out, expTs }, 200, cors);
+}
+
+// 公开：一次性核销取件链接，从 R2 回源 bin
+async function pickupFetch(jti, url, env, cors) {
+  if (!/^[0-9a-f]{32}$/.test(jti)) return json({ error: "bad_request" }, 400, cors);
+  const g = await env.DB.prepare("SELECT * FROM pickup_grants WHERE jti=?").bind(jti).first();
+  if (!g) return json({ error: "not_found" }, 404, cors);
+  if (g.used_ts) return json({ error: "already_used" }, 403, cors);
+  if (Date.now() > g.exp_ts) return json({ error: "expired" }, 403, cors);
+  if (g.fp) {
+    const fp = clean(url.searchParams.get("fp") || "", 128);
+    if (fp !== g.fp) return json({ error: "fp_mismatch" }, 403, cors);
+  }
+  // 先回源后核销：R2 缺件不烧授权；并发取件由条件更新保证只成功一次
+  const obj = await env.PICKUP.get(`${g.slug}/${g.file}`);
+  if (!obj) return json({ error: "object_missing" }, 404, cors);
+  const r = await env.DB.prepare("UPDATE pickup_grants SET used_ts=? WHERE jti=? AND used_ts IS NULL")
+    .bind(Date.now(), jti).run();
+  if (!r.meta.changes) return json({ error: "already_used" }, 403, cors);
+  return new Response(obj.body, {
+    status: 200,
+    headers: {
+      "Content-Type": "application/octet-stream",
+      "Cache-Control": "no-store",
+      ...cors,
+    },
+  });
 }

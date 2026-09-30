@@ -120,8 +120,9 @@ PATCHES = {
          "  const list = (state.manifests[state.device]?.firmware ?? []).filter((f) => !f.hideInList);", 1),
         ("  $('firmware-count').textContent = `（${list.length} 个）`;\n  section.hidden = list.length === 0;",
          "  $('firmware-count').textContent = `（${list.length} 个）`;\n  if (state.device === 'esp8266' && list.length === 0) {\n    section.hidden = false;\n    grid.innerHTML = '<div class=\"alert alert-info\" style=\"grid-column:1/-1;margin:0\">ESP8266 官方固件即将上线。现在就可以在「自定义固件」页刷写自己的固件（多 bin + 烧录地址编辑，实验性）。<br><button id=\"btn-go-custom\" class=\"btn btn-primary\" type=\"button\" style=\"margin-top:10px\">前往自定义固件刷写 →</button></div>';\n    document.getElementById('btn-go-custom').addEventListener('click', () => { document.getElementById('nav-custom').click(); document.querySelector('[data-cdev=\"esp8266\"]').click(); });\n  } else {\n    section.hidden = list.length === 0;\n  }", 1),
+        # 连接提示注入 + M6 取件面板显隐钩子（pickup.js 由 tools/flash-pickup/ 附加）
         ("  unmountEwtButton();\n  note.hidden = true;\n  if (!fw) {",
-         "  unmountEwtButton();\n  note.hidden = true;\n  if (fw && fw.connectNote) {\n    note.textContent = fw.connectNote;\n    note.hidden = false;\n  }\n  if (!fw) {", 1),
+         "  unmountEwtButton();\n  note.hidden = true;\n  if (fw && fw.connectNote) {\n    note.textContent = fw.connectNote;\n    note.hidden = false;\n  }\n  try { import('./pickup.js').then((m) => m.onFirmwareSelected(fw)).catch(() => {}); } catch {}\n  if (!fw) {", 1),
         ("'已关闭高速档（全程 115200，约慢 3 倍）'",
          "'已使用标准速度（约慢 3 倍）'", 1),
         ("  $('flash-target-meta').textContent =\n    `${fw.device === 'bw16' ? 'BW16' : 'ESP32-C3'} · ${fmtBytes(sizes)} · 来源 ${fw.sourcePath}`;",
@@ -145,6 +146,7 @@ PATCHES = {
         # M7：初始化自定义固件模块（custom.js 由 tools/flash-custom/ 附加，随站点发布）
         ("  await initRescue(bw16, flasherLog);\n}",
          "  await initRescue(bw16, flasherLog);\n  try {\n    const custom = await import('./custom.js');\n    await custom.initCustom(state.manifests, flasherLog);\n  } catch (e) {\n    flasherLog.append('自定义固件模块加载失败：' + e.message, 'err');\n  }\n\n  try {\n    const { initTelemetry } = await import('./telemetry.js');\n    initTelemetry(() => lastFlashSummary);\n  } catch { /* 遥测失败不影响使用 */ }\n}", 1),
+        # M6：付费固件选中/切换 → 取件面板显隐（pickup.js 由 tools/flash-pickup/ 附加）
         # M7 修复：switchView 同步第三个视图/页签，否则从「自定义固件」切回时旧页签保持高亮且视图叠加
         ("  $('view-rescue').hidden = view !== 'rescue';\n  $('nav-flash').classList.toggle('selected', view === 'flash');\n  $('nav-rescue').classList.toggle('selected', view === 'rescue');",
          "  $('view-rescue').hidden = view !== 'rescue';\n  $('view-custom').hidden = view !== 'custom';\n  $('nav-flash').classList.toggle('selected', view === 'flash');\n  $('nav-rescue').classList.toggle('selected', view === 'rescue');\n  $('nav-custom').classList.toggle('selected', view === 'custom');", 1),
@@ -154,6 +156,12 @@ PATCHES = {
          "  const fw = state.firmware;\n  if (fw.device !== 'bw16') {\n    const esp = await import('./esp-flash.js');\n    $('log-section').hidden = false;\n    await esp.flashEspFirmware(fw, flasherLog);\n    return;\n  }", 1),
         ("  const [bw16, esp32c3] = await Promise.all([\n    backendLoadCatalog(),\n    fetchJson('manifests/esp32c3.json'),\n  ]);\n  state.manifests.bw16 = bw16;\n  state.manifests.esp32c3 = esp32c3;",
          "  const [bw16, esp32c3, esp8266, esp32, esp32s3] = await Promise.all([\n    backendLoadCatalog(),\n    fetchJson('manifests/esp32c3.json'),\n    fetchJson('manifests/esp8266.json'),\n    fetchJson('manifests/esp32.json'),\n    fetchJson('manifests/esp32s3.json'),\n  ]);\n  state.manifests.bw16 = bw16;\n  state.manifests.esp32c3 = esp32c3;\n  state.manifests.esp8266 = esp8266;\n  state.manifests.esp32 = esp32;\n  state.manifests.esp32s3 = esp32s3;", 1),
+        # M6：付费固件取件闸门 —— 未取件不进串口流程（先弹端口选择器会浪费一次用户手势）
+        ("  state.busy = true;\n  setBusy(true);\n  hideResult();",
+         "  state.busy = true;\n  setBusy(true);\n  hideResult();\n  if (fw.paid) {\n    const pk = await import('./pickup.js');\n    if (!(await pk.ensurePaidReady(fw, flasherLog))) {\n      state.busy = false;\n      setBusy(false);\n      return;\n    }\n  }", 1),
+        # M6：付费固件三镜像改走后台一次性取件（pickup.js），flashloader 仍在站点发布（_common）
+        ("  const [fl, km0, km4, image2] = await Promise.all([\n    fetchBinary(flashloader.path),\n    fetchBinary(pick('km0_boot_all.bin').path),\n    fetchBinary(pick('km4_boot_all.bin').path),\n    fetchBinary(pick('km0_km4_image2.bin').path),\n  ]);",
+         "  let fl, km0, km4, image2;\n  if (fw.paid) {\n    const pk = await import('./pickup.js');\n    ({ flashloader: fl, km0, km4, image2 } = await pk.pickupPaidImages(fw, flashloader, fetchBinary, flasherLog));\n  } else {\n    [fl, km0, km4, image2] = await Promise.all([\n      fetchBinary(flashloader.path),\n      fetchBinary(pick('km0_boot_all.bin').path),\n      fetchBinary(pick('km4_boot_all.bin').path),\n      fetchBinary(pick('km0_km4_image2.bin').path),\n    ]);\n  }", 1),
     ],
     "js/log.js": [
         # M2：刷写结果匿名上报（仅生产域名；telemetry 模块随构建附加）
@@ -207,6 +215,13 @@ FIRMWARE_WHITELIST = {
     "esp32s3": ["esp32s3-bruce-devkit", "esp32s3-ghost-cardputeradv"],
 }
 
+# M6 付费固件：这些 slug 保留清单卡片（含 paid 标记）但 bin 不发布到公开仓库，
+# 烧录页经后台取件码换取一次性链接下载（tools/flash-api + R2，见 tools/flash-pickup/pickup.js）。
+# bin 上传到 R2：管理后台 admin.peipeidev.cn → 付费固件 → 上传。当前仅支持 BW16 三镜像固件。
+PAID_FIRMWARE = {
+    "bw16": ["bw16-19"],
+}
+
 # 线上显示名映射（本地项目保留原名；slug 不变，只改清单里的 name 字段）
 FIRMWARE_NAME_MAP = {
     "断网": "WiFi安全测试固件「2026」",
@@ -223,7 +238,7 @@ FIRMWARE_CONNECT_NOTES_OVERRIDE = {
     "esp32c3-1": "刷写后热点：ManagementAP（密码 mgmtadmin）· 管理后台 http://192.168.4.1",
     "esp32c3-2": "设备端操作（配套 Flipper 蓝牙工具使用）",
     "bw16-18": "刷写后热点：RTL8720dn-Deauther（密码 0123456789）· 管理后台 http://192.168.1.1 · 支持双频 2.4G/5G",
-    "bw16-19": "刷写后热点：CMCC（密码 12345678.，末尾为英文句点）· 此固件需要激活码，请联系开发者购买",
+    "bw16-19": "刷写后热点：CMCC（密码 12345678.，末尾为英文句点）· 此固件需激活码：在上方输入取件码完成验证后即可刷写",
 }
 
 # 署名表（按 slug 注入清单；ESP 系固件在 ESP_FIRMWARES 内自带）
@@ -501,6 +516,7 @@ def sanitize_manifest(path: Path) -> None:
     if allow is not None and "firmware" in d:
         before = len(d["firmware"])
         d["firmware"] = [f for f in d["firmware"] if f.get("slug") in allow]
+        paid_slugs = set(PAID_FIRMWARE.get(d.get("device", ""), []))
         # 线上专属连接提示：默认统一文案，override 表可按 slug 单独覆盖
         for f in d["firmware"]:
             if f.get("slug") == "bw16-at":
@@ -511,6 +527,13 @@ def sanitize_manifest(path: Path) -> None:
                 f["connectNote"] = note
             if f.get("slug") in ATTRIBUTION_OVERRIDE:
                 f["attribution"] = ATTRIBUTION_OVERRIDE[f["slug"]]
+            if f.get("slug") in paid_slugs:
+                # M6 付费固件：保留卡片与元数据，但移除下载路径（bin 不发布，烧录页经后台取件）
+                f["paid"] = True
+                files = f.get("files")
+                for meta in (files.values() if isinstance(files, dict) else (files or [])):
+                    if isinstance(meta, dict):
+                        meta.pop("path", None)
         print(f"  · {path.name} 固件 {before} → {len(d['firmware'])}（白名单）")
     path.write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
 
@@ -535,13 +558,15 @@ def main() -> None:
         for d in ["css", "manifests", "test/helpers"]:
             shutil.copytree(work / d, dist / d)
         (dist / "css" / "theme-home.css").write_text(THEME_CSS, encoding="utf-8")
-        # 固件目录按白名单选择：_common/_sdk_backup 公共件 + 白名单 slug（未上线的 bin 不发布）
+        # 固件目录按白名单选择：_common/_sdk_backup 公共件 + 白名单 slug（未上线的 bin 不发布；
+        # M6 付费固件的 bin 也不发布——取件走后台 R2）
         fw_src = work / "firmware"
         fw_dst = dist / "firmware"
         fw_dst.mkdir(parents=True)
+        paid_slugs = {s for slugs in PAID_FIRMWARE.values() for s in slugs}
         allowed = {"_common", "_sdk_backup"}
         for device, slugs in FIRMWARE_WHITELIST.items():
-            allowed.update(slugs)
+            allowed.update(s for s in slugs if s not in paid_slugs)
         for entry in fw_src.iterdir():
             if entry.is_dir() and entry.name in allowed:
                 shutil.copytree(entry, fw_dst / entry.name)
@@ -563,6 +588,10 @@ def main() -> None:
         if (tel_dir / "telemetry.js").exists():
             shutil.copy(tel_dir / "telemetry.js", dist / "js" / "telemetry.js")
             print("  ✓ 遥测模块已附加（telemetry.js）")
+        pk_dir = SITE / "tools" / "flash-pickup"
+        if (pk_dir / "pickup.js").exists():
+            shutil.copy(pk_dir / "pickup.js", dist / "js" / "pickup.js")
+            print("  ✓ 付费固件取件模块已附加（pickup.js）")
         build_esp_manifests(dist)
         esp_dir = SITE / "tools" / "flash-esp"
         if (esp_dir / "esp-flash.js").exists():
@@ -592,6 +621,23 @@ def main() -> None:
     extra = actual - allowed_dirs
     if extra:
         sys.exit(f"✗ 自检失败：firmware/ 存在白名单外的目录：{sorted(extra)}")
+    # M6 自检：付费固件 bin 不得发布；清单条目必须带 paid 标记且无下载路径
+    for device, slugs in PAID_FIRMWARE.items():
+        for s in slugs:
+            if (OUT / "firmware" / s).exists():
+                sys.exit(f"✗ 自检失败：付费固件 {s} 的 bin 目录不得发布到站点")
+            mf = OUT / "manifests" / (device + ".json")
+            ent = next((x for x in json.loads(mf.read_text(encoding="utf-8")).get("firmware", []) if x.get("slug") == s), None)
+            if not (ent and ent.get("paid")):
+                sys.exit(f"✗ 自检失败：付费固件 {s} 清单缺少 paid 标记")
+
+            def _has_path(o):
+                if isinstance(o, dict):
+                    return "path" in o or any(_has_path(v) for v in o.values())
+                return isinstance(o, list) and any(_has_path(v) for v in o)
+
+            if _has_path(ent.get("files")):
+                sys.exit(f"✗ 自检失败：付费固件 {s} 清单仍残留下载路径")
     size = sum(p.stat().st_size for p in OUT.rglob("*") if p.is_file())
     print(f"③ 自检通过（{len(FORBIDDEN)} 项敏感串 + 固件白名单 {sorted(allowed_dirs)}）")
     print(f"✓ 上线产物就绪：{OUT}（{size / 1e6:.1f} MB）")
