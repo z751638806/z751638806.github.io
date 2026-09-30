@@ -1,0 +1,19 @@
+name = "peipei-flash-api"
+main = "src/worker.mjs"
+compatibility_date = "2025-09-01"
+workers_dev = false
+
+account_id = "83799c18cdfa00512d34fdeb4a4d7de4"
+
+[[routes]]
+pattern = "api.peipeidev.cn"
+custom_domain = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "peipei-flash-db"
+database_id = "134defac-2a1c-4424-b244-f1996f0ece5b"
+
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]

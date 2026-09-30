@@ -144,7 +144,7 @@ PATCHES = {
          "'当前是 IDE 内嵌预览窗（Electron），弹不出系统串口列表。请复制当前页面地址，到独立的 Chrome / Edge 标签页打开后再刷写。'", 1),
         # M7：初始化自定义固件模块（custom.js 由 tools/flash-custom/ 附加，随站点发布）
         ("  await initRescue(bw16, flasherLog);\n}",
-         "  await initRescue(bw16, flasherLog);\n  try {\n    const custom = await import('./custom.js');\n    await custom.initCustom(state.manifests, flasherLog);\n  } catch (e) {\n    flasherLog.append('自定义固件模块加载失败：' + e.message, 'err');\n  }\n}", 1),
+         "  await initRescue(bw16, flasherLog);\n  try {\n    const custom = await import('./custom.js');\n    await custom.initCustom(state.manifests, flasherLog);\n  } catch (e) {\n    flasherLog.append('自定义固件模块加载失败：' + e.message, 'err');\n  }\n\n  try {\n    const { initTelemetry } = await import('./telemetry.js');\n    initTelemetry(() => lastFlashSummary);\n  } catch { /* 遥测失败不影响使用 */ }\n}", 1),
         # M7 修复：switchView 同步第三个视图/页签，否则从「自定义固件」切回时旧页签保持高亮且视图叠加
         ("  $('view-rescue').hidden = view !== 'rescue';\n  $('nav-flash').classList.toggle('selected', view === 'flash');\n  $('nav-rescue').classList.toggle('selected', view === 'rescue');",
          "  $('view-rescue').hidden = view !== 'rescue';\n  $('view-custom').hidden = view !== 'custom';\n  $('nav-flash').classList.toggle('selected', view === 'flash');\n  $('nav-rescue').classList.toggle('selected', view === 'rescue');\n  $('nav-custom').classList.toggle('selected', view === 'custom');", 1),
@@ -154,6 +154,13 @@ PATCHES = {
          "  const fw = state.firmware;\n  if (fw.device !== 'bw16') {\n    const esp = await import('./esp-flash.js');\n    $('log-section').hidden = false;\n    await esp.flashEspFirmware(fw, flasherLog);\n    return;\n  }", 1),
         ("  const [bw16, esp32c3] = await Promise.all([\n    backendLoadCatalog(),\n    fetchJson('manifests/esp32c3.json'),\n  ]);\n  state.manifests.bw16 = bw16;\n  state.manifests.esp32c3 = esp32c3;",
          "  const [bw16, esp32c3, esp8266, esp32, esp32s3] = await Promise.all([\n    backendLoadCatalog(),\n    fetchJson('manifests/esp32c3.json'),\n    fetchJson('manifests/esp8266.json'),\n    fetchJson('manifests/esp32.json'),\n    fetchJson('manifests/esp32s3.json'),\n  ]);\n  state.manifests.bw16 = bw16;\n  state.manifests.esp32c3 = esp32c3;\n  state.manifests.esp8266 = esp8266;\n  state.manifests.esp32 = esp32;\n  state.manifests.esp32s3 = esp32s3;", 1),
+    ],
+    "js/log.js": [
+        # M2：刷写结果匿名上报（仅生产域名；telemetry 模块随构建附加）
+        ("    localStorage.setItem(STATS_KEY, JSON.stringify(stats));\n    return stats;\n  }",
+         "    localStorage.setItem(STATS_KEY, JSON.stringify(stats));\n    try { telemetry.reportFlashResult({ device, firmware, success, duration }); } catch {}\n    return stats;\n  }", 1),
+        ("import { timestamp, timestampShort, downloadText, $ } from './util.js';",
+         "import { timestamp, timestampShort, downloadText, $ } from './util.js';\nimport { telemetry } from './telemetry.js';", 1),
     ],
     "js/serial.js": [
         ("label = '指定字节'", "label = '设备应答'", 1),
@@ -552,6 +559,10 @@ def main() -> None:
             (dist / "js" / "vendor").mkdir(parents=True, exist_ok=True)
             shutil.copy(custom_dir / "vendor" / "esptool-js.esm.js", dist / "js" / "vendor" / "esptool-js.esm.js")
             print("  ✓ 自定义固件模块已附加（custom.js + esptool-js vendor）")
+        tel_dir = SITE / "tools" / "flash-telemetry"
+        if (tel_dir / "telemetry.js").exists():
+            shutil.copy(tel_dir / "telemetry.js", dist / "js" / "telemetry.js")
+            print("  ✓ 遥测模块已附加（telemetry.js）")
         build_esp_manifests(dist)
         esp_dir = SITE / "tools" / "flash-esp"
         if (esp_dir / "esp-flash.js").exists():
