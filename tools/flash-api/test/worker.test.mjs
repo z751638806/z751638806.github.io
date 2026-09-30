@@ -156,6 +156,28 @@ async function main() {
   const rc = (await j(await worker.fetch(req("/api/admin/codes", { method: "POST", token: T, body: { slug: "*", count: 1 } }), env))).codes[0];
   ok((await j(await worker.fetch(req("/api/redeem", { method: "POST", body: { code: rc, slug: "anything" } }), env))).ok, "M5 redeem 仍可用");
 
+  console.log("KV 形状存储回归（PICKUP.get 直接返回 ArrayBuffer）");
+  {
+    const kvStore = new Map();
+    const envKV = {
+      DB: env.DB,
+      ADMIN_TOKEN: T,
+      PICKUP: {
+        async put(k, v) { kvStore.set(k, v instanceof Uint8Array ? v.slice().buffer : v); },
+        async get(k) { return kvStore.get(k) ?? null; },   // KV：直接返回值（无 .arrayBuffer 方法）
+      },
+    };
+    await worker.fetch(req("/api/admin/paid", { method: "POST", token: T, body: { slug: "kv-fw", name: "KV 测试", device: "bw16" } }), envKV);
+    const kvBin = new Uint8Array([9, 8, 7, 6]);
+    await worker.fetch(new Request("https://admin.peipeidev.cn/api/admin/paid/upload/kv-fw/km0_boot_all.bin",
+      { method: "PUT", headers: { Authorization: `Bearer ${T}` }, body: kvBin }), envKV);
+    const kvBegin = await j(await worker.fetch(req("/api/pickup/begin", { method: "POST", body: { code: rc, slug: "kv-fw", fp: "fp-kv" } }), envKV));
+    ok(kvBegin.ok, "KV 存储：取件码换链接");
+    const kvGot = await worker.fetch(req(`${kvBegin.files[0].url}?fp=fp-kv`), envKV);
+    const kvBytes = new Uint8Array(await kvGot.arrayBuffer());
+    ok(kvGot.status === 200 && kvBytes.length === 4 && kvBytes[0] === 9, "KV 存储：回源字节正确（适配器双兼容）");
+  }
+
   console.log(`\n结果：${passed} 通过，${failed} 失败`);
   if (failed) process.exit(1);
 }

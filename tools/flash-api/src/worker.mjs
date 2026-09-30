@@ -1,8 +1,9 @@
-// peipei-flash-api — peipeidev.cn 在线烧录后台 API（Cloudflare Worker + D1 + R2）
+// peipei-flash-api — peipeidev.cn 在线烧录后台 API（Cloudflare Worker + D1 + KV/R2）
 // 能力：刷写统计 / 用户反馈 / 公告 / 激活码（M5）/ 付费固件签名取件（M6）
 // 部署：cd tools/flash-api && HTTPS_PROXY=… npx wrangler deploy
 // 管理：Header Authorization: Bearer <ADMIN_TOKEN secret>
-// M6：bin 实体存 R2（PICKUP 绑定）；/api/pickup/begin 换一次性取件链接（10 分钟、单次核销、指纹绑定）
+// M6：bin 实体存 PICKUP 绑定（KV 当前生效；R2 待账户开通后一行切换，取件适配器双兼容）；
+//     /api/pickup/begin 换一次性取件链接（10 分钟、单次核销、指纹绑定）
 
 import { adminPage } from "./admin.mjs";
 
@@ -241,7 +242,7 @@ async function upsertPaid(request, env, cors) {
   return json({ ok: true, slug }, 200, cors);
 }
 
-// 管理端上传 bin 到 R2（PUT 原始字节流），并回填注册表 size/sha256
+// 管理端上传 bin 到存储（PUT 原始字节流），并回填注册表 size/sha256
 async function uploadPaidBin(slug, file, request, env, cors) {
   if (!/^[a-z0-9][a-z0-9._-]{0,58}$/i.test(slug) || !/^[A-Za-z0-9._-]{1,80}$/.test(file))
     return json({ error: "bad_name" }, 400, cors);
@@ -296,7 +297,14 @@ async function pickupBegin(request, env, cors) {
   return json({ ok: true, slug, name: paid.name, files: out, expTs }, 200, cors);
 }
 
-// 公开：一次性核销取件链接，从 R2 回源 bin
+// 兼容 KV 与 R2 两种存储的读取：KV get 返回值本身，R2 get 返回带 body 的对象
+async function readPickupBlob(store, key) {
+  const obj = await store.get(key, { type: "arrayBuffer" });
+  if (!obj) return null;
+  return typeof obj.arrayBuffer === "function" ? await obj.arrayBuffer() : obj;
+}
+
+// 公开：一次性核销取件链接，从存储回源 bin
 async function pickupFetch(jti, url, env, cors) {
   if (!/^[0-9a-f]{32}$/.test(jti)) return json({ error: "bad_request" }, 400, cors);
   const g = await env.DB.prepare("SELECT * FROM pickup_grants WHERE jti=?").bind(jti).first();
@@ -307,13 +315,13 @@ async function pickupFetch(jti, url, env, cors) {
     const fp = clean(url.searchParams.get("fp") || "", 128);
     if (fp !== g.fp) return json({ error: "fp_mismatch" }, 403, cors);
   }
-  // 先回源后核销：R2 缺件不烧授权；并发取件由条件更新保证只成功一次
-  const obj = await env.PICKUP.get(`${g.slug}/${g.file}`);
-  if (!obj) return json({ error: "object_missing" }, 404, cors);
+  // 先回源后核销：存储缺件不烧授权；并发取件由条件更新保证只成功一次
+  const data = await readPickupBlob(env.PICKUP, `${g.slug}/${g.file}`);
+  if (!data) return json({ error: "object_missing" }, 404, cors);
   const r = await env.DB.prepare("UPDATE pickup_grants SET used_ts=? WHERE jti=? AND used_ts IS NULL")
     .bind(Date.now(), jti).run();
   if (!r.meta.changes) return json({ error: "already_used" }, 403, cors);
-  return new Response(obj.body, {
+  return new Response(data, {
     status: 200,
     headers: {
       "Content-Type": "application/octet-stream",
