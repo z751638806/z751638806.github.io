@@ -40,36 +40,6 @@
       "connectNote": "刷写完成后，设备会释放 WiFi 热点「CMCC」，连接密码：12345678.（注意：末尾有一个英文句点）"
     },
     {
-      "slug": "bw16-02",
-      "name": "WiFi安全测试固件-远程版「2026」",
-      "color": "G",
-      "colorLabel": "绿",
-      "colorCss": "#22c55e",
-      "sourcePath": "佩佩队长固件库",
-      "device": "bw16",
-      "files": {
-        "km0_boot_all.bin": {
-          "path": "firmware/bw16-02/km0_boot_all.bin",
-          "size": 4500,
-          "md5": "abf78d11cc0768c029f69adc4d902a0b",
-          "sha256": "453c880307fc389009aa8a39c63da3d715b207ad797206c896cc691426daaa64"
-        },
-        "km4_boot_all.bin": {
-          "path": "firmware/bw16-02/km4_boot_all.bin",
-          "size": 4456,
-          "md5": "b0adda4bd9a27304948a029119b7d717",
-          "sha256": "05fbf808d43113eaf7c11b75091c986b817135f0c52eb9fa94bb9fe9f34b062c"
-        },
-        "km0_km4_image2.bin": {
-          "path": "firmware/bw16-02/km0_km4_image2.bin",
-          "size": 925696,
-          "md5": "281888c075ea77f6a64bd6cff2da8e1e",
-          "sha256": "3132f32e17a92423151540008f12dfd8c0bb594888948d59300ebd187460a364"
-        }
-      },
-      "connectNote": "刷写完成后，设备会释放 WiFi 热点「CMCC」，连接密码：12345678.（注意：末尾有一个英文句点）"
-    },
-    {
       "slug": "bw16-18",
       "name": "双频断网固件（2.4G/5G）",
       "color": "R",

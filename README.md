@@ -12,7 +12,7 @@
 支持的开发板（Web Serial 直刷）：**BW16（RTL8720DN）/ ESP8266 / ESP32 / ESP32-S3 / ESP32-C3**。
 
 线上固件清单（15 项，署名与来源见 `tools/esp-firmware/SOURCES.md`）：
-BW16：WiFi安全测试固件「2026」/ 远程版 / 远程版「20261001」（需激活码） / **双频断网固件（2.4G/5G，本地编译 RTL8720dn-Deauther GPL-3.0）** / 官方 AT（救砖）；
+BW16：WiFi安全测试固件「2026」/ 远程版「20261001」（需激活码） / **双频断网固件（2.4G/5G，本地编译 RTL8720dn-Deauther GPL-3.0）** / 官方 AT（救砖）；
 ESP8266：Deauther v2 / Tasmota / MicroPython / WLED / 钓鱼门户演示；
 ESP32：Bruce（CYD）/ MicroPython / **ESP32-DIV 多频工具箱（MIT）** / **Ghost（CYD）**；
 ESP32-S3：Bruce / **Ghost（Cardputer ADV）**；ESP32-C3：WiFi渗透工具 / BLE 工具。

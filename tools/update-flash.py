@@ -45,7 +45,7 @@ PATCHES = {
         ("扩展擦除（变砖恢复建议勾选；出处 PROTOCOL.md P14 备注）",
          "全片擦除（变砖恢复建议勾选，较慢）", 1),
         ("<span class=\"device-desc\">安信可 Ai-Thinker BW16（RTL8720DN）<br>Web Serial 直刷 · 17 个固件</span>",
-         "<span class=\"device-desc\">安信可 Ai-Thinker BW16（RTL8720DN）<br>Web Serial 直刷 · 4 个固件</span>", 1),
+         "<span class=\"device-desc\">安信可 Ai-Thinker BW16（RTL8720DN）<br>Web Serial 直刷 · 3 个固件</span>", 1),
         ("<span class=\"device-desc\">乐鑫 ESP32-C3 开发板<br>ESP Web Tools · 2 个固件</span>",
          "<span class=\"device-desc\">乐鑫 ESP32-C3 开发板<br>固件即将上线</span>", 1),
         # M2：ESP8266 设备卡片（第三张，实验性）
@@ -193,7 +193,7 @@ MANIFEST_FIELD_PATCH = {
 # 线上固件白名单：只发布这些 slug（清单 + bin 文件都以此为准；本地项目不受影响）。
 # 空 list = 该设备暂不上线固件。
 FIRMWARE_WHITELIST = {
-    "bw16": ["bw16-01", "bw16-02", "bw16-18", "bw16-19", "bw16-at"],
+    "bw16": ["bw16-01", "bw16-18", "bw16-19", "bw16-at"],
     "esp32c3": ["esp32c3-1", "esp32c3-2"],
     "esp8266": ["esp8266-deauther", "esp8266-tasmota", "esp8266-micropython", "esp8266-wled", "esp8266-captive-portal"],
     "esp32": ["esp32-bruce-cyd", "esp32-micropython", "esp32-div-cyd", "esp32-ghost-cyd"],
