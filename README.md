@@ -105,6 +105,17 @@ git add -A && git commit -m "..." && git push   # push 后 1-2 分钟 Pages 生�
 发布新版本：把新 bin 放入 `fw/`，更新 `firmware.json` 的 `versions` 顶部条目、`notice`
 公告与 `version.txt`，推送即可。
 
+## 烧录站后台（api.peipeidev.cn，Cloudflare Worker + D1，零月费）
+
+- **管理后台**：https://api.peipeidev.cn/admin （ADMIN_TOKEN 登录，凭据见 `~/Desktop/AI-Accounts/api-keys.md`）
+- 能力：刷写统计看板（30 天量/成功率/失败 Top）/ 用户反馈收件箱 / 公告编辑
+  （烧录页实时显示）/ 激活码生成与核销（公开核销接口 `POST /api/redeem`，可绑定固件 slug）
+- 前端接入：烧录页每次刷写结束匿名上报统计（`tools/flash-telemetry/telemetry.js`，
+  仅生产域名生效）；顶栏「反馈」按钮直投后台
+- 源码：`tools/flash-api/`（Worker + admin 页面 + D1 schema）；部署
+  `cd tools/flash-api && HTTPS_PROXY=… npx wrangler deploy`
+- 待做批次：M6 付费固件防盗链（R2 + 签名取件）、M7 固件投稿审核
+
 ## 主页内容更新
 
 直接编辑 `index.html`（单文件含全部样式与脚本）。常用位置：
