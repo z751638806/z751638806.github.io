@@ -111,7 +111,7 @@ git add -A && git commit -m "..." && git push   # push 后 1-2 分钟 Pages 生�
 发布新版本：把新 bin 放入 `fw/`，更新 `firmware.json` 的 `versions` 顶部条目、`notice`
 公告与 `version.txt`，推送即可。
 
-## 烧录站后台（admin.peipeidev.cn，Cloudflare Worker + D1 + R2，零月费）
+## 烧录站后台（admin.peipeidev.cn，Cloudflare Worker + D1 + KV，零月费）
 
 - **管理后台**：https://admin.peipeidev.cn/admin （ADMIN_TOKEN 登录，凭据见 `~/Desktop/AI-Accounts/api-keys.md`；
   「激活码」= 真实 keygen 一机一码体系（api.peipeidev.cn，MAC→绑定码，固件端离线验证））
@@ -127,7 +127,8 @@ git add -A && git commit -m "..." && git push   # push 后 1-2 分钟 Pages 生�
 ### 付费固件取件（M6）
 
 付费固件（当前 `bw16-19`）的 **bin 不发布在公开仓库**（构建时由 `PAID_FIRMWARE` 排除，
-知道地址也下载不到），改存后台 R2（`peipei-flash-pickup` bucket）。买家流程：
+知道地址也下载不到），改存后台 KV（`PICKUP` 绑定；账户开通 R2 后可在 wrangler.toml 一行切换，
+取件适配器双兼容）。买家流程：
 
 1. 购买获得**取件码**（后台「付费固件」页签生成，绑定固件 slug，与设备端激活码相互独立）
 2. 烧录页选中付费固件 → 输入取件码 → `POST /api/pickup/begin` 校验并签发**一次性下载链接**
@@ -144,16 +145,9 @@ python3 -m http.server 8765                    # 烧录页 :8765
 # 无硬件演练：http://127.0.0.1:8765/flash/?mock=1（付费固件用模拟数据走全流程）
 ```
 
-**上线顺序（重要）**：后台先上、站点后上，顺序反了付费固件会暂时刷不了——
-
-```bash
-cd tools/flash-api
-HTTPS_PROXY=… npx wrangler r2 bucket create peipei-flash-pickup   # ① 建 R2 bucket（仅一次）
-HTTPS_PROXY=… npx wrangler d1 execute peipei-flash-db --remote --file=schema.sql  # ② 建表
-HTTPS_PROXY=… npx wrangler deploy                                  # ③ 部署 Worker
-# ④ 后台 → 付费固件：注册 bw16-19 → 上传三个 bin → 生成取件码
-# ⑤ 回到仓库根目录重跑 python3 tools/update-flash.py（bin 从站点移除）→ commit → push
-```
+**上线状态（2026-10-01）**：已部署并冒烟通过（D1 两表 + KV 存储 + Worker + 后台上传 +
+一次性链接取件全链路）。换固件版本直接在后台上传覆盖三镜像即可（前端以服务端登记的
+SHA-256 校验），无需重跑构建。若未来账户开通 R2，切换方法见仓库 ops/runbook（枢纽）。
 
 ## 主页内容更新
 
