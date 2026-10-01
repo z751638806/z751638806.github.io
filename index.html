@@ -692,7 +692,110 @@ footer a:hover{color:var(--pink)}
   }
   fetch(API, { cache: "no-store" }).then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){ if (d && d.ok && d.content) hydrate(d.content); })
-    .catch(function(){ /* 后台不可达 → 静态兜底，静默 */ });
+    .catch(function(){ (window.__diag = window.__diag || []).push({ t: Date.now(), kind: "api", msg: "主站内容接口不可达，已静态兜底" }); /* 静默兜底 */ });
+})();
+</script>
+<style>
+/* 一键反馈组件 */
+#fb-fab{position:fixed;right:18px;bottom:18px;z-index:60;width:52px;height:52px;border-radius:50%;
+  background:linear-gradient(135deg,var(--pink-deep),var(--pink));color:#fff;font-size:20px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;
+  box-shadow:0 6px 20px rgba(251,114,153,.35);transition:transform .15s,box-shadow .15s}
+#fb-fab:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(251,114,153,.45)}
+#fb-fab i{position:absolute;top:2px;right:2px;width:11px;height:11px;border-radius:50%;background:#ef4444;border:2px solid var(--bg)}
+#fb-ov{position:fixed;inset:0;z-index:70;background:rgba(6,9,13,.66);backdrop-filter:blur(4px);
+  display:none;align-items:center;justify-content:center;padding:16px}
+#fb-ov.on{display:flex}
+.fb-box{width:min(540px,94vw);max-height:88vh;overflow:auto;background:var(--bg-panel);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px;font-size:14px;box-shadow:0 16px 48px rgba(0,0,0,.5)}
+.fb-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.fb-head b{color:var(--pink);font-size:16px}
+.fb-head button{background:none;border:0;color:var(--dim);font-size:20px;cursor:pointer;padding:0 4px}
+.fb-l{display:block;margin:10px 0 4px;color:var(--dim);font-size:13px}
+.fb-box select,.fb-box textarea{width:100%;margin-top:4px;padding:9px 10px;border-radius:8px;border:1px solid var(--border);
+  background:var(--bg-panel-2);color:var(--text);font:inherit}
+.fb-pre{margin-top:6px;padding:10px;border-radius:8px;background:var(--bg);border:1px solid var(--border);
+  color:var(--dim);font:12px/1.6 var(--mono);white-space:pre-wrap;word-break:break-all;max-height:180px;overflow:auto}
+.fb-act{display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-top:14px}
+.fb-act span{font-size:13px;color:var(--ok)}
+.fb-act span.fb-err{color:#ef4444}
+.fb-pri{padding:9px 20px;border-radius:8px;border:0;background:linear-gradient(135deg,var(--pink-deep),var(--pink));
+  color:#fff;font-weight:600;cursor:pointer}
+.fb-pri:disabled{opacity:.6;cursor:default}
+.fb-box details{margin:8px 0 0}
+.fb-box summary{cursor:pointer;user-select:none}
+</style>
+<script>
+/* 一键反馈：全站用户反馈入口 → admin.peipeidev.cn/api/feedback（后台「反馈」收件箱）。
+   自动附带诊断日志：JS 报错 / Promise 未捕获异常（环形缓冲，最新 12 条）+ 水合失败记录
+   （window.__diag，由水合脚本写入）+ 页面环境。支持 ?api= 覆盖联调。 */
+(function(){
+  "use strict";
+  var API = (new URLSearchParams(location.search).get("api") || "https://admin.peipeidev.cn") + "/api/feedback";
+  var errs = window.__diag = window.__diag || [];           // {t, kind, msg} 最新 12 条
+  function pushErr(kind, msg){
+    errs.push({ t: Date.now(), kind: kind, msg: String(msg == null ? "" : msg).slice(0, 300) });
+    if (errs.length > 12) errs.shift();
+    badge();
+  }
+  window.addEventListener("error", function(e){ pushErr("js", e.message + (e.filename ? " @" + String(e.filename).split("/").pop() + ":" + e.lineno : "")); });
+  window.addEventListener("unhandledrejection", function(e){ pushErr("promise", (e.reason && e.reason.message) || e.reason); });
+  function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  function fmtLog(){
+    var env = { page: location.pathname + location.search, ref: document.referrer || "", ua: navigator.userAgent,
+      lang: navigator.language || "", screen: innerWidth + "x" + innerHeight, time: new Date().toISOString() };
+    var lines = errs.length ? errs.map(function(e){ return "[" + new Date(e.t).toLocaleTimeString("zh-CN") + "][" + e.kind + "] " + e.msg; }) : [];
+    return { env: env, errors: errs.slice(), text: lines.join("\n") };
+  }
+  /* 悬浮按钮（有未反馈报错时亮红点） */
+  var fab = document.createElement("div");
+  fab.id = "fb-fab";
+  fab.setAttribute("role", "button"); fab.setAttribute("tabindex", "0"); fab.title = "意见反馈";
+  fab.innerHTML = '💬<i id="fb-dot" hidden></i>';
+  document.body.appendChild(fab);
+  function badge(){ var d = document.getElementById("fb-dot"); if (d) d.hidden = !errs.length; }
+  /* 弹窗 */
+  var ov = document.createElement("div");
+  ov.id = "fb-ov";
+  ov.innerHTML = '<div class="fb-box" role="dialog" aria-label="意见反馈">'
+    + '<div class="fb-head"><b>意见反馈</b><button id="fb-x" aria-label="关闭">×</button></div>'
+    + '<label class="fb-l">类型<select id="fb-t"><option value="bug">问题（页面异常 / 功能故障）</option><option value="suggestion">建议</option><option value="other">其他</option></select></label>'
+    + '<label class="fb-l">描述（遇到什么问题 / 希望有什么）<textarea id="fb-b" rows="4" placeholder="至少 5 个字，越具体越好"></textarea></label>'
+    + '<details id="fb-log-d"><summary class="fb-l">诊断日志（<span id="fb-n">0</span> 条，自动附带，帮助定位问题）</summary><pre id="fb-log" class="fb-pre"></pre></details>'
+    + '<div class="fb-act"><span id="fb-msg"></span><button id="fb-ok" class="fb-pri">提交反馈</button></div>'
+    + '</div>';
+  document.body.appendChild(ov);
+  function refreshLog(){
+    var l = fmtLog();
+    document.getElementById("fb-n").textContent = l.errors.length;
+    document.getElementById("fb-log").textContent = (l.text || "（本次浏览暂无报错记录）") + "\n\n—— 环境 ——" + JSON.stringify(l.env, null, 1);
+  }
+  function open(){ refreshLog(); document.getElementById("fb-msg").textContent = ""; ov.classList.add("on"); document.getElementById("fb-b").focus(); }
+  fab.addEventListener("click", open);
+  fab.addEventListener("keydown", function(e){ if (e.key === "Enter" || e.key === " ") open(); });
+  document.getElementById("fb-x").addEventListener("click", function(){ ov.classList.remove("on"); });
+  ov.addEventListener("click", function(e){ if (e.target === ov) ov.classList.remove("on"); });
+  document.getElementById("fb-ok").addEventListener("click", function(){
+    var body = document.getElementById("fb-b").value.trim();
+    var msg = document.getElementById("fb-msg");
+    if (body.length < 5) { msg.textContent = "请至少写 5 个字"; msg.className = "fb-err"; return; }
+    var btn = document.getElementById("fb-ok"); btn.disabled = true;
+    var l = fmtLog();
+    fetch(API, { method: "POST", cache: "no-store",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: document.getElementById("fb-t").value, body: body,
+        /* 兼容两代后台：旧版认 message/log，v2 认 body/extra（log 文本两代都存） */
+        message: body, log: l.text,
+        extra: { page: l.env.page, ua: l.env.ua, lang: l.env.lang, screen: l.env.screen,
+                 errors: l.errors, log: l.text } })
+    }).then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function(){
+        errs.length = 0; badge(); ov.classList.remove("on");
+        document.getElementById("fb-b").value = "";
+        fab.innerHTML = "✓"; setTimeout(function(){ fab.innerHTML = '💬<i id="fb-dot" hidden></i>'; badge(); }, 2400);
+      })
+      .catch(function(e){ btn.disabled = false; msg.textContent = "提交失败：" + e.message + "（可稍后重试）"; msg.className = "fb-err"; });
+  });
 })();
 </script>
 

@@ -129,7 +129,10 @@ git add -A && git commit -m "..." && git push   # push 后 1-2 分钟 Pages 生�
   错误体 `{detail}`、`/api/flash/begin` 返回 `{文件名: 链接}` 且链接必须自带 `?…`）——改后端先读它
 - 前端接入：烧录页每次刷写结束匿名上报统计（`tools/flash-telemetry/telemetry.js`，
   仅生产域名生效）；顶栏「反馈」按钮直投后台；主页 `index.html` 尾部水合脚本
-  （支持 `?api=` 覆盖联调）从 `/api/site/content` 拉内容块，接口不可达时静态内容兜底
+  （支持 `?api=` 覆盖联调）从 `/api/site/content` 拉内容块，接口不可达时静态内容兜底；
+  主页右下角**一键反馈**悬浮按钮（`index.html` 自包含组件）：弹窗投递 `/api/feedback`，
+  自动附带诊断日志（JS 报错/未捕获 Promise 环形缓冲、水合失败记录、页面环境），
+  有未反馈报错时按钮亮红点，后台「反馈」收件箱可查
 - 源码：`tools/flash-api/`（Worker + admin 页面 + D1 schema + test/ 本地测试与开发服务器 +
   scripts/sync-catalog.mjs 目录批量接入）；
   部署 `cd tools/flash-api && npx wrangler d1 execute peipei-flash-db --remote --file schema.sql
