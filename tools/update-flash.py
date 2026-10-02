@@ -200,7 +200,7 @@ MANIFEST_FIELD_PATCH = {
 # 线上固件白名单：只发布这些 slug（清单 + bin 文件都以此为准；本地项目不受影响）。
 # 空 list = 该设备暂不上线固件。
 FIRMWARE_WHITELIST = {
-    "bw16": ["bw16-01", "bw16-18", "bw16-19", "bw16-at"],
+    "bw16": ["bw16-01", "bw16-18", "bw16-at"],   # bw16-19 远程版未正式上线：下架公开入口，仅后台取件直链内测
     "esp32c3": ["esp32c3-1", "esp32c3-2"],
     "esp8266": ["esp8266-deauther", "esp8266-tasmota", "esp8266-micropython", "esp8266-wled", "esp8266-captive-portal"],
     "esp32": ["esp32-bruce-cyd", "esp32-micropython", "esp32-div-cyd", "esp32-ghost-cyd"],
