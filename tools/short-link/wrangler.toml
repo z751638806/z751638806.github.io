@@ -1,0 +1,15 @@
+name = "peipei-short-link"
+main = "src/worker.mjs"
+compatibility_date = "2025-09-01"
+workers_dev = false
+
+account_id = "83799c18cdfa00512d34fdeb4a4d7de4"
+
+[[routes]]
+pattern = "go.peipeidev.cn"
+custom_domain = true
+
+# 短链 slug 存储：KV 原生 expirationTtl 自动清理（记录多留 24h 供 410 页判断）
+[[kv_namespaces]]
+binding = "SLUGS"
+id = "74e39951563c43c4aa73cc2708619796"
