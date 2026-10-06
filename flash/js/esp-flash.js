@@ -99,6 +99,32 @@ export async function flashEspFirmware(fw, log) {
     try { await withTimeout(transport.disconnect(), 2000); } catch { /* ignore */ }
     transport = null;
 
+    // USB-Serial-JTAG 的复位只能触发核心复位、退不出下载模式（esptool 官方文档
+    // troubleshooting：USJ 无法用默认复位行为退出下载模式）→ 芯片可能停在下载模式
+    // 跑不了新固件（表现为热点/新固件不出现）。检测：重开已授权端口（getPorts 无需
+    // 再次手势授权）做同步——同步成功 = 停在下载模式；随后用 python esptool `run` 的
+    // 同款机制（flashBegin(0,0) + flashFinish(reboot)，ROM 协议级跳转应用）启动新固件。
+    // 同步失败 = 应用已正常运行，无需处理。
+    try {
+      await new Promise((r) => setTimeout(r, 1200));
+      const ports = await navigator.serial.getPorts();
+      const again = ports.find((p) => p === port) || ports[0];
+      if (again) {
+        await again.open({ baudRate: 115200 });
+        const { ESPLoader: Loader2, Transport: Transport2 } = await import("./vendor/esptool-js.esm.js");
+        const t2 = new Transport2(again, false);
+        const l2 = new Loader2({
+          transport: t2, port: again, baudrate: 115200,
+          terminal: { clean: () => {}, writeLine: () => {}, write: () => {} },
+        });
+        await l2.main();
+        log.append("检测到设备停在下载模式，发送运行指令启动新固件…", "warn");
+        await l2.flashBegin(0, 0);
+        await l2.flashFinish(true);
+        await again.close();
+      }
+    } catch { /* 同步失败 = 应用已正常运行 */ }
+
     finishProgressBar(true);
     ok = true;
     const sec = ((Date.now() - t0) / 1e3).toFixed(1);
