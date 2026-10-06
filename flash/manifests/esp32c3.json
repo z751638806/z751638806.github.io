@@ -1,7 +1,56 @@
 {
-  "generatedAt": "2026-10-01 01:08:13",
+  "generatedAt": "2026-10-07 01:22:49",
   "device": "esp32c3",
   "firmware": [
+    {
+      "slug": "esp32c3-nat",
+      "device": "esp32c3",
+      "name": "CMCC",
+      "color": "B",
+      "colorCss": "#5fd4f5",
+      "files": [
+        {
+          "path": "firmware/esp32c3-nat/bootloader.bin",
+          "offset": 0,
+          "size": 18512,
+          "sha256": "af29137abc09b07fcf68eb08e8badb1597623485acff00426276317e8ca008a3"
+        },
+        {
+          "path": "firmware/esp32c3-nat/partition-table.bin",
+          "offset": 32768,
+          "size": 3072,
+          "sha256": "da36e7feda9b1551ff1d75b6c74d2eb72a8f0ae012ab1ea892097877eaaf87b3"
+        },
+        {
+          "path": "firmware/esp32c3-nat/esp32_nat_router.bin",
+          "offset": 65536,
+          "size": 1343600,
+          "sha256": "18528c91178206d173696b3cc55638b74bb650c59625bc10b6d2f32df9164f51"
+        }
+      ],
+      "type": "esptool",
+      "manifest": "firmware/esp32c3-nat/manifest.json",
+      "parts": [
+        {
+          "path": "bootloader.bin",
+          "offset": 0,
+          "size": 18512
+        },
+        {
+          "path": "partition-table.bin",
+          "offset": 32768,
+          "size": 3072
+        },
+        {
+          "path": "esp32_nat_router.bin",
+          "offset": 65536,
+          "size": 1343600
+        }
+      ],
+      "version": "local",
+      "connectNote": "刷写后热点：CMCC（密码 12345678.，注意末尾有英文句点）· 浏览器打开 http://192.168.4.1 进入后台（NAT 路由：克隆/中继/网速统计）",
+      "attribution": "基于 esp32-nat-router 开源项目 · Nomad 定制版 · 打包发行 无敌佩佩队长 · peipeidev.cn"
+    },
     {
       "slug": "esp32c3-1",
       "name": "WiFi渗透工具",

@@ -50,7 +50,7 @@ PATCHES = {
          "<span class=\"device-desc\">乐鑫 ESP32-C3 开发板<br>固件即将上线</span>", 1),
         # M2：ESP8266 设备卡片（第三张，实验性）
         ("乐鑫 ESP32-C3 开发板<br>固件即将上线</span>\n        </button>",
-         "乐鑫 ESP32-C3 开发板<br>Web Serial 直刷 · 2 个固件</span>\n        </button>\n        <button class=\"device-card\" data-device=\"esp8266\" type=\"button\">\n          <span class=\"device-icon\">📶</span>\n          <span class=\"device-name\">ESP8266</span>\n          <span class=\"device-desc\">乐鑫 ESP8266 / ESP8285<br>Web Serial 直刷 · 5 个固件</span>\n        </button>\n        <button class=\"device-card\" data-device=\"esp32\" type=\"button\">\n          <span class=\"device-icon\">🔲</span>\n          <span class=\"device-name\">ESP32</span>\n          <span class=\"device-desc\">乐鑫 ESP32（经典款）<br>Web Serial 直刷 · 4 个固件</span>\n        </button>\n        <button class=\"device-card\" data-device=\"esp32s3\" type=\"button\">\n          <span class=\"device-icon\">🧩</span>\n          <span class=\"device-name\">ESP32-S3</span>\n          <span class=\"device-desc\">乐鑫 ESP32-S3<br>Web Serial 直刷 · 2 个固件</span>\n        </button>", 1),
+         "乐鑫 ESP32-C3 开发板<br>Web Serial 直刷 · 3 个固件</span>\n        </button>\n        <button class=\"device-card\" data-device=\"esp8266\" type=\"button\">\n          <span class=\"device-icon\">📶</span>\n          <span class=\"device-name\">ESP8266</span>\n          <span class=\"device-desc\">乐鑫 ESP8266 / ESP8285<br>Web Serial 直刷 · 5 个固件</span>\n        </button>\n        <button class=\"device-card\" data-device=\"esp32\" type=\"button\">\n          <span class=\"device-icon\">🔲</span>\n          <span class=\"device-name\">ESP32</span>\n          <span class=\"device-desc\">乐鑫 ESP32（经典款）<br>Web Serial 直刷 · 4 个固件</span>\n        </button>\n        <button class=\"device-card\" data-device=\"esp32s3\" type=\"button\">\n          <span class=\"device-icon\">🧩</span>\n          <span class=\"device-name\">ESP32-S3</span>\n          <span class=\"device-desc\">乐鑫 ESP32-S3<br>Web Serial 直刷 · 2 个固件</span>\n        </button>", 1),
         ('<p class="dim small">协议出处：<a href="docs/PROTOCOL.md">web/docs/PROTOCOL.md</a> ·\n      审查记录：<a href="docs/REVIEW_LOG.md">web/docs/REVIEW_LOG.md</a></p>',
          '<p class="dim small">使用遇到问题？观看 B 站视频教程，或通过 <a href="/">peipeidev.cn</a> 首页的联系方式联系我。</p>', 1),
         # M7：自定义固件视图（导航页签 + 视图区块；custom.js 由 tools/flash-custom/ 附加）
@@ -201,7 +201,7 @@ MANIFEST_FIELD_PATCH = {
 # 空 list = 该设备暂不上线固件。
 FIRMWARE_WHITELIST = {
     "bw16": ["bw16-01", "bw16-18", "bw16-19", "bw16-at"],
-    "esp32c3": ["esp32c3-1", "esp32c3-2"],
+    "esp32c3": ["esp32c3-1", "esp32c3-2", "esp32c3-nat"],
     "esp8266": ["esp8266-deauther", "esp8266-tasmota", "esp8266-micropython", "esp8266-wled", "esp8266-captive-portal"],
     "esp32": ["esp32-bruce-cyd", "esp32-micropython", "esp32-div-cyd", "esp32-ghost-cyd"],
     "esp32s3": ["esp32s3-bruce-devkit", "esp32s3-ghost-cardputeradv"],
@@ -473,34 +473,81 @@ ESP_FIRMWARES = [
         "connectNote": "刷写后开放一个开放的演示热点 · 管理地址 172.0.0.1（/pass 查看记录 · /ssid 改热点名）",
         "attribution": "原项目 © adamff-dev（MIT）· 打包发行 无敌佩佩队长 · peipeidev.cn",
     },
+    {
+        # 多文件条目：files = [[esp-firmware 相对路径, 烧录 offset], ...]（ESP Web Tools 分件刷写）
+        "slug": "esp32c3-nat", "device": "esp32c3",
+        "name": "CMCC",
+        "files": [
+            ["esp32c3/nat/bootloader.bin", 0x0],
+            ["esp32c3/nat/partition-table.bin", 0x8000],
+            ["esp32c3/nat/esp32_nat_router.bin", 0x10000],
+        ],
+        "colorCss": "#5fd4f5",
+        "connectNote": "刷写后热点：CMCC（密码 12345678.，注意末尾有英文句点）· 浏览器打开 http://192.168.4.1 进入后台（NAT 路由：克隆/中继/网速统计）",
+        "attribution": "基于 esp32-nat-router 开源项目 · Nomad 定制版 · 打包发行 无敌佩佩队长 · peipeidev.cn",
+    },
 ]
 
 def build_esp_manifests(dist: Path) -> None:
-    """ESP 系官方固件：从 tools/esp-firmware 生成各设备清单（含署名/热点提示/SHA-256）。"""
+    """ESP 系官方固件：从 tools/esp-firmware 生成各设备清单（含署名/热点提示/SHA-256）。
+
+    条目两种形态：
+      单文件  file + offset          → 清单 files: [单条]，bin 发布为 <slug>.bin
+      多文件  files: [[路径, offset]] → 清单 files: [多条]（按各 offset）+ EWT manifest.json
+              （ESP32-C3 走 ESP Web Tools，消费 manifest 字段，格式对齐线上 esp32c3-1）
+    """
     import hashlib
     from datetime import datetime
     groups = {}
     for e in ESP_FIRMWARES:
         if e["slug"] not in FIRMWARE_WHITELIST.get(e["device"], []):
             continue
-        data = (SITE / "tools" / "esp-firmware" / e["file"]).read_bytes()
         slug = e["slug"]
         out_dir = dist / "firmware" / slug
         out_dir.mkdir(parents=True, exist_ok=True)
-        (out_dir / (slug + ".bin")).write_bytes(data)
+        if "files" in e:
+            specs = [(SITE / "tools" / "esp-firmware" / p, off, Path(p).name) for p, off in e["files"]]
+        else:
+            data = (SITE / "tools" / "esp-firmware" / e["file"]).read_bytes()
+            (out_dir / (slug + ".bin")).write_bytes(data)
+            specs = [(SITE / "tools" / "esp-firmware" / e["file"], e["offset"], slug + ".bin")]
+        entries, ewt_parts = [], []
+        for src, off, name in specs:
+            data = src.read_bytes()
+            (out_dir / name).write_bytes(data)
+            entries.append({"path": f"firmware/{slug}/{name}", "offset": off,
+                            "size": len(data), "sha256": hashlib.sha256(data).hexdigest()})
+            ewt_parts.append({"path": name, "offset": off})
         groups.setdefault(e["device"], []).append({
             "slug": slug, "device": e["device"], "name": e["name"],
             "color": "B", "colorCss": e["colorCss"],
-            "files": [{"path": f"firmware/{slug}/{slug}.bin", "offset": e["offset"],
-                        "size": len(data), "sha256": hashlib.sha256(data).hexdigest()}],
+            "files": entries,
+            **({"type": "esptool", "manifest": f"firmware/{slug}/manifest.json",
+                "parts": [{"path": p["path"], "offset": p["offset"], "size": n["size"]}
+                          for p, n in zip(ewt_parts, entries)],
+                "version": e.get("version", "local")} if "files" in e else {}),
             "connectNote": e["connectNote"], "attribution": e["attribution"],
         })
+        if "files" in e:
+            (out_dir / "manifest.json").write_text(json.dumps({
+                "name": e["name"], "version": e.get("version", "local"),
+                "new_install_prompt_erase": False,
+                "builds": [{"chipFamily": "ESP32-C3", "improv": False, "parts": ewt_parts}],
+            }, ensure_ascii=False, indent=2), encoding="utf-8")
     for device, items in groups.items():
-        (dist / "manifests" / (device + ".json")).write_text(
+        # 与本地项目清单按 slug 合并（本地条目保留，ESP_FIRMWARES 同 slug 覆盖），
+        # 否则直接重写会把本地生成的固件（如 esp32c3-1/2）清掉
+        out_path = dist / "manifests" / (device + ".json")
+        merged = list(items)
+        if out_path.exists():
+            existing = json.loads(out_path.read_text(encoding="utf-8")).get("firmware", [])
+            new_slugs = {i["slug"] for i in items}
+            merged = items + [f for f in existing if f.get("slug") not in new_slugs]
+        out_path.write_text(
             json.dumps({"generatedAt": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        "device": device, "firmware": items}, ensure_ascii=False, indent=2),
+                        "device": device, "firmware": merged}, ensure_ascii=False, indent=2),
             encoding="utf-8")
-        print(f"  · {device}.json：{len(items)} 个固件（ESP 系官方直刷）")
+        print(f"  · {device}.json：+{len(items)} 个固件（ESP 系官方直刷，合并后 {len(merged)} 个）")
 
 def sanitize_manifest(path: Path) -> None:
     d = json.loads(path.read_text(encoding="utf-8"))
