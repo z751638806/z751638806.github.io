@@ -92,8 +92,11 @@ export async function flashEspFirmware(fw, log) {
     });
 
     log.append("写入完成，正在复位设备…", "sys");
-    await loader.after("hard_reset");
-    try { await transport.disconnect(); } catch { /* ignore */ }
+    // 复位后原生 USB（USB-Serial-JTAG）会重新枚举，复位/断开的 await 可能永远等不到
+    // 端口回包 → 页面卡死在收尾（固件其实已写入成功）。加超时兜底，收尾失败不影响结果。
+    const withTimeout = (p, ms) => Promise.race([p, new Promise((r) => setTimeout(r, ms))]);
+    await withTimeout(loader.after("hard_reset"), 3000);
+    try { await withTimeout(transport.disconnect(), 2000); } catch { /* ignore */ }
     transport = null;
 
     finishProgressBar(true);
