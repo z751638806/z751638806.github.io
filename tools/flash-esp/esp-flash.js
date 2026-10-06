@@ -36,6 +36,11 @@ export async function flashEspFirmware(fw, log) {
   let transport = null;
   log.beginSession({ device: String(fw.device).toUpperCase(), firmware: fw.name, port: "Web Serial" });
   showProgress();
+  // 串口授权必须在点击的用户手势窗口内（约 5s）发起：先请求端口、再并行加载固件。
+  // 若先加载后请求，慢加载（首次访问/大文件）会让 requestPort 被浏览器以
+  // "Must be handling a user gesture" 拒绝（与 BW16 流程的先请求串口保持一致）。
+  log.append("请在弹出的窗口中选择你的开发板串口…", "sys");
+  const portPromise = beginPortRequest();
   try {
     log.append("加载固件文件…", "sys");
     const parts = fw.files ?? fw.parts ?? [];
@@ -54,8 +59,7 @@ export async function flashEspFirmware(fw, log) {
     const total = sizes.reduce((a, b) => a + b, 0);
     log.append(`固件就绪（${parts.length} 段，共 ${total} 字节）`, "ok");
 
-    log.append("请在弹出的窗口中选择你的开发板串口…", "sys");
-    const port = await beginPortRequest();
+    const port = await portPromise;
     const { ESPLoader, Transport } = await import("./vendor/esptool-js.esm.js");
     transport = new Transport(port, false);
     const loader = new ESPLoader({
