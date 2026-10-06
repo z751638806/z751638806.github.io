@@ -15,7 +15,7 @@
 BW16：WiFi安全测试固件「2026」/ 远程版「20261001」（需激活码） / **双频断网固件「英文版」（2.4G/5G，本地编译 RTL8720dn-Deauther GPL-3.0）** / 官方 AT（救砖）；
 ESP8266：Deauther v2 / Tasmota / MicroPython / WLED / 钓鱼门户演示；
 ESP32：Bruce（CYD）/ MicroPython / **ESP32-DIV 多频工具箱（MIT）** / **Ghost（CYD）**；
-ESP32-S3：Bruce / **Ghost（Cardputer ADV）**；ESP32-C3：**CMCC（NAT 路由，热点 CMCC/12345678.，后台 192.168.4.1）** / WiFi渗透工具 / BLE 工具。
+ESP32-S3：Bruce / **Ghost（Cardputer ADV）**；ESP32-C3：**Wifi模拟中继（热点 CMCC/12345678.，后台 192.168.4.1；克隆/中继/网速/打卡）** / WiFi渗透工具 / BLE 工具。
 ESP 系官方固件发行规格在 `tools/update-flash.py` 的 `ESP_FIRMWARES`（bin 存于 `tools/esp-firmware/`，
 来源/许可证/默认热点存证见 `tools/esp-firmware/SOURCES.md`）；署名统一为
 「原项目 © 作者（许可证）· 打包发行 无敌佩佩队长 · peipeidev.cn」（清单+界面呈现，不改二进制）。

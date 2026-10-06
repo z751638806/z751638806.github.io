@@ -476,14 +476,14 @@ ESP_FIRMWARES = [
     {
         # 多文件条目：files = [[esp-firmware 相对路径, 烧录 offset], ...]（ESP Web Tools 分件刷写）
         "slug": "esp32c3-nat", "device": "esp32c3",
-        "name": "CMCC",
+        "name": "Wifi模拟中继",
         "files": [
             ["esp32c3/nat/bootloader.bin", 0x0],
             ["esp32c3/nat/partition-table.bin", 0x8000],
             ["esp32c3/nat/esp32_nat_router.bin", 0x10000],
         ],
         "colorCss": "#5fd4f5",
-        "connectNote": "刷写后热点：CMCC（密码 12345678.，注意末尾有英文句点）· 浏览器打开 http://192.168.4.1 进入后台（NAT 路由：克隆/中继/网速统计）",
+        "connectNote": "刷写后热点：CMCC（密码 12345678.，注意末尾有英文句点）· 浏览器打开 http://192.168.4.1 进入后台（克隆/中继/网速/打卡）",
         "attribution": "基于 esp32-nat-router 开源项目 · Nomad 定制版 · 打包发行 无敌佩佩队长 · peipeidev.cn",
     },
 ]

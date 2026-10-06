@@ -1,5 +1,5 @@
 {
-  "name": "CMCC",
+  "name": "Wifi模拟中继",
   "version": "local",
   "new_install_prompt_erase": false,
   "builds": [

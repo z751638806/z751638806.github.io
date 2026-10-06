@@ -42,4 +42,4 @@
 | nat/bootloader.bin + nat/partition-table.bin + nat/esp32_nat_router.bin | 基于 [martin-ger/esp32_nat_router](https://github.com/martin-ger/esp32_nat_router) 的 Nomad 定制构建（本地编译，来源存证同目录 刷机说明.txt：esp32_nat_router-master git 最新提交，导出 2026-10-06） | nomad-20261006 | 上游许可证（待与上游仓库核对，无逐文件 SHA 存证——用户提供的预编译产物） | 0x0 / 0x8000 / 0x10000（ESP32-C3，dio/80m/4MB） | CMCC / 12345678.（9位带句点）/ 192.168.4.1（或 192.168.1.1） |
 
 - 功能：NAT 路由（WiFi 克隆向导、记录页、通电自动漫游、实时网速统计、恢复出厂：管理页底部 / 长按 BOOT 5s / 串口 factory_reset）
-- 上架名「CMCC」为用户指定；与 BW16「WiFi安全测试固件」的 CMCC 热点为不同设备/固件
+- 上架名「Wifi模拟中继」为用户指定（2026-10-07 由「CMCC」更名）；热点仍为 CMCC；与 BW16「WiFi安全测试固件」的 CMCC 热点为不同设备/固件
