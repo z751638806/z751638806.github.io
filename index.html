@@ -308,7 +308,7 @@ footer a:hover{color:var(--pink)}
       <div class="social">
         <a href="https://space.bilibili.com/" target="_blank" rel="noopener">Bilibili</a>
         <a href="https://github.com/z751638806" target="_blank" rel="noopener">GitHub</a>
-        <a href="mailto:751638806@qq.com">Email</a>
+        <a href="mailto:0XT@tutamail.com">Email</a>
       </div>
       <div class="stats" aria-label="数据一览">
         <div class="stat"><b data-count="10" data-suffix="+">0+</b><span>技术视频</span></div>
@@ -528,7 +528,7 @@ footer a:hover{color:var(--pink)}
     <p>· <b>B站</b>：闲鱼ID无敌佩佩队长（视频 + 图文教程）<br>
        · <b>闲鱼</b>：在售固件 + 激活码（8.8 元起）<br>
        · <b>GitHub</b>：z751638806（开源代码）<br>
-       · <b>联系</b>：751638806@qq.com</p>
+       · <b>联系</b>：0XT@tutamail.com</p>
     <p>固件仅供学习研究，请勿用于非法用途。</p>
   </div>
 </section>
@@ -555,7 +555,7 @@ footer a:hover{color:var(--pink)}
       <h4>联系我</h4>
       <p><a href="https://space.bilibili.com/" target="_blank" rel="noopener">B站 @闲鱼ID无敌佩佩队长</a><br>
          <a href="https://github.com/z751638806" target="_blank" rel="noopener">GitHub</a> · 闲鱼同名<br>
-         <a href="mailto:751638806@qq.com">751638806@qq.com</a></p>
+         <a href="mailto:0XT@tutamail.com">0XT@tutamail.com</a></p>
     </div>
   </div>
   <div class="foot-bottom">
@@ -762,6 +762,7 @@ footer a:hover{color:var(--pink)}
     + '<label class="fb-l">类型<select id="fb-t"><option value="bug">问题（页面异常 / 功能故障）</option><option value="suggestion">建议</option><option value="other">其他</option></select></label>'
     + '<label class="fb-l">描述（遇到什么问题 / 希望有什么）<textarea id="fb-b" rows="4" placeholder="至少 5 个字，越具体越好"></textarea></label>'
     + '<details id="fb-log-d"><summary class="fb-l">诊断日志（<span id="fb-n">0</span> 条，自动附带，帮助定位问题）</summary><pre id="fb-log" class="fb-pre"></pre></details>'
+    + '<div id="fb-ts" style="margin-top:10px"></div>'
     + '<div class="fb-act"><span id="fb-msg"></span><button id="fb-ok" class="fb-pri">提交反馈</button></div>'
     + '</div>';
   document.body.appendChild(ov);
@@ -770,11 +771,30 @@ footer a:hover{color:var(--pink)}
     document.getElementById("fb-n").textContent = l.errors.length;
     document.getElementById("fb-log").textContent = (l.text || "（本次浏览暂无报错记录）") + "\n\n—— 环境 ——" + JSON.stringify(l.env, null, 1);
   }
-  function open(){ refreshLog(); document.getElementById("fb-msg").textContent = ""; ov.classList.add("on"); document.getElementById("fb-b").focus(); }
+  function open(){ refreshLog(); tsLoad(); document.getElementById("fb-msg").textContent = ""; ov.classList.add("on"); document.getElementById("fb-b").focus(); }
   fab.addEventListener("click", open);
   fab.addEventListener("keydown", function(e){ if (e.key === "Enter" || e.key === " ") open(); });
   document.getElementById("fb-x").addEventListener("click", function(){ ov.classList.remove("on"); });
   ov.addEventListener("click", function(e){ if (e.target === ov) ov.classList.remove("on"); });
+  /* Turnstile 人机验证（组件 peipei-turnstile；sitekey 为公开值）：打开弹窗时懒加载渲染，提交时带 token；
+     服务端未启用（无 TURNSTILE_SECRET）时 token 会被忽略，不影响提交。 */
+  var TS_KEY = "0x4AAAAAAFUzwgbZTzxfssPL", tsWid = null, tsToken = "";
+  function tsLoad(){
+    if (window.turnstile) { tsRender(); return; }
+    if (document.getElementById("ts-js")) return;
+    var s = document.createElement("script");
+    s.id = "ts-js"; s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    s.async = true; s.defer = true; s.onload = tsRender;
+    document.head.appendChild(s);
+  }
+  function tsRender(){
+    if (!window.turnstile || tsWid !== null) return;
+    try { tsWid = window.turnstile.render("#fb-ts", { sitekey: TS_KEY,
+      callback: function(t){ tsToken = t; },
+      "expired-callback": function(){ tsToken = ""; },
+      "error-callback": function(){ tsToken = ""; } }); } catch (e) {}
+  }
+  function tsReset(){ tsToken = ""; if (window.turnstile && tsWid !== null) { try { window.turnstile.reset(tsWid); } catch (e) {} } }
   document.getElementById("fb-ok").addEventListener("click", function(){
     var body = document.getElementById("fb-b").value.trim();
     var msg = document.getElementById("fb-msg");
@@ -784,17 +804,19 @@ footer a:hover{color:var(--pink)}
     fetch(API, { method: "POST", cache: "no-store",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ type: document.getElementById("fb-t").value, body: body,
+        turnstileToken: tsToken || undefined,
         /* 兼容两代后台：旧版认 message/log，v2 认 body/extra（log 文本两代都存） */
         message: body, log: l.text,
         extra: { page: l.env.page, ua: l.env.ua, lang: l.env.lang, screen: l.env.screen,
                  errors: l.errors, log: l.text } })
-    }).then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    }).then(function(r){ return r.json().catch(function(){ return {}; }).then(function(d){ if (!r.ok) throw new Error(d.detail || ("HTTP " + r.status)); return d; }); })
       .then(function(){
+        tsReset();
         errs.length = 0; badge(); ov.classList.remove("on");
         document.getElementById("fb-b").value = "";
         fab.innerHTML = "✓"; setTimeout(function(){ fab.innerHTML = '💬<i id="fb-dot" hidden></i>'; badge(); }, 2400);
       })
-      .catch(function(e){ btn.disabled = false; msg.textContent = "提交失败：" + e.message + "（可稍后重试）"; msg.className = "fb-err"; });
+      .catch(function(e){ tsReset(); btn.disabled = false; msg.textContent = "提交失败：" + e.message + "（可稍后重试）"; msg.className = "fb-err"; });
   });
 })();
 </script>

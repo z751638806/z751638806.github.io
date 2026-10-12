@@ -124,6 +124,23 @@ async function body(request) {
 }
 const clean = (s, n = 300) => (typeof s === "string" ? s.slice(0, n) : null);
 
+/* ---------- Turnstile 人机验证（2026-10-13 接入） ----------
+   仅当 env.TURNSTILE_SECRET 已设置时才启用；未设置一律放行，保证部署/回滚顺序自由、不会锁死现有流程。
+   策略：注册（authRegister）强制校验——token 缺失或无效都拒绝；
+        反馈（postFeedback）过渡期只校验「带了 token 的」请求，旧客户端无 token 暂放行，前端全量上线后再收紧。 */
+const clientIp = (request) => request.headers.get("CF-Connecting-IP") || null;
+async function verifyTurnstile(env, token, ip) {
+  if (!env.TURNSTILE_SECRET) return true;
+  if (!token || typeof token !== "string") return false;
+  try {
+    const form = new URLSearchParams({ secret: env.TURNSTILE_SECRET, response: token });
+    if (ip) form.set("remoteip", ip);
+    const r = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", { method: "POST", body: form });
+    const data = await r.json().catch(() => null);
+    return !!(data && data.success);
+  } catch { return false; }
+}
+
 /* ---------- 公开：刷写统计上报 ---------- */
 async function reportEvent(request, env, cors) {
   const b = await body(request);
@@ -138,6 +155,8 @@ async function reportEvent(request, env, cors) {
 /* ---------- 公开：用户反馈（v2 契约 {type,body,sessionPublicId,extra}；旧 {message,contact,log} 兼容） ---------- */
 async function postFeedback(request, env, cors) {
   const b = await body(request);
+  if (env.TURNSTILE_SECRET && b.turnstileToken && !(await verifyTurnstile(env, b.turnstileToken, clientIp(request))))
+    return json({ detail: "人机验证未通过，请刷新页面后重试" }, 400, cors);
   const message = clean(typeof b.body === "string" && b.body ? b.body : b.message, 2000);
   if (!message || message.length < 5) return json({ detail: "反馈内容太短（至少 5 字）" }, 400, cors);
   const user = await userFromCookie(request, env).catch(() => null);
@@ -473,6 +492,8 @@ async function addQuota(env, userId, delta, reason) {
 /* ---------- 认证四件套（契约：成功 {ok,loginId,quota}；失败 {detail} + 4xx；me 未登录 401） ---------- */
 async function authRegister(request, env, cors) {
   const b = await body(request);
+  if (env.TURNSTILE_SECRET && !(await verifyTurnstile(env, b.turnstileToken, clientIp(request))))
+    return json({ detail: "人机验证未通过，请刷新页面后重试" }, 400, cors);
   const loginId = (clean(b.loginId, 40) || "").trim();
   const password = typeof b.password === "string" ? b.password : "";
   if (!loginId || !/^[A-Za-z0-9_.@-]{3,32}$/.test(loginId))

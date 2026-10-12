@@ -282,6 +282,35 @@ async function main() {
     ok(scDel.deleted && !((await j(await worker.fetch(req("/api/site/content"), env))).content ?? {}).hasOwnProperty?.("tmp"), "删除内容块");
   }
 
+  console.log("Turnstile 人机验证（secret 已设时）");
+  {
+    const envT = { DB: makeD1(), PICKUP: makeR2(), ADMIN_TOKEN: "test-token", TURNSTILE_SECRET: "ts-secret" };
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = async (url, init) => {
+      if (String(url).includes("challenges.cloudflare.com")) {
+        const token = new URLSearchParams(init.body).get("response");
+        return { json: async () => ({ success: token === "good-token" }) };
+      }
+      return realFetch(url, init);
+    };
+    try {
+      const noTok = await worker.fetch(req("/api/auth/register", { method: "POST", body: { loginId: "carol", password: "password8" } }), envT);
+      ok(noTok.status === 400 && /人机验证/.test((await noTok.json()).detail || ""), "注册无 token 被拒（400+detail）");
+      const badTok = await worker.fetch(req("/api/auth/register", { method: "POST", body: { loginId: "carol", password: "password8", turnstileToken: "bad" } }), envT);
+      ok(badTok.status === 400, "注册坏 token 被拒");
+      const goodTok = await worker.fetch(req("/api/auth/register", { method: "POST", body: { loginId: "carol", password: "password8", turnstileToken: "good-token" } }), envT);
+      ok((await goodTok.json()).ok === true, "注册好 token 通过");
+      const fbBad = await worker.fetch(req("/api/feedback", { method: "POST", body: { type: "feedback", body: "这是一条足够长的反馈内容", turnstileToken: "bad" } }), envT);
+      ok(fbBad.status === 400, "反馈带坏 token 被拒");
+      const fbNone = await worker.fetch(req("/api/feedback", { method: "POST", body: { type: "feedback", body: "这是一条足够长的反馈内容" } }), envT);
+      ok(fbNone.status === 200, "反馈无 token 过渡期放行（旧客户端兼容）");
+      const fbGood = await worker.fetch(req("/api/feedback", { method: "POST", body: { type: "feedback", body: "这是一条足够长的反馈内容", turnstileToken: "good-token" } }), envT);
+      ok(fbGood.status === 200, "反馈好 token 通过");
+      const noSecret = await worker.fetch(req("/api/auth/register", { method: "POST", body: { loginId: "dave", password: "password8" } }), env);
+      ok((await noSecret.json()).ok === true, "未设 TURNSTILE_SECRET 时注册不受影响");
+    } finally { globalThis.fetch = realFetch; }
+  }
+
   console.log(`\n结果：${passed} 通过，${failed} 失败`);
   if (failed) process.exit(1);
 }
