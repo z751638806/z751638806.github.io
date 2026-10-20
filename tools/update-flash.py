@@ -233,7 +233,7 @@ MANIFEST_FIELD_PATCH = {
 # 线上固件白名单：只发布这些 slug（清单 + bin 文件都以此为准；本地项目不受影响）。
 # 空 list = 该设备暂不上线固件。
 FIRMWARE_WHITELIST = {
-    "bw16": ["bw16-01", "bw16-18", "bw16-19", "bw16-at"],
+    "bw16": ["bw16-01", "bw16-18", "bw16-19", "bw16-20", "bw16-at"],
     "esp32c3": ["esp32c3-1", "esp32c3-2", "esp32c3-nat"],
     "esp8266": ["esp8266-deauther", "esp8266-tasmota", "esp8266-micropython", "esp8266-wled", "esp8266-captive-portal"],
     "esp32": ["esp32-bruce-cyd", "esp32-micropython", "esp32-div-cyd", "esp32-ghost-cyd"],
@@ -285,6 +285,7 @@ FIRMWARE_CONNECT_NOTES_OVERRIDE = {
     "esp32c3-2": "设备端操作（配套 Flipper 蓝牙工具使用）",
     "bw16-18": "刷写后热点：RTL8720dn-Deauther（密码 0123456789）· 管理后台 http://192.168.1.1 · 支持双频 2.4G/5G",
     "bw16-19": "刷写后热点：CMCC（密码 12345678.，末尾为英文句点）· 固件需激活后才能使用：刷写完成 → 打开固件界面复制设备码 → 通过 peipeidev.cn 首页联系方式发给开发者 → 获取激活码完成激活",
+    "bw16-20": "刷写后热点：CMCC（密码 12345678.，末尾为英文句点）· 默认信道 6 · 管理后台 http://192.168.1.1 · 需激活后才能使用：刷写完成 → 打开固件界面复制设备码 → 通过 peipeidev.cn 首页联系方式发给开发者 → 获取激活码完成激活（一机一码）· 仅供学习研究，请勿用于非法用途",
 }
 
 # 署名表（按 slug 注入清单；ESP 系固件在 ESP_FIRMWARES 内自带）
