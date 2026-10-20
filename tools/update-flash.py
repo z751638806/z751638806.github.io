@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""上线净化构建：把本地 BW16-ESP32-tool 网页版发布为 peipeidev.cn/flash/。
+"""上线净化构建：把本地 BW16-ESP32-tool 网页版发布为 peipeidev.cn **根路径**应用。
+
+2026-10-21 落位变更（主页深度重构第②步「应用上根」）：
+  · 应用本体（index.html / css / js / manifests / firmware）发布到站点根，`/flash/` 只留薄壳跳转页；
+  · 固件静态目录随之从 /flash/firmware/ 移到 /firmware/ —— 清单与 backend.js 用的都是相对页面的
+    `firmware/<slug>/<name>`，上根后天然解析到 /firmware/，所以路径字符串一行都不用改；
+  · 站内与枢纽档案都没发行过 /flash/firmware/... 静态直链（买家拿的是后台 /pickup/... 一次性签名链接），
+    故本次移动不影响既有交付。
 
 本地源项目保持原样（协议文档、调试日志照旧），本脚本在临时副本上打"用户视角"补丁：
   1. 移除协议出处/审查记录等开发向内容（docs/ 不随站点发布）
   2. 日志与界面文案通俗化（地址/指令/波特率等技术细节不再出现在默认视图）
-  3. manifest 改相对路径（站点部署在 /flash/ 子目录）
+  3. manifest 改相对路径（相对页面解析，根落位与旧 /flash/ 落位都能用）
+  4. 注入首屏信任区、手机引导区与 /flash/ 薄壳跳转页
 之后再 terser 压缩、组装、自检。
 
 用法：
@@ -20,7 +28,11 @@ import tempfile
 from pathlib import Path
 
 SITE = Path(__file__).resolve().parents[1]
-OUT = SITE / "flash"
+OUT = SITE                      # 应用上根：产物发布到站点根
+FW_OUT = SITE / "firmware"      # 固件实体目录
+LEGACY_DIR = SITE / "flash"     # 旧落位：只保留跳转薄壳
+# 组装时允许整体替换的"应用自有路径"。绝不含 SITE 本身——防误删整站
+APP_OWNED = ["index.html", "css", "js", "manifests", "firmware", "test"]
 DEFAULT_SRC = Path.home() / "Downloads/归档/BW16-ESP32-tool/web"
 
 # ---------------------------------------------------------------------------
@@ -29,13 +41,41 @@ DEFAULT_SRC = Path.home() / "Downloads/归档/BW16-ESP32-tool/web"
 PATCHES = {
     "index.html": [
         ("<title>BW16 / ESP32-C3 网页刷写工具</title>",
-         "<title>在线烧录 · BW16 / ESP32-C3 网页刷写工具 — peipeidev.cn</title>", 1),
+         "<title>在线烧录 · BW16 / ESP32 / ESP8266 网页直刷 — peipeidev.cn</title>\n"
+         "  <meta name=\"description\" content=\"浏览器里直接给 BW16（RTL8720DN）、ESP32、ESP32-C3/S3、ESP8266 刷固件，"
+         "无需装驱动。官方 AT 救砖镜像一键恢复，固件免费公开下载，付费固件一机一码激活。\">", 1),
         ("<link rel=\"stylesheet\" href=\"css/style.css\">",
          "<link rel=\"stylesheet\" href=\"css/style.css\">\n  <link rel=\"stylesheet\" href=\"css/theme-home.css\">", 1),
         ("<h1>⚡ BW16 / ESP32-C3 网页刷写工具</h1>",
          "<h1 class=\"logo\"><a href=\"/\">peipei<span>.</span>dev</a><span class=\"topbar-title\">在线烧录</span></h1>", 1),
         ('    <div class="topbar-status">\n      <button id="btn-feedback"',
-         '    <div class="topbar-status">\n      <nav class="site-nav" aria-label="站点导航"><a href="/#videos">视频</a><a href="/#firmware">固件</a><a href="/#projects">项目</a><a href="/#about">关于</a></nav>\n      <button id="btn-feedback"', 1),
+         '    <div class="topbar-status">\n      <nav class="site-nav" aria-label="站点导航"><a href="#trust">关于站长</a><a href="#contact">联系</a></nav>\n      <button id="btn-feedback"', 1),
+        # 主页重构第②步：应用上根后，首屏先给"信任四件事"，再给手机访客一条出路
+        ('  <main>\n  <div id="view-flash">',
+         '  <main>\n'
+         '  <section id="trust" class="trust-strip" aria-label="关于站长与本站">\n'
+         '    <div class="trust-item"><b>站长</b><span>佩佩队长，野生嵌入式开发玩家，板子上的固件都自己先刷一遍。'
+         '<a href="https://github.com/z751638806" rel="me noopener">GitHub · z751638806</a></span></div>\n'
+         '    <div class="trust-item"><b>固件</b><span>本页列出的免费固件直接刷，不注册、不登录、不占额度；'
+         '付费固件按一机一码激活（闲鱼同名店铺「无敌佩佩队长」）。</span></div>\n'
+         '    <div class="trust-item"><b>出问题</b><span>右上角「反馈」直接发到站长后台，或写信 '
+         '<a href="mailto:0XT@tutamail.com">0XT@tutamail.com</a>；付费额度若刷写失败会自动退还。</span></div>\n'
+         '    <div class="trust-item"><b>合规</b><span>固件仅供学习研究，请勿用于非法用途；'
+         '本站由 GitHub Pages 托管在境外，依法无需 ICP 备案。</span></div>\n'
+         '  </section>\n'
+         '  <section id="mobile-guide" class="mobile-guide" hidden aria-label="手机访客指引">\n'
+         '    <b>你在手机上打开本站？</b>\n'
+         '    <p>浏览器直刷需要<b>电脑上的 Chrome 或 Edge</b>——手机浏览器没有串口访问权限（Web Serial API）。</p>\n'
+         '    <ol>\n'
+         '      <li>把 <code>peipeidev.cn</code> 复制到电脑浏览器打开，固件与额度都不绑设备，换浏览器不影响。'
+         '<button class="btn btn-small" type="button" onclick="try{navigator.clipboard.writeText(\'https://peipeidev.cn/\')}catch(e){}">复制本页地址</button></li>\n'
+         '      <li>手边没电脑：写信到 <a href="mailto:0XT@tutamail.com">0XT@tutamail.com</a>，写清板子型号（BW16 / ESP32-C3 / ESP8266…）'
+         '和想要的固件，站长把接线与刷写步骤发给你。</li>\n'
+         '      <li>已买激活码：激活在设备端完成，与本页刷写互不影响；卡在哪一步就把设备码一起发来。</li>\n'
+         '    </ol>\n'
+         '  </section>\n'
+         '  <script>if (!("serial" in navigator)) { document.getElementById("mobile-guide").hidden = false; }</script>\n'
+         '  <div id="view-flash">', 1),
         ("扩展擦除（覆盖全部镜像区，较慢；出处 PROTOCOL.md P14 备注）",
          "全片擦除（更彻底但较慢；普通刷写无需勾选）", 1),
         ("高速档 921600（快约 3 倍；失败自动回退 115200；出处 PROTOCOL.md P19）",
@@ -52,7 +92,9 @@ PATCHES = {
         ("乐鑫 ESP32-C3 开发板<br>固件即将上线</span>\n        </button>",
          "乐鑫 ESP32-C3 开发板<br>Web Serial 直刷 · 3 个固件</span>\n        </button>\n        <button class=\"device-card\" data-device=\"esp8266\" type=\"button\">\n          <span class=\"device-icon\">📶</span>\n          <span class=\"device-name\">ESP8266</span>\n          <span class=\"device-desc\">乐鑫 ESP8266 / ESP8285<br>Web Serial 直刷 · 5 个固件</span>\n        </button>\n        <button class=\"device-card\" data-device=\"esp32\" type=\"button\">\n          <span class=\"device-icon\">🔲</span>\n          <span class=\"device-name\">ESP32</span>\n          <span class=\"device-desc\">乐鑫 ESP32（经典款）<br>Web Serial 直刷 · 4 个固件</span>\n        </button>\n        <button class=\"device-card\" data-device=\"esp32s3\" type=\"button\">\n          <span class=\"device-icon\">🧩</span>\n          <span class=\"device-name\">ESP32-S3</span>\n          <span class=\"device-desc\">乐鑫 ESP32-S3<br>Web Serial 直刷 · 2 个固件</span>\n        </button>", 1),
         ('<p class="dim small">协议出处：<a href="docs/PROTOCOL.md">web/docs/PROTOCOL.md</a> ·\n      审查记录：<a href="docs/REVIEW_LOG.md">web/docs/REVIEW_LOG.md</a></p>',
-         '<p class="dim small">使用遇到问题？观看 B 站视频教程，或通过 <a href="/">peipeidev.cn</a> 首页的联系方式联系我。</p>', 1),
+         '<p class="dim small" id="contact">联系站长：<a href="mailto:0XT@tutamail.com">0XT@tutamail.com</a> · '
+         '<a href="https://github.com/z751638806" rel="me noopener">GitHub</a> · 固件与激活码购买渠道：闲鱼「无敌佩佩队长」 · '
+         '本页开源实现见 <a href="https://github.com/z751638806/z751638806.github.io">仓库</a>。</p>', 1),
         # M7：自定义固件视图（导航页签 + 视图区块；custom.js 由 tools/flash-custom/ 附加）
         ('<nav class="view-nav" aria-label="视图切换">\n      <button id="nav-flash" class="view-tab selected" type="button">刷固件</button>\n      <button id="nav-rescue" class="view-tab" type="button">救砖恢复</button>\n    </nav>',
          '<nav class="view-nav" aria-label="视图切换">\n      <button id="nav-flash" class="view-tab selected" type="button">刷固件</button>\n      <button id="nav-rescue" class="view-tab" type="button">救砖恢复</button>\n      <button id="nav-custom" class="view-tab" type="button">自定义固件</button>\n    </nav>', 1),
@@ -266,7 +308,28 @@ FORBIDDEN = [
     "SRAM", "NAK 0x", "ACK 0x", "vid=0x", "来源 ", "firmware_config",
     "_at_firmware", "flash_cmd", "协议出处", "审查记录", "待实机验证",
     '"/firmware/',
+    # 主页重构第②步：这些是旧简历主页留下的死引用与第三方计数，一次都不该回到线上
+    "busuanzi", "space.bilibili.com", "/#videos", "/#projects", "/#about", "/#firmware",
 ]
+
+# 旧落位 /flash/ 的薄壳跳转页（书签、闲鱼话术、时效短链都还能用）
+SHELL_HTML = """<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>在线烧录 · peipeidev.cn</title>
+  <link rel="canonical" href="https://peipeidev.cn/">
+  <meta http-equiv="refresh" content="0; url=/">
+  <meta name="robots" content="noindex">
+</head>
+<body style="font:15px/1.7 system-ui,-apple-system,'PingFang SC',sans-serif;background:#0e1116;color:#d7dfe8;padding:24px">
+  <p>在线烧录台已移到本站根目录 <strong>peipeidev.cn</strong>，正在跳转……</p>
+  <p><a href="/" style="color:#FB7299">没自动跳？点这里前往烧录台 →</a></p>
+  <script>location.replace("/");</script>
+</body>
+</html>
+"""
 
 # 主题覆盖层：深色极客风（深灰黑底 + 品牌粉点缀，与日志终端融为一体）
 THEME_CSS = """/* theme-home.css · 深色极客风主题层（构建时生成） */
@@ -367,6 +430,24 @@ main .badge, .flash-panel .badge { background: rgba(251, 114, 153, .12); border-
 .footer a { color: #FB7299; text-decoration: none; }
 .footer a:hover { text-decoration: underline; }
 .footer .dim { color: #5d6874; }
+
+/* ---- 首屏信任区（主页重构第②步：应用上根后先讲清"这人是谁、凭什么信"） ---- */
+.trust-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin: 4px 0 22px; }
+.trust-item { background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.trust-item b { color: #FB7299; font-size: 12px; letter-spacing: .5px; }
+.trust-item span { color: var(--text-dim); font-size: 13px; line-height: 1.6; }
+.trust-item a { color: #d7dfe8; text-decoration: underline; text-underline-offset: 2px; }
+.trust-item a:hover { color: #FB7299; }
+
+/* ---- 手机引导区（Web Serial 不可用时才显示） ---- */
+.mobile-guide { background: rgba(251, 114, 153, .08); border: 1px solid rgba(251, 114, 153, .35);
+  border-radius: var(--radius); padding: 14px 16px; margin: 4px 0 22px; }
+.mobile-guide b { color: #ffb3ca; }
+.mobile-guide p, .mobile-guide li { color: var(--text-dim); font-size: 14px; line-height: 1.75; }
+.mobile-guide ol { margin: 8px 0 0; padding-left: 22px; }
+.mobile-guide code { background: #0b0e12; padding: 1px 6px; border-radius: 4px; color: #d7dfe8; }
+.mobile-guide a { color: #FB7299; }
 """
 
 
@@ -661,20 +742,48 @@ def main() -> None:
             sanitize_manifest(m)
         print("② 压缩 + 清单净化完成")
 
-        # 组装到站点（清空旧 flash/，docs/ 永不发布）
-        if OUT.exists():
-            shutil.rmtree(OUT)
-        shutil.copytree(dist, OUT)
+        # 组装到站点根（应用上根）：只替换"应用自有路径"，绝不对站点根做 rmtree
+        for rel in APP_OWNED:
+            target = (SITE / rel).resolve()
+            if target == SITE.resolve():
+                sys.exit(f"✗ APP_OWNED 解析到站点根本身，拒绝替换：{rel}")
+            if target.is_dir():
+                shutil.rmtree(target)
+            elif target.is_file():
+                target.unlink()
+        shutil.copytree(dist, SITE, dirs_exist_ok=True)
+        # 旧落位 /flash/ 只留跳转薄壳（书签与短链继续可达），docs/ 永不发布
+        for stale in ("css", "js", "manifests", "firmware", "test", "index.html"):
+            p = LEGACY_DIR / stale
+            if p.is_dir():
+                shutil.rmtree(p)
+            elif p.is_file():
+                p.unlink()
+        LEGACY_DIR.mkdir(exist_ok=True)
+        (LEGACY_DIR / "index.html").write_text(SHELL_HTML, encoding="utf-8")
+        print("  ✓ 应用已上根；flash/ 只留薄壳跳转页")
 
     # 自检：上线文件不得包含开发向字符串
     bad = []
-    for f in list(OUT.glob("js/*.js")) + [OUT / "index.html"] + list(OUT.glob("manifests/*.json")):
+    scanned = list(OUT.glob("js/*.js")) + [OUT / "index.html", LEGACY_DIR / "index.html"] + list(OUT.glob("manifests/*.json"))
+    for f in scanned:
         text = f.read_text(encoding="utf-8", errors="ignore")
         for s in FORBIDDEN:
             if s in text:
                 bad.append(f"{f.relative_to(OUT)} 含 {s!r}")
     if bad:
         sys.exit("✗ 自检失败：\n  " + "\n  ".join(bad))
+    # 自检：应用上根的落位三件事——首屏信任区在、手机引导区在、旧落位只剩薄壳
+    home = (OUT / "index.html").read_text(encoding="utf-8")
+    for need, why in [('<main>', "烧录应用本体"), ('id="trust"', "首屏信任区"),
+                      ('id="mobile-guide"', "手机引导区"), ('id="contact"', "联系锚点")]:
+        if need not in home:
+            sys.exit(f"✗ 自检失败：根 index.html 缺少{why}（{need}）——主页重构第②步未落地")
+    shell = (LEGACY_DIR / "index.html").read_text(encoding="utf-8")
+    if 'rel="canonical" href="https://peipeidev.cn/"' not in shell or "http-equiv=\"refresh\"" not in shell:
+        sys.exit("✗ 自检失败：flash/index.html 薄壳缺少 canonical 或 meta refresh")
+    if (LEGACY_DIR / "firmware").exists():
+        sys.exit("✗ 自检失败：旧落位 flash/firmware 未清（固件应只在站点根 /firmware）")
     # 自检：线上固件目录必须与白名单一致，多一个 bin 都不行
     allowed_dirs = {"_common", "_sdk_backup"} | {s for slugs in FIRMWARE_WHITELIST.values() for s in slugs}
     actual = {p.name for p in (OUT / "firmware").iterdir() if p.is_dir()}
@@ -698,9 +807,11 @@ def main() -> None:
 
             if _has_path(ent.get("files")):
                 sys.exit(f"✗ 自检失败：付费固件 {s} 清单仍残留下载路径")
-    size = sum(p.stat().st_size for p in OUT.rglob("*") if p.is_file())
+    # 体积只统计应用自有路径（OUT 现在是站点根，含 tools/ 与 .git，不能再 rglob 全站）
+    size = sum(p.stat().st_size for rel in APP_OWNED for p in [SITE / rel]
+               for p in (p.rglob("*") if p.is_dir() else [p]) if p.is_file())
     print(f"③ 自检通过（{len(FORBIDDEN)} 项敏感串 + 固件白名单 {sorted(allowed_dirs)}）")
-    print(f"✓ 上线产物就绪：{OUT}（{size / 1e6:.1f} MB）")
+    print(f"✓ 上线产物就绪：应用已发布到站点根 {OUT}（{size / 1e6:.1f} MB，另有 {LEGACY_DIR.name}/ 薄壳）")
 
 
 if __name__ == "__main__":
