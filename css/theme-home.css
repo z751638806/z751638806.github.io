@@ -97,15 +97,6 @@ main .badge, .flash-panel .badge { background: rgba(251, 114, 153, .12); border-
 .footer a:hover { text-decoration: underline; }
 .footer .dim { color: #5d6874; }
 
-/* ---- 首屏信任区（主页重构第②步：应用上根后先讲清"这人是谁、凭什么信"） ---- */
-.trust-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin: 4px 0 22px; }
-.trust-item { background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
-.trust-item b { color: #FB7299; font-size: 12px; letter-spacing: .5px; }
-.trust-item span { color: var(--text-dim); font-size: 13px; line-height: 1.6; }
-.trust-item a { color: #d7dfe8; text-decoration: underline; text-underline-offset: 2px; }
-.trust-item a:hover { color: #FB7299; }
-
 /* ---- 手机引导区（Web Serial 不可用时才显示） ---- */
 .mobile-guide { background: rgba(251, 114, 153, .08); border: 1px solid rgba(251, 114, 153, .35);
   border-radius: var(--radius); padding: 14px 16px; margin: 4px 0 22px; }

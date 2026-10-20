@@ -50,20 +50,10 @@ PATCHES = {
          "<h1 class=\"logo\"><a href=\"/\">peipei<span>.</span>dev</a><span class=\"topbar-title\">在线烧录</span></h1>", 1),
         # 站点导航放在登录区左侧：顶栏最左的「反馈」由遥测模块运行时注入，别夹在两个反馈中间
         ('      <span id="user-box"',
-         '      <nav class="site-nav" aria-label="站点导航"><a href="#trust">关于站长</a><a href="#contact">联系</a></nav>\n      <span id="user-box"', 1),
-        # 主页重构第②步：应用上根后，首屏先给"信任四件事"，再给手机访客一条出路
+         '      <nav class="site-nav" aria-label="站点导航"><a href="#contact">联系</a></nav>\n      <span id="user-box"', 1),
+        # 主页重构第②步：应用上根后，首屏给手机访客一条出路（信任区已按站长要求 2026-10-21 移除）
         ('  <main>\n  <div id="view-flash">',
          '  <main>\n'
-         '  <section id="trust" class="trust-strip" aria-label="关于站长与本站">\n'
-         '    <div class="trust-item"><b>站长</b><span>佩佩队长，野生嵌入式开发玩家，板子上的固件都自己先刷一遍。'
-         '<a href="https://github.com/z751638806" rel="me noopener">GitHub · z751638806</a></span></div>\n'
-         '    <div class="trust-item"><b>固件</b><span>本页列出的免费固件直接刷，不注册、不登录、不占额度；'
-         '付费固件按一机一码激活（闲鱼同名店铺「无敌佩佩队长」）。</span></div>\n'
-         '    <div class="trust-item"><b>出问题</b><span>右上角「反馈」直接发到站长后台，或写信 '
-         '<a href="mailto:0XT@tutamail.com">0XT@tutamail.com</a>；付费额度若刷写失败会自动退还。</span></div>\n'
-         '    <div class="trust-item"><b>合规</b><span>固件仅供学习研究，请勿用于非法用途；'
-         '本站由 GitHub Pages 托管在境外，依法无需 ICP 备案。</span></div>\n'
-         '  </section>\n'
          '  <section id="mobile-guide" class="mobile-guide" hidden aria-label="手机访客指引">\n'
          '    <b>你在手机上打开本站？</b>\n'
          '    <p>浏览器直刷需要<b>电脑上的 Chrome 或 Edge</b>——手机浏览器没有串口访问权限（Web Serial API）。</p>\n'
@@ -432,15 +422,6 @@ main .badge, .flash-panel .badge { background: rgba(251, 114, 153, .12); border-
 .footer a:hover { text-decoration: underline; }
 .footer .dim { color: #5d6874; }
 
-/* ---- 首屏信任区（主页重构第②步：应用上根后先讲清"这人是谁、凭什么信"） ---- */
-.trust-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin: 4px 0 22px; }
-.trust-item { background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
-.trust-item b { color: #FB7299; font-size: 12px; letter-spacing: .5px; }
-.trust-item span { color: var(--text-dim); font-size: 13px; line-height: 1.6; }
-.trust-item a { color: #d7dfe8; text-decoration: underline; text-underline-offset: 2px; }
-.trust-item a:hover { color: #FB7299; }
-
 /* ---- 手机引导区（Web Serial 不可用时才显示） ---- */
 .mobile-guide { background: rgba(251, 114, 153, .08); border: 1px solid rgba(251, 114, 153, .35);
   border-radius: var(--radius); padding: 14px 16px; margin: 4px 0 22px; }
@@ -774,10 +755,10 @@ def main() -> None:
                 bad.append(f"{f.relative_to(OUT)} 含 {s!r}")
     if bad:
         sys.exit("✗ 自检失败：\n  " + "\n  ".join(bad))
-    # 自检：应用上根的落位三件事——首屏信任区在、手机引导区在、旧落位只剩薄壳
+    # 自检：应用上根的落位三件事——应用本体在、手机引导区在、联系锚点 in；旧落位只剩薄壳
     home = (OUT / "index.html").read_text(encoding="utf-8")
-    for need, why in [('<main>', "烧录应用本体"), ('id="trust"', "首屏信任区"),
-                      ('id="mobile-guide"', "手机引导区"), ('id="contact"', "联系锚点")]:
+    for need, why in [('<main>', "烧录应用本体"), ('id="mobile-guide"', "手机引导区"),
+                      ('id="contact"', "联系锚点")]:
         if need not in home:
             sys.exit(f"✗ 自检失败：根 index.html 缺少{why}（{need}）——主页重构第②步未落地")
     shell = (LEGACY_DIR / "index.html").read_text(encoding="utf-8")
