@@ -48,8 +48,9 @@ PATCHES = {
          "<link rel=\"stylesheet\" href=\"css/style.css\">\n  <link rel=\"stylesheet\" href=\"css/theme-home.css\">", 1),
         ("<h1>⚡ BW16 / ESP32-C3 网页刷写工具</h1>",
          "<h1 class=\"logo\"><a href=\"/\">peipei<span>.</span>dev</a><span class=\"topbar-title\">在线烧录</span></h1>", 1),
-        ('    <div class="topbar-status">\n      <button id="btn-feedback"',
-         '    <div class="topbar-status">\n      <nav class="site-nav" aria-label="站点导航"><a href="#trust">关于站长</a><a href="#contact">联系</a></nav>\n      <button id="btn-feedback"', 1),
+        # 站点导航放在登录区左侧：顶栏最左的「反馈」由遥测模块运行时注入，别夹在两个反馈中间
+        ('      <span id="user-box"',
+         '      <nav class="site-nav" aria-label="站点导航"><a href="#trust">关于站长</a><a href="#contact">联系</a></nav>\n      <span id="user-box"', 1),
         # 主页重构第②步：应用上根后，首屏先给"信任四件事"，再给手机访客一条出路
         ('  <main>\n  <div id="view-flash">',
          '  <main>\n'
