@@ -539,6 +539,7 @@ async function getCatalog(env, cors) {
     slug: r.slug, name: r.name, color: r.color || "", colorLabel: r.color_label || "",
     colorCss: r.color_css || "", device: r.device || "bw16", version: r.version || "",
     sourcePath: r.source_path || "线上目录", attribution: r.attribution || "",
+    connectNote: r.connect_note || "",
     files: safeParseObj(r.files),
     paid: gated.has(r.slug) ? 1 : 0,
   }));
@@ -727,15 +728,15 @@ async function upsertCatalog(request, env, cors) {
   // files 只在显式传入时整体替换，否则保留已上传登记（避免控制台改名清掉清单）
   const files = b.files !== undefined ? JSON.stringify(b.files) : (prev?.files || "{}");
   await env.DB.prepare(
-    `INSERT INTO catalog_fw (slug, device, name, color, color_label, color_css, version, source_path, attribution, sort, files, active, updated_ts)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+    `INSERT INTO catalog_fw (slug, device, name, color, color_label, color_css, version, source_path, attribution, connect_note, sort, files, active, updated_ts)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
      ON CONFLICT(slug) DO UPDATE SET device=excluded.device, name=excluded.name, color=excluded.color,
        color_label=excluded.color_label, color_css=excluded.color_css, version=excluded.version,
-       source_path=excluded.source_path, attribution=excluded.attribution, sort=excluded.sort,
-       files=excluded.files, active=excluded.active, updated_ts=excluded.updated_ts`
+       source_path=excluded.source_path, attribution=excluded.attribution, connect_note=excluded.connect_note,
+       sort=excluded.sort, files=excluded.files, active=excluded.active, updated_ts=excluded.updated_ts`
   ).bind(slug, clean(b.device, 20) || "bw16", clean(b.name, 120) || slug, clean(b.color, 20),
     clean(b.colorLabel, 40), clean(b.colorCss, 40), clean(b.version, 40), clean(b.sourcePath, 120),
-    clean(b.attribution, 200), Number(b.sort) || 0, files, b.active === false ? 0 : 1, Date.now()).run();
+    clean(b.attribution, 200), clean(b.connectNote, 400), Number(b.sort) || 0, files, b.active === false ? 0 : 1, Date.now()).run();
   return json({ ok: true, slug }, 200, cors);
 }
 // 目录固件 bin 上传（与 paid 上传同款：存 PICKUP、回填 size/sha256）

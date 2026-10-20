@@ -60,7 +60,9 @@ for (let i = 0; i < items.length; i++) {
       body: JSON.stringify({
         slug: fw.slug, device: fw.device || "bw16", name: fw.name,
         color: fw.color, colorLabel: fw.colorLabel, colorCss: fw.colorCss,
-        sourcePath: fw.sourcePath, attribution: fw.attribution, sort: items.length - i,
+        sourcePath: fw.sourcePath, attribution: fw.attribution, connectNote: fw.connectNote || "",
+        // sort 跟静态清单同序（api 模式与本地兜底模式的列表顺序必须一致）
+        sort: i + 1,
         active: true, files,
       }),
     });

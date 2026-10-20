@@ -203,13 +203,16 @@ async function main() {
     ok((await j(login)).ok, "登录成功");
 
     console.log("v2 固件目录 + 一次性镜像取件 + 额度闭环");
-    await worker.fetch(req("/api/admin/catalog", { method: "POST", token: T, body: { slug: "bw16-01", name: "WiFi安全测试固件「2026」", device: "bw16", sort: 10, colorCss: "#FB7299" } }), env);
+    await worker.fetch(req("/api/admin/catalog", { method: "POST", token: T, body: { slug: "bw16-01", name: "WiFi安全测试固件「2026」", device: "bw16", sort: 10, colorCss: "#FB7299", connectNote: "刷写后热点：CMCC（密码 12345678.，末尾为英文句点）· 管理后台 http://192.168.1.1" } }), env);
     const catUp = await j(await worker.fetch(new Request("https://admin.peipeidev.cn/api/admin/catalog/upload/bw16-01/imgtool_flashloader_amebad.bin",
       { method: "PUT", headers: { Authorization: `Bearer ${T}` }, body: new Uint8Array(2048).fill(3) }), env));
     ok(catUp.ok && /^[0-9a-f]{64}$/.test(catUp.sha256), "目录固件上传回填 sha256");
     const cat = await j(await worker.fetch(req("/api/catalog"), env));
     const entry = (cat.firmware || []).find((f) => f.slug === "bw16-01");
     ok(entry && entry.files["imgtool_flashloader_amebad.bin"]?.size === 2048 && entry.sourcePath === "线上目录", "/api/catalog 契约（firmware[].files 元数据）");
+    // 介绍文案必须原样回到前端（api 模式下 main.js 只认 fw.connectNote，掉了就不显示提示）
+    ok(entry?.connectNote === "刷写后热点：CMCC（密码 12345678.，末尾为英文句点）· 管理后台 http://192.168.1.1", "/api/catalog 下发 connectNote 全文");
+    ok(entry?.attribution === "", "/api/catalog 未署名时 attribution 为空串而非 undefined");
 
     ok((await j(await worker.fetch(req("/api/admin/paid", { method: "POST", token: T, body: { slug: "bw16-01", name: "WiFi安全测试固件「2026」", device: "bw16" } }), env))).ok, "把 bw16-01 登记为付费固件（闸门生效前提）");
     const anon401 = await worker.fetch(req("/api/flash/begin", { method: "POST", body: { slug: "bw16-01", fingerprint: "fpA" } }), env);

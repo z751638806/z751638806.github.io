@@ -132,6 +132,7 @@ CREATE TABLE IF NOT EXISTS catalog_fw (
   version TEXT,
   source_path TEXT,
   attribution TEXT,
+  connect_note TEXT,                  -- 选中固件后刷写面板的提示（热点名/密码/后台地址/激活说明）
   sort INTEGER NOT NULL DEFAULT 0,
   files TEXT NOT NULL DEFAULT '{}',   -- {文件名: {size, sha256, md5, fileId}}
   active INTEGER NOT NULL DEFAULT 1,
