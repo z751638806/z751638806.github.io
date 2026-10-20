@@ -533,40 +533,49 @@ async function authMe(request, env, cors) {
 function safeParseObj(s) { try { const v = JSON.parse(s || "{}"); return v && typeof v === "object" ? v : {}; } catch { return {}; } }
 async function getCatalog(env, cors) {
   const { results } = await env.DB.prepare("SELECT * FROM catalog_fw WHERE active=1 ORDER BY sort, slug").all();
+  const { results: paidRows } = await env.DB.prepare("SELECT slug FROM paid_fw WHERE active=1").all();
+  const gated = new Set((paidRows || []).map((p) => p.slug));
   const firmware = (results || []).map((r) => ({
     slug: r.slug, name: r.name, color: r.color || "", colorLabel: r.color_label || "",
     colorCss: r.color_css || "", device: r.device || "bw16", version: r.version || "",
     sourcePath: r.source_path || "线上目录", attribution: r.attribution || "",
     files: safeParseObj(r.files),
+    paid: gated.has(r.slug) ? 1 : 0,
   }));
   return json({ ok: true, generatedAt: new Date().toISOString(), device: "bw16", firmware }, 200, cors);
 }
 
-/* ---------- 刷写会话：登录 + 额度 → 一次性镜像链接（失败/中止退额度） ---------- */
+/* ---------- 刷写会话：仅付费固件要登录 + 额度 → 一次性镜像链接（失败/中止退额度） ---------- */
 async function flashBegin(request, env, cors) {
   const b = await body(request);
   const slug = clean(b.slug, 60);
   const fp = clean(b.fingerprint, 128);
   if (!slug) return json({ detail: "缺少固件 slug" }, 400, cors);
-  const user = await userFromCookie(request, env);
-  if (!user) return json({ detail: "请先登录后再刷写" }, 401, cors);
   const fw = await env.DB.prepare("SELECT * FROM catalog_fw WHERE slug=? AND active=1").bind(slug).first();
   if (!fw) return json({ detail: "固件不存在或未上架" }, 404, cors);
   const files = safeParseObj(fw.files);
   if (!Object.keys(files).length) return json({ detail: "固件镜像未上传" }, 404, cors);
-  const charged = await env.DB.prepare("UPDATE users SET quota=quota-1 WHERE id=? AND quota>0").bind(user.id).run();
-  if (!charged.meta.changes) return json({ detail: "额度不足，请兑换卡密或联系站长" }, 403, cors);
-  await env.DB.prepare("INSERT INTO quota_log (user_id, delta, reason, ts) VALUES (?,?,?,?)")
-    .bind(user.id, -1, `flash:${slug}`, Date.now()).run();
+  // 保护只加在 paid_fw 注册表命中的固件上：免费/救砖镜像本就是公开文件，登录墙只会赶跑客户
+  const gated = await env.DB.prepare("SELECT 1 FROM paid_fw WHERE slug=? AND active=1").bind(slug).first();
+  const user = gated ? await userFromCookie(request, env) : null;
+  if (gated && !user) return json({ detail: "请先登录后再刷写" }, 401, cors);
+  let charged = 0;
+  if (gated) {
+    const r = await env.DB.prepare("UPDATE users SET quota=quota-1 WHERE id=? AND quota>0").bind(user.id).run();
+    if (!r.meta.changes) return json({ detail: "额度不足，请兑换卡密或联系站长" }, 403, cors);
+    charged = 1;
+    await env.DB.prepare("INSERT INTO quota_log (user_id, delta, reason, ts) VALUES (?,?,?,?)")
+      .bind(user.id, -1, `flash:${slug}`, Date.now()).run();
+  }
   const sessionId = randomHex(16);
   const expTs = Date.now() + FLASH_TTL_MS;
-  await env.DB.prepare("INSERT INTO flash_sessions (session_id, user_id, slug, fp, quota_charged, created_ts) VALUES (?,?,?,?,1,?)")
-    .bind(sessionId, user.id, slug, fp, Date.now()).run();
+  await env.DB.prepare("INSERT INTO flash_sessions (session_id, user_id, slug, fp, quota_charged, created_ts) VALUES (?,?,?,?,?,?)")
+    .bind(sessionId, gated ? user.id : null, slug, fp, charged, Date.now()).run();
   const out = {};
   for (const name of Object.keys(files)) {
     const jti = randomHex(16);
     await env.DB.prepare("INSERT INTO flash_grants (jti, session_id, slug, file, user_id, fp, created_ts, exp_ts) VALUES (?,?,?,?,?,?,?,?)")
-      .bind(jti, sessionId, slug, name, user.id, fp, Date.now(), expTs).run();
+      .bind(jti, sessionId, slug, name, gated ? user.id : null, fp, Date.now(), expTs).run();
     out[name] = `/api/flash/file?g=${jti}`;   // 必须自带 ?，前端会追加 &fp=
   }
   return json({ ok: true, flashSessionId: sessionId, slug, name: fw.name, files: out, expTs }, 200, cors);

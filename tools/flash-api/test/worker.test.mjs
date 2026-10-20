@@ -211,8 +211,9 @@ async function main() {
     const entry = (cat.firmware || []).find((f) => f.slug === "bw16-01");
     ok(entry && entry.files["imgtool_flashloader_amebad.bin"]?.size === 2048 && entry.sourcePath === "线上目录", "/api/catalog 契约（firmware[].files 元数据）");
 
+    ok((await j(await worker.fetch(req("/api/admin/paid", { method: "POST", token: T, body: { slug: "bw16-01", name: "WiFi安全测试固件「2026」", device: "bw16" } }), env))).ok, "把 bw16-01 登记为付费固件（闸门生效前提）");
     const anon401 = await worker.fetch(req("/api/flash/begin", { method: "POST", body: { slug: "bw16-01", fingerprint: "fpA" } }), env);
-    ok(anon401.status === 401 && (await anon401.json()).detail, "未登录 flash/begin 401");
+    ok(anon401.status === 401 && (await anon401.json()).detail, "付费固件未登录 flash/begin 401");
     await worker.fetch(req("/api/admin/catalog/upload/bw16-01/km0_boot_all.bin", { method: "PUT", token: T }), env); // 空 body → 400，占位不生效
     await worker.fetch(new Request("https://admin.peipeidev.cn/api/admin/catalog/upload/bw16-01/km0_boot_all.bin",
       { method: "PUT", headers: { Authorization: `Bearer ${T}` }, body: new Uint8Array(512).fill(4) }), env);
@@ -239,6 +240,26 @@ async function main() {
     ok(me3.quota === 1, "失败退还额度 0→1");
     const st = await j(await worker.fetch(req("/api/admin/stats?days=1", { token: T }), env));
     ok((st.byFirmware || []).some((f) => f.firmware === "WiFi安全测试固件「2026」"), "flash/end 落统计看板（与 M5 同表）");
+
+    console.log("v2 分档闸门：免费/救砖固件匿名放行、不动额度");
+    await worker.fetch(req("/api/admin/catalog", { method: "POST", token: T, body: { slug: "bw16-at", name: "官方 AT 固件（救砖）", device: "bw16", sort: 90 } }), env);
+    await worker.fetch(new Request("https://admin.peipeidev.cn/api/admin/catalog/upload/bw16-at/km0_boot_all.bin",
+      { method: "PUT", headers: { Authorization: `Bearer ${T}` }, body: new Uint8Array(256).fill(9) }), env);
+    const freeBegin = await j(await worker.fetch(req("/api/flash/begin", { method: "POST", body: { slug: "bw16-at", fingerprint: "fpFree" } }), env));
+    ok(freeBegin.ok && freeBegin.flashSessionId && freeBegin.files["km0_boot_all.bin"]?.includes("?g="), "免费固件匿名 begin 放行并出一次性链接");
+    const catFlags = Object.fromEntries(((await j(await worker.fetch(req("/api/catalog"), env))).firmware || []).map((f) => [f.slug, f.paid]));
+    ok(catFlags["bw16-01"] === 1 && catFlags["bw16-at"] === 0, "/api/catalog 下发 paid 分档标记");
+    const freeFile = await worker.fetch(req(`${freeBegin.files["km0_boot_all.bin"]}&fp=fpFree`), env);
+    const freeBytes = new Uint8Array(await freeFile.arrayBuffer());
+    ok(freeFile.status === 200 && freeBytes.length === 256 && freeBytes[0] === 9, "免费固件匿名取件字节正确");
+    const freeSess = await env.DB.prepare("SELECT user_id, quota_charged FROM flash_sessions WHERE session_id=?").bind(freeBegin.flashSessionId).first();
+    ok(freeSess && freeSess.user_id === null && freeSess.quota_charged === 0, "匿名会话落库：user_id 空 + quota_charged=0");
+    const freeLog = await env.DB.prepare("SELECT COUNT(*) AS n FROM quota_log WHERE reason LIKE 'flash:bw16-at'").first();
+    ok(Number(freeLog.n) === 0, "匿名免费刷写不写任何额度流水");
+    const freeEnd = await j(await worker.fetch(req("/api/flash/end", { method: "POST", body: { flashSessionId: freeBegin.flashSessionId, result: "failed", durationS: 1 } }), env));
+    ok(freeEnd.ok, "匿名会话失败上报不报错（无额度可退）");
+    const ghost = await worker.fetch(req("/api/flash/begin", { method: "POST", body: { slug: "nope-not-here", fingerprint: "fp" } }), env);
+    ok(ghost.status === 404, "未上架固件 404（先判存在与镜像，再判登录门槛）");
 
     console.log("v2 额度卡密 / 用户管理 / 主站内容 / 反馈新契约");
     const fb2 = await j(await worker.fetch(req("/api/feedback", { method: "POST", body: { type: "flash_fail", body: "刷写失败反馈内容", sessionPublicId: "s1", extra: { stage: "x" } } }), env));
