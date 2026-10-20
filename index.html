@@ -1,825 +1,405 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>佩佩队长 · Peipei Dev — BW16 / ESP32 嵌入式开发</title>
-<meta name="description" content="佩佩队长（Peipei）— BW16 (RTL8720DN) / ESP32 嵌入式开发UP主。技术视频、固件在线烧录、开源项目。">
-<meta name="theme-color" content="#0e1116">
-<script>document.documentElement.classList.add('js')</script>
-<style>
-/* ============ 令牌：与 /flash/ 深色极客风一致 ============ */
-:root{
-  --bg:#0e1116;
-  --bg-panel:#151a21;
-  --bg-panel-2:#1b2129;
-  --border:#262e39;
-  --border-soft:rgba(255,255,255,.07);
-  --text:#d7dfe8;
-  --dim:#8b97a7;
-  --pink:#FB7299;
-  --pink-deep:#e05a85;
-  --blue:#8b9dfc;
-  --cyan:#5fd4f5;
-  --ok:#4ade80;
-  --radius:10px;
-  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
-  --glass:rgba(21,26,33,.66);
-}
-*{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{
-  font:15px/1.7 system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
-  color:var(--text);background:var(--bg);overflow-x:hidden;
-}
-a{color:var(--pink);text-decoration:none}
-a:hover{color:#ff86ab}
-img,svg{display:block;max-width:100%}
-:focus-visible{outline:2px solid var(--pink);outline-offset:2px;border-radius:4px}
-::selection{background:rgba(251,114,153,.35)}
-@media (prefers-reduced-motion: reduce){
-  *,*::before,*::after{animation:none!important;transition:none!important}
-  html{scroll-behavior:auto}
-}
-
-/* ============ 背景特效层：虚化渐变光斑 + 网格 ============ */
-/* 光斑用径向渐变软边实现（零 filter），移动端不掉帧、不发热 */
-.bg-fx{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
-.blob{position:absolute;border-radius:50%;opacity:.55;will-change:transform;transform:translateZ(0)}
-.blob-1{width:560px;height:560px;left:-160px;top:-140px;
-  background:radial-gradient(circle closest-side,rgba(251,114,153,.34),rgba(251,114,153,0) 74%);
-  animation:drift1 22s ease-in-out infinite alternate}
-.blob-2{width:500px;height:500px;right:-140px;top:22%;
-  background:radial-gradient(circle closest-side,rgba(139,157,252,.28),rgba(139,157,252,0) 74%);
-  animation:drift2 26s ease-in-out infinite alternate}
-.blob-3{width:460px;height:460px;left:30%;bottom:-200px;
-  background:radial-gradient(circle closest-side,rgba(95,212,245,.18),rgba(95,212,245,0) 74%);
-  animation:drift1 30s ease-in-out infinite alternate-reverse}
-@keyframes drift1{to{transform:translate(70px,46px) scale(1.08)}}
-@keyframes drift2{to{transform:translate(-56px,60px) scale(.94)}}
-.grid-overlay{
-  position:absolute;inset:0;
-  background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),
-                   linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);
-  background-size:44px 44px;
-  -webkit-mask-image:radial-gradient(ellipse 90% 70% at 50% 0%,#000 40%,transparent 100%);
-          mask-image:radial-gradient(ellipse 90% 70% at 50% 0%,#000 40%,transparent 100%);
-}
-
-/* ============ 顶部导航：毛玻璃 ============ */
-.nav{position:sticky;top:0;z-index:50;background:rgba(11,14,18,.72);
-  -webkit-backdrop-filter:blur(14px) saturate(150%);backdrop-filter:blur(14px) saturate(150%);
-  border-bottom:1px solid var(--border-soft)}
-.nav-in{max-width:960px;margin:0 auto;padding:11px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.logo{font-weight:700;font-size:15px;letter-spacing:.3px;color:#fff;display:flex;align-items:center;gap:2px}
-.logo b{color:var(--pink)}
-.logo:hover{color:#fff}
-.nav-links{display:flex;align-items:center;gap:16px}
-.nav-links a{color:#aab4c2;font-size:13px;transition:color .2s}
-.nav-links a:hover{color:#fff}
-.nav-links a.nav-cta{color:var(--pink);font-weight:600;position:relative}
-.nav-links a.nav-cta:hover{color:#ff86ab}
-
-/* ============ Hero ============ */
-.hero{position:relative;padding:84px 20px 64px;overflow:hidden}
-.hero-in{max-width:960px;margin:0 auto;position:relative;z-index:1}
-
-/* ---- Hero 背景：星轨 SVG 高斯模糊 + 色相流转（动态渐变），径向遮罩渐隐 ---- */
-.hero-bg{position:absolute;z-index:-1;top:50%;right:-80px;width:min(660px,94vw);
-  transform:translateY(-52%);pointer-events:none;opacity:.68;overflow:visible;
-  filter:blur(1.3px) hue-rotate(0deg) saturate(1.15);
-  animation:hue 18s linear infinite;
-  -webkit-mask-image:radial-gradient(closest-side,#000 34%,transparent 80%);
-          mask-image:radial-gradient(closest-side,#000 34%,transparent 80%);
-}
-.hero-bg svg{width:100%;height:auto}
-@keyframes hue{to{filter:blur(1.3px) hue-rotate(360deg) saturate(1.15)}}
-
-/* 轨道系统缓慢进动：大尺度可感知运动（与电子的 SMIL 环绕叠加） */
-.orbit-spin{transform-origin:180px 180px;transform-box:view-box;animation:spin 48s linear infinite}
-.spin-b{animation-duration:36s;animation-direction:reverse}
-@keyframes spin{to{transform:rotate(360deg)}}
-.prompt{font:13px/1.9 var(--mono);background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;
-  padding:12px 16px;margin-bottom:26px;color:var(--dim);position:relative;overflow:hidden}
-.prompt::before{content:"";position:absolute;inset:0 0 auto 0;height:1px;background:linear-gradient(90deg,transparent,rgba(251,114,153,.5),transparent)}
-.prompt .t1{color:#e05a85}.prompt .t2{color:#5fd4f5}.prompt .c1{color:#e5c07b}.prompt .c2{color:#61afef}.prompt .c3{color:#98c379}
-.caret{display:inline-block;width:8px;height:15px;background:var(--pink);vertical-align:-2px;margin-left:2px;animation:blink 1s steps(1) infinite}
-@keyframes blink{50%{opacity:0}}
-h1{font-size:52px;font-weight:800;letter-spacing:.5px;line-height:1.12;
-  background:linear-gradient(92deg,#fff 10%,#ffb3ca 45%,var(--pink) 75%,var(--blue) 110%);
-  background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
-  animation:sheen 7s ease-in-out infinite}
-@keyframes sheen{0%,100%{background-position:0 0}50%{background-position:100% 0}}
-.sub{margin-top:12px;font-size:18px;color:#c3cdd9}
-.sub b{color:var(--pink)}
-.hero-desc{margin-top:18px;max-width:560px;color:var(--dim);font-size:15px;line-height:1.85}
-.hero-text{max-width:640px}
-.cta{margin-top:30px;display:flex;gap:12px;flex-wrap:wrap}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 26px;border-radius:8px;font-size:14px;font-weight:600;
-  border:1px solid transparent;transition:transform .18s,box-shadow .18s,border-color .18s,color .18s}
-.btn-pink{background:var(--pink);color:#fff;box-shadow:0 8px 26px rgba(251,114,153,.32)}
-.btn-pink:hover{color:#fff;transform:translateY(-2px);box-shadow:0 12px 32px rgba(251,114,153,.42)}
-.btn-ghost{border-color:#39424f;color:#c3cdd9;background:rgba(255,255,255,.02)}
-.btn-ghost:hover{color:var(--pink);border-color:var(--pink);transform:translateY(-2px)}
-.social{margin-top:26px;display:flex;gap:8px;flex-wrap:wrap}
-.social a{color:var(--dim);font-size:12px;border:1px solid var(--border);padding:5px 13px;border-radius:999px;
-  background:rgba(255,255,255,.02);transition:all .2s}
-.social a:hover{color:#fff;border-color:var(--pink)}
-.stats{margin-top:40px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;border-top:1px solid var(--border-soft);padding-top:24px;max-width:640px}
-.stat{text-align:center}
-.stat b{display:block;font-size:27px;font-weight:800;font-variant-numeric:tabular-nums;
-  background:linear-gradient(180deg,#fff,#ffb3ca);-webkit-background-clip:text;background-clip:text;color:transparent}
-.stat span{font-size:12px;color:var(--dim)}
-
-.star{animation:star 3.4s ease-in-out infinite}
-.star:nth-of-type(2n){animation-delay:1.1s}
-.star:nth-of-type(3n){animation-delay:2.1s}
-@keyframes star{0%,100%{opacity:.15}50%{opacity:.9}}
-.core{animation:glow 3.2s ease-in-out infinite}
-@keyframes glow{0%,100%{filter:drop-shadow(0 0 6px rgba(251,114,153,.4))}50%{filter:drop-shadow(0 0 16px rgba(251,114,153,.85))}}
-
-/* ============ 主内容区 ============ */
-main{max-width:960px;margin:0 auto;padding:20px 20px 20px}
-section{margin-bottom:56px}
-h2{font-size:13px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:2px;
-  margin-bottom:20px;display:flex;align-items:center;gap:10px}
-h2::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--pink);transform:rotate(45deg);
-  box-shadow:0 0 10px rgba(251,114,153,.8)}
-h2::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
-h2 small{letter-spacing:0;text-transform:none;font-weight:400}
-
-/* ---- 玻璃卡片通用 ---- */
-.glass{background:var(--glass);border:1px solid var(--border-soft);border-radius:var(--radius);
-  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
-  transition:transform .22s,border-color .22s,box-shadow .22s}
-.glass:hover{transform:translateY(-3px);border-color:rgba(251,114,153,.55);box-shadow:0 14px 38px rgba(0,0,0,.42)}
-
-/* ---- 技能标签 ---- */
-.tags{display:flex;flex-wrap:wrap;gap:9px}
-.tag{background:var(--glass);border:1px solid var(--border-soft);border-radius:999px;padding:6px 15px;font-size:13px;
-  color:#c3cdd9;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transition:all .2s}
-.tag:hover{border-color:var(--pink);color:#fff;transform:translateY(-2px)}
-.tag b{color:var(--pink)}
-
-/* ---- 视频卡片 ---- */
-.vid-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
-.card{background:var(--glass);border:1px solid var(--border-soft);border-radius:var(--radius);padding:18px;
-  display:flex;flex-direction:column;gap:8px;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
-  transition:transform .22s,border-color .22s,box-shadow .22s}
-.card:hover{transform:translateY(-4px);border-color:rgba(251,114,153,.55);box-shadow:0 14px 38px rgba(0,0,0,.42)}
-.card .t{font-size:14px;font-weight:600;color:#eaf0f7;line-height:1.55}
-.card .m{font-size:12px;color:var(--dim)}
-.card .go{margin-top:auto;font-size:13px;color:var(--pink);font-weight:600}
-.card .go span{display:inline-block;transition:transform .2s}
-.card:hover .go span{transform:translateX(4px)}
-
-/* ---- 固件列表 ---- */
-.fw{background:var(--glass);border:1px solid var(--border-soft);border-radius:var(--radius);overflow:hidden;
-  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
-.fw-row{display:flex;justify-content:space-between;align-items:center;padding:15px 18px;
-  border-bottom:1px solid rgba(255,255,255,.05);gap:12px;flex-wrap:wrap;transition:background .2s}
-.fw-row:last-child{border-bottom:none}
-.fw-row:hover{background:rgba(251,114,153,.05)}
-.fw-name{font-size:14px;font-weight:600;color:#eaf0f7}
-.fw-name small{display:block;font-weight:400;color:var(--dim);font-size:12px;margin-top:2px}
-.fw-meta{display:flex;align-items:center;gap:14px;font-size:12px;color:var(--dim);flex-shrink:0}
-.fw-dl{background:var(--pink);color:#fff;padding:6px 15px;border-radius:6px;font-size:12px;font-weight:600;
-  transition:all .2s;box-shadow:0 4px 16px rgba(251,114,153,.25)}
-.fw-dl:hover{background:#ff86ab;color:#fff;transform:translateY(-1px);box-shadow:0 6px 20px rgba(251,114,153,.4)}
-.badge{display:inline-block;background:rgba(251,114,153,.12);border:1px solid rgba(251,114,153,.4);color:#ffb3ca;
-  font-size:11px;padding:1px 9px;border-radius:999px}
-
-/* ---- 项目 ---- */
-.proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
-.proj{background:var(--glass);border:1px solid var(--border-soft);border-radius:var(--radius);padding:18px;
-  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transition:transform .22s,border-color .22s,box-shadow .22s}
-.proj:hover{transform:translateY(-4px);border-color:rgba(139,157,252,.6);box-shadow:0 14px 38px rgba(0,0,0,.42)}
-.proj .n{font-size:14px;font-weight:600;color:#eaf0f7;margin-bottom:6px}
-.proj .n span{color:var(--dim);font-weight:400;font-size:12px}
-.proj p{font-size:13px;color:var(--dim)}
-.proj a{font-size:12px;color:var(--blue)}
-.proj a:hover{color:#aebdfc}
-
-/* ---- 时间线 ---- */
-.tl{position:relative;padding-left:26px}
-.tl::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;
-  background:linear-gradient(180deg,var(--pink),rgba(139,157,252,.5),transparent)}
-.tl-item{position:relative;padding:0 0 24px 10px}
-.tl-item:last-child{padding-bottom:0}
-.tl-item::before{content:"";position:absolute;left:-26px;top:6px;width:11px;height:11px;border-radius:50%;
-  background:var(--bg);border:2px solid var(--pink);box-shadow:0 0 0 3px rgba(251,114,153,.15);transition:box-shadow .3s}
-.tl-item:hover::before{box-shadow:0 0 0 5px rgba(251,114,153,.25);background:var(--pink)}
-.tl-date{font:12px var(--mono);color:var(--pink)}
-.tl-title{font-size:14px;font-weight:600;color:#eaf0f7;margin:3px 0}
-.tl-desc{font-size:13px;color:var(--dim)}
-
-/* ---- 关于 ---- */
-.about{background:var(--glass);border:1px solid var(--border-soft);border-radius:var(--radius);padding:22px;
-  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
-.about p{font-size:14px;color:#c3cdd9;margin-bottom:10px}
-.about p:last-child{margin-bottom:0}
-.about b{color:var(--pink)}
-
-/* ============ 页脚 ============ */
-footer{background:#0b0e12;border-top:1px solid var(--border-soft);color:var(--dim);
-  margin-top:56px;padding:34px 20px 38px;font-size:12px;position:relative}
-footer::before{content:"";position:absolute;inset:0 0 auto 0;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(251,114,153,.55),transparent)}
-.foot-in{max-width:960px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr;gap:28px}
-footer h4{color:#c3cdd9;font-size:12px;font-weight:700;margin-bottom:10px;letter-spacing:1px}
-footer p{color:var(--dim);line-height:1.9}
-footer a{color:#9aa6b4}
-footer a:hover{color:var(--pink)}
-.foot-bottom{border-top:1px solid rgba(255,255,255,.05);margin-top:26px;padding-top:16px;text-align:center;
-  color:#5d6874;font-size:11px;line-height:1.9}
-.foot-bottom .dom{font:11px var(--mono);color:#8b97a7}
-
-/* ============ 滚动渐入 ============ */
-.js .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
-.js .reveal.visible{opacity:1;transform:none}
-.js .reveal-d1{transition-delay:.08s}.js .reveal-d2{transition-delay:.16s}.js .reveal-d3{transition-delay:.24s}
-
-/* ============ 移动端：文字优先，动画缩量垫底 ============ */
-@media(max-width:820px){
-  .hero{padding:44px 16px 32px}
-  .hero-bg{top:42%;right:-120px;width:460px;opacity:.6;
-    filter:blur(1.8px) hue-rotate(0deg) saturate(1.15);animation:none}
-  h1{font-size:36px}
-  .blob-1{width:340px;height:340px;opacity:.45}
-  .blob-2{width:300px;height:300px;opacity:.4}
-  .blob-3{width:280px;height:280px;opacity:.32}
-  .grid-overlay{background-size:36px 36px}
-  .stats{margin-top:30px;padding-top:18px}
-}
-@media(max-width:600px){
-  h1{font-size:29px}
-  .sub{font-size:15px}
-  .stats{grid-template-columns:repeat(2,1fr);gap:16px 12px}
-  .foot-in{grid-template-columns:1fr;gap:20px}
-  .nav-links{gap:11px}
-  .nav-links a{font-size:12px}
-  .hero-bg{right:-150px;width:400px;opacity:.35;filter:blur(3.5px)}
-  .blob-1{width:280px;height:280px}
-  .blob-2{width:240px;height:240px}
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>在线烧录 · BW16 / ESP32 / ESP8266 网页直刷 — peipeidev.cn</title>
+  <meta name="description" content="浏览器里直接给 BW16（RTL8720DN）、ESP32、ESP32-C3/S3、ESP8266 刷固件，无需装驱动。官方 AT 救砖镜像一键恢复，固件免费公开下载，付费固件一机一码激活。">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/theme-home.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <script>
+    // 早期错误捕获（诊断用；后续版本把错误接入日志面板）
+    window.__errs = [];
+    window.addEventListener('error', (e) => window.__errs.push('err: ' + (e.message || e.filename) + ' @' + e.lineno));
+    window.addEventListener('unhandledrejection', (e) => window.__errs.push('rej: ' + (e.reason && e.reason.stack ? e.reason.stack.split('\n').slice(0, 3).join(' | ') : e.reason)));
+  </script>
 </head>
 <body>
+  <header class="topbar">
+    <h1 class="logo"><a href="/">peipei<span>.</span>dev</a><span class="topbar-title">在线烧录</span></h1>
+    <nav class="view-nav" aria-label="视图切换">
+      <button id="nav-flash" class="view-tab selected" type="button">刷固件</button>
+      <button id="nav-rescue" class="view-tab" type="button">救砖恢复</button>
+      <button id="nav-custom" class="view-tab" type="button">自定义固件</button>
+    </nav>
+    <div class="topbar-status">
+      <nav class="site-nav" aria-label="站点导航"><a href="#trust">关于站长</a><a href="#contact">联系</a></nav>
+      <button id="btn-feedback" class="btn" type="button" hidden style="padding:2px 10px;font-size:12px;">反馈</button>
+      <span id="user-box" class="badge badge-dim" hidden></span>
+      <button id="btn-redeem" class="btn" type="button" hidden style="padding:2px 10px;font-size:12px;">兑换码</button>
+      <button id="btn-login" class="btn" type="button" hidden style="padding:2px 10px;font-size:12px;">登录 / 注册</button>
+      <span id="serial-support" class="badge badge-dim">检测浏览器中…</span>
+    </div>
+  </header>
 
-<!-- 背景特效：虚化光斑 + 网格（纯装饰） -->
-<div class="bg-fx" aria-hidden="true">
-  <div class="blob blob-1"></div>
-  <div class="blob blob-2"></div>
-  <div class="blob blob-3"></div>
-  <div class="grid-overlay"></div>
-</div>
+  <!-- 公告条（M4：F5，API 模式轮询刷新；显示样式在 style.css，勿用内联 display 以免压过 hidden） -->
+  <div id="announce-bar" class="alert alert-info" hidden>
+    <div style="flex:1;">
+      <strong id="announce-title"></strong>
+      <span id="announce-body" style="margin-left:8px;"></span>
+    </div>
+    <button id="announce-close" class="btn" type="button" style="padding:0 8px;">×</button>
+  </div>
 
-<div class="nav">
-  <div class="nav-in">
-    <a class="logo" href="/">peipei<b>.</b>dev</a>
-    <div class="nav-links">
-      <a class="nav-cta" href="/flash/">⚡ 在线烧录</a>
-      <a href="#videos">视频</a>
-      <a href="#firmware">固件</a>
-      <a href="#projects">项目</a>
-      <a href="#about">关于</a>
+  <!-- 最低版本强制刷新遮罩（M4：F5） -->
+  <div id="version-overlay" hidden
+       style="position:fixed;inset:0;background:rgba(2,6,23,.9);z-index:80;align-items:center;justify-content:center;">
+    <div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:26px 30px;width:min(92vw,420px);color:#e2e8f0;text-align:center;">
+      <h3 style="margin:0 0 10px;">🚀 站点已更新</h3>
+      <p id="version-message" class="dim" style="margin:0 0 16px;font-size:13px;">当前页面版本过旧，请刷新后使用。</p>
+      <button id="btn-hard-reload" class="btn btn-primary" type="button">立即刷新</button>
     </div>
   </div>
-</div>
 
-<header class="hero">
-  <div class="hero-in">
-    <div>
-      <div class="prompt" aria-hidden="true">
-        <span class="t1">peipei@dev</span>:<span class="t2">~</span>$ <span id="typed"></span><span class="caret"></span><br>
-        <span class="c3" id="typed-out" style="opacity:0;transition:opacity .8s"># 嵌入式开发 · 技术视频 · 固件分享 · 在线烧录</span>
+  <!-- 登录/注册对话框（M3：F1） -->
+  <div id="auth-overlay" hidden
+       style="position:fixed;inset:0;background:rgba(2,6,23,.72);z-index:60;align-items:center;justify-content:center;">
+    <div id="auth-dialog" role="dialog" aria-modal="true" aria-label="登录或注册"
+         style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:22px 24px;width:min(92vw,360px);color:#e2e8f0;">
+      <h3 style="margin:0 0 6px;font-size:17px;">登录 / 注册</h3>
+      <p class="dim" style="margin:0 0 14px;font-size:12px;">注册即送 3 次刷写额度；密码至少 8 位。</p>
+      <div class="auth-tabs" style="display:flex;gap:8px;margin-bottom:12px;">
+        <button id="auth-tab-login" class="view-tab selected" type="button">登录</button>
+        <button id="auth-tab-register" class="view-tab" type="button">注册</button>
       </div>
-      <h1>佩佩队长<span style="color:var(--pink);-webkit-text-fill-color:var(--pink)">.</span></h1>
-      <div class="sub">BW16 (RTL8720DN) / ESP32 嵌入式开发 UP 主</div>
-      <p class="hero-desc">
-        专注 WiFi 单片机开发，分享从零开始的硬件折腾实录。
-        这里是我的视频、固件与开源项目大本营——B站更新，GitHub 开源，闲鱼可购固件。
-      </p>
-      <div class="cta">
-        <a class="btn btn-pink" href="/flash/">⚡ 在线烧录固件</a>
-        <a class="btn btn-ghost" href="https://space.bilibili.com/" target="_blank" rel="noopener">▶ 去B站看视频</a>
-        <a class="btn btn-ghost" href="https://github.com/z751638806" target="_blank" rel="noopener">GitHub 仓库</a>
-      </div>
-      <div class="social">
-        <a href="https://space.bilibili.com/" target="_blank" rel="noopener">Bilibili</a>
-        <a href="https://github.com/z751638806" target="_blank" rel="noopener">GitHub</a>
-        <a href="mailto:0XT@tutamail.com">Email</a>
-      </div>
-      <div class="stats" aria-label="数据一览">
-        <div class="stat"><b data-count="10" data-suffix="+">0+</b><span>技术视频</span></div>
-        <div class="stat"><b data-count="2">0</b><span>固件系列</span></div>
-        <div class="stat"><b data-count="3">0</b><span>开源项目</span></div>
-        <div class="stat"><b data-count="1000" data-suffix="+">0+</b><span>B站粉丝</span></div>
-      </div>
-    </div>
-    <div class="hero-bg" aria-hidden="true">
-      <svg class="chip-wrap" viewBox="0 0 360 360" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="chipGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#FB7299"/><stop offset="1" stop-color="#8b9dfc"/>
-          </linearGradient>
-          <radialGradient id="orbPink" cx="0.5" cy="0.5" r="0.5">
-            <stop offset="0" stop-color="#ffb3ca"/><stop offset="0.4" stop-color="#FB7299"/><stop offset="1" stop-color="rgba(251,114,153,0)"/>
-          </radialGradient>
-          <radialGradient id="orbBlue" cx="0.5" cy="0.5" r="0.5">
-            <stop offset="0" stop-color="#c7d2fe"/><stop offset="0.4" stop-color="#8b9dfc"/><stop offset="1" stop-color="rgba(139,157,252,0)"/>
-          </radialGradient>
-        </defs>
-
-        <!-- 星尘 -->
-        <g fill="#8b97a7">
-          <circle class="star" cx="40" cy="60" r="1.5"/>
-          <circle class="star" cx="320" cy="50" r="1.2"/>
-          <circle class="star" cx="330" cy="290" r="1.6"/>
-          <circle class="star" cx="30" cy="300" r="1.2"/>
-          <circle class="star" cx="180" cy="16" r="1.3"/>
-          <circle class="star" cx="212" cy="342" r="1.4"/>
-        </g>
-
-        <!-- 倾斜轨道 A（粉）+ 两颗电子 -->
-        <g transform="rotate(-16 180 180)">
-         <g class="orbit-spin spin-a">
-          <path id="orbitA" d="M330 180 A150 58 0 1 1 30 180 A150 58 0 1 1 330 180"
-                stroke="rgba(251,114,153,.32)" stroke-width="1.5" stroke-dasharray="4 7" fill="none"/>
-          <g class="orb">
-            <circle r="11" fill="url(#orbPink)" opacity=".6"/>
-            <circle r="4" fill="#ffb3ca"/>
-            <animateMotion dur="9s" repeatCount="indefinite"><mpath href="#orbitA"/></animateMotion>
-          </g>
-          <g class="orb">
-            <circle r="7" fill="url(#orbPink)" opacity=".45"/>
-            <circle r="2.6" fill="#fff"/>
-            <animateMotion dur="13s" repeatCount="indefinite" begin="-6s"><mpath href="#orbitA"/></animateMotion>
-          </g>
-         </g>
-        </g>
-
-        <!-- 倾斜轨道 B（蓝紫）+ 一颗电子 -->
-        <g transform="rotate(12 180 180)">
-         <g class="orbit-spin spin-b">
-          <path id="orbitB" d="M290 180 A110 42 0 1 1 70 180 A110 42 0 1 1 290 180"
-                stroke="rgba(139,157,252,.32)" stroke-width="1.5" stroke-dasharray="4 7" fill="none"/>
-          <g class="orb">
-            <circle r="9" fill="url(#orbBlue)" opacity=".55"/>
-            <circle r="3.2" fill="#c7d2fe"/>
-            <animateMotion dur="6.5s" repeatCount="indefinite" begin="-3s"><mpath href="#orbitB"/></animateMotion>
-          </g>
-         </g>
-        </g>
-
-        <!-- WiFi 广播波纹：从核心周期性扩散 -->
-        <g fill="none" stroke="url(#chipGrad)" stroke-width="1.5">
-          <circle cx="180" cy="180" r="64" opacity=".5">
-            <animate attributeName="r" values="64;152" dur="3.2s" repeatCount="indefinite"/>
-            <animate attributeName="opacity" values=".5;0" dur="3.2s" repeatCount="indefinite"/>
-          </circle>
-          <circle cx="180" cy="180" r="64" opacity=".3">
-            <animate attributeName="r" values="64;152" dur="3.2s" begin="1.6s" repeatCount="indefinite"/>
-            <animate attributeName="opacity" values=".4;0" dur="3.2s" begin="1.6s" repeatCount="indefinite"/>
-          </circle>
-        </g>
-
-        <!-- 核心芯片 -->
-        <g transform="rotate(-8 180 180)">
-          <rect class="core" x="138" y="138" width="84" height="84" rx="14" fill="#151a21" stroke="url(#chipGrad)" stroke-width="2"/>
-          <rect x="154" y="154" width="52" height="52" rx="7" fill="none" stroke="#2c3642" stroke-width="1.4"/>
-          <circle cx="180" cy="180" r="9" fill="url(#chipGrad)"/>
-          <circle cx="180" cy="180" r="3.2" fill="#fff" opacity=".9"/>
-        </g>
-      </svg>
-    </div>
-  </div>
-</header>
-
-<main>
-
-<section id="skills" class="reveal">
-  <h2>技能栈</h2>
-  <div class="tags">
-    <span class="tag"><b>BW16</b> RTL8720DN</span>
-    <span class="tag"><b>ESP32</b> / ESP32-C3</span>
-    <span class="tag"><b>WiFi</b> 802.11</span>
-    <span class="tag"><b>Arduino</b> IDE</span>
-    <span class="tag"><b>Ameba</b> SDK</span>
-    <span class="tag"><b>C</b> / C++</span>
-    <span class="tag"><b>IoT</b> 应用</span>
-    <span class="tag"><b>固件</b> 开发</span>
-  </div>
-</section>
-
-<section id="videos" class="reveal">
-  <h2>最新视频</h2>
-  <div class="vid-grid">
-    <div class="card reveal">
-      <div class="t">视频整理中…</div>
-      <div class="m">B站 @闲鱼ID无敌佩佩队长 持续更新</div>
-      <a class="go" href="https://space.bilibili.com/" target="_blank" rel="noopener">去B站观看 <span>→</span></a>
-    </div>
-    <div class="card reveal reveal-d1">
-      <div class="t">BW16 开发环境搭建教程</div>
-      <div class="m">敬请期待 · Arduino IDE + Ameba SDK</div>
-      <a class="go" href="https://space.bilibili.com/" target="_blank" rel="noopener">预约观看 <span>→</span></a>
-    </div>
-    <div class="card reveal reveal-d2">
-      <div class="t">ESP32 WiFi 安全研究系列</div>
-      <div class="m">敬请期待 · 攻防演示</div>
-      <a class="go" href="https://space.bilibili.com/" target="_blank" rel="noopener">预约观看 <span>→</span></a>
-    </div>
-  </div>
-</section>
-
-<section id="firmware" class="reveal">
-  <h2>固件下载</h2>
-  <div class="fw">
-    <div class="fw-row">
-      <div class="fw-name">在线烧录（推荐）
-        <small>浏览器直刷 BW16 / ESP8266 / ESP32 全系 · 免安装驱动 · Chrome/Edge 打开即用</small>
-      </div>
-      <div class="fw-meta">
-        <span class="badge">5 类开发板 · 14 个固件</span>
-        <span>2026-09</span>
-        <a class="fw-dl" href="/flash/">立即烧录 →</a>
-      </div>
-    </div>
-    <div class="fw-row">
-      <div class="fw-name">BW16 系列固件包
-        <small>WiFi 安全测试固件 · 含烧录说明</small>
-      </div>
-      <div class="fw-meta">
-        <span class="badge">v1.5</span>
-        <span>2026-08</span>
-        <a class="fw-dl" href="/flash/">获取 ↓</a>
-      </div>
-    </div>
-    <div class="fw-row">
-      <div class="fw-name">ESP32 系列固件包
-        <small>WiFi 渗透 / 演示固件 · 含激活码说明</small>
-      </div>
-      <div class="fw-meta">
-        <span class="badge">v1.0</span>
-        <span>2026-08</span>
-        <a class="fw-dl" href="/flash/">获取 ↓</a>
+      <label style="display:block;margin-bottom:10px;font-size:13px;">
+        邮箱 / 手机号
+        <input id="auth-login-id" type="text" autocomplete="username" inputmode="email"
+               style="width:100%;margin-top:4px;padding:8px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;">
+      </label>
+      <label style="display:block;margin-bottom:12px;font-size:13px;">
+        密码
+        <input id="auth-password" type="password" autocomplete="current-password"
+               style="width:100%;margin-top:4px;padding:8px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;">
+      </label>
+      <div id="auth-ts" style="margin:0 0 12px;" hidden></div>
+      <p id="auth-error" class="alert alert-err" style="margin:0 0 12px;" hidden></p>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button id="auth-cancel" class="btn" type="button">取消</button>
+        <button id="auth-submit" class="btn btn-primary" type="button">登录</button>
       </div>
     </div>
   </div>
-</section>
 
-<section id="projects" class="reveal">
-  <h2>开源项目</h2>
-  <div class="proj-grid">
-    <div class="proj reveal">
-      <div class="n">BW16 开发笔记 <span>· 持续更新</span></div>
-      <p>BW16 环境搭建、外设驱动、踩坑记录，从入门到实战。</p>
-      <a href="https://github.com/z751638806" target="_blank" rel="noopener">GitHub →</a>
-    </div>
-    <div class="proj reveal reveal-d1">
-      <div class="n">CMCC Phisher <span>· 教育演示</span></div>
-      <p>基于 BW16 的 WiFi 钓鱼演示项目，仅用于安全教学。</p>
-      <a href="https://github.com/z751638806" target="_blank" rel="noopener">GitHub →</a>
-    </div>
-    <div class="proj reveal reveal-d2">
-      <div class="n">ESP32 安全工具箱 <span>· 规划中</span></div>
-      <p>ESP32 系列 WiFi 安全测试工具合集。</p>
-      <a href="https://github.com/z751638806" target="_blank" rel="noopener">GitHub →</a>
+  <!-- 兑换码对话框（M6：F8） -->
+  <div id="rd-overlay" hidden
+       style="position:fixed;inset:0;background:rgba(2,6,23,.72);z-index:60;align-items:center;justify-content:center;">
+    <div id="rd-dialog" role="dialog" aria-modal="true" aria-label="卡密兑换"
+         style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:22px 24px;width:min(92vw,360px);color:#e2e8f0;">
+      <h3 style="margin:0 0 6px;font-size:17px;">卡密兑换</h3>
+      <p class="dim" style="margin:0 0 12px;font-size:12px;">输入 16 位卡密（XXXX-XXXX-XXXX-XXXX），面额即时到账。</p>
+      <input id="rd-code" type="text" placeholder="XXXX-XXXX-XXXX-XXXX" maxlength="19" autocomplete="off"
+             style="width:100%;padding:8px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;">
+      <p id="rd-error" class="alert alert-err" style="margin:12px 0 0;" hidden></p>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
+        <button id="rd-cancel" class="btn" type="button">取消</button>
+        <button id="rd-submit" class="btn btn-primary" type="button">兑换</button>
+      </div>
     </div>
   </div>
-</section>
 
-<section id="timeline" class="reveal">
-  <h2>更新日志</h2>
-  <div class="tl">
-    <div class="tl-item">
-      <div class="tl-date">2026-09-19</div>
-      <div class="tl-title">在线烧录上线</div>
-      <div class="tl-desc">浏览器直刷 BW16 / ESP32-C3 固件（Web Serial），免安装任何工具，支持救砖恢复</div>
-    </div>
-    <div class="tl-item">
-      <div class="tl-date">2026-08-02</div>
-      <div class="tl-title">peipeidev.cn 上线</div>
-      <div class="tl-desc">个人主页正式上线，绑定 GitHub Pages，全站 HTTPS</div>
-    </div>
-    <div class="tl-item">
-      <div class="tl-date">2026-08</div>
-      <div class="tl-title">BW16 固件系列发布</div>
-      <div class="tl-desc">WiFi 安全测试固件系列，配套激活码</div>
-    </div>
-    <div class="tl-item">
-      <div class="tl-date">2026-07</div>
-      <div class="tl-title">ESP32 安全研究起步</div>
-      <div class="tl-desc">WiFi 攻防演示系列视频开始更新</div>
-    </div>
-    <div class="tl-item">
-      <div class="tl-date">2026-06</div>
-      <div class="tl-title">BW16 开发入门</div>
-      <div class="tl-desc">从零折腾 RTL8720DN，Arduino + Ameba SDK 踩坑记录</div>
-    </div>
-  </div>
-</section>
-
-<section id="about" class="reveal">
-  <h2>关于</h2>
-  <div class="about">
-    <p>大家好，我是<b>佩佩队长</b>，一名野生嵌入式开发玩家。从 BW16 到 ESP32，从点灯到 WiFi 攻防，我把每一块开发板的折腾过程都拍成了视频。</p>
-    <p>· <b>B站</b>：闲鱼ID无敌佩佩队长（视频 + 图文教程）<br>
-       · <b>闲鱼</b>：在售固件 + 激活码（8.8 元起）<br>
-       · <b>GitHub</b>：z751638806（开源代码）<br>
-       · <b>联系</b>：0XT@tutamail.com</p>
-    <p>固件仅供学习研究，请勿用于非法用途。</p>
-  </div>
-</section>
-
-</main>
-
-<footer>
-  <div class="foot-in">
-    <div>
-      <h4>关于本站</h4>
-      <p>佩佩队长 · peipeidev.cn<br>
-      个人技术博客，分享 BW16 / ESP32 嵌入式开发经验、固件与开源项目。<br>
-      本站由 GitHub Pages 托管于境外服务器，依法无需 ICP 备案。</p>
-    </div>
-    <div>
-      <h4>快速链接</h4>
-      <p><a href="/flash/">⚡ 在线烧录</a><br>
-         <a href="#videos">最新视频</a><br>
-         <a href="#firmware">固件下载</a><br>
-         <a href="#projects">开源项目</a><br>
-         <a href="#about">关于我</a></p>
-    </div>
-    <div>
-      <h4>联系我</h4>
-      <p><a href="https://space.bilibili.com/" target="_blank" rel="noopener">B站 @闲鱼ID无敌佩佩队长</a><br>
-         <a href="https://github.com/z751638806" target="_blank" rel="noopener">GitHub</a> · 闲鱼同名<br>
-         <a href="mailto:0XT@tutamail.com">0XT@tutamail.com</a></p>
+  <!-- 反馈对话框（M4：F6） -->
+  <div id="fb-overlay" hidden
+       style="position:fixed;inset:0;background:rgba(2,6,23,.72);z-index:60;align-items:center;justify-content:center;">
+    <div id="fb-dialog" role="dialog" aria-modal="true" aria-label="提交反馈"
+         style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:22px 24px;width:min(92vw,420px);color:#e2e8f0;">
+      <h3 style="margin:0 0 6px;font-size:17px;">提交反馈</h3>
+      <p class="dim" style="margin:0 0 12px;font-size:12px;">问题反馈 / 功能建议；仅登录用户可提交，处理进度可在后台查看。</p>
+      <label style="display:block;margin-bottom:10px;font-size:13px;">
+        类型
+        <select id="fb-type" style="width:100%;margin-top:4px;padding:8px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;">
+          <option value="bug">问题（刷写失败 / 页面异常）</option>
+          <option value="suggestion">建议</option>
+          <option value="other">其他</option>
+        </select>
+      </label>
+      <label style="display:block;margin-bottom:10px;font-size:13px;">
+        内容（1-2000 字）
+        <textarea id="fb-body" rows="4" maxlength="2000"
+                  style="width:100%;margin-top:4px;padding:8px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;resize:vertical;"></textarea>
+      </label>
+      <label style="display:flex;gap:8px;align-items:center;margin-bottom:12px;font-size:13px;">
+        <input id="fb-attach" type="checkbox" checked>
+        附带最近一次刷写摘要（固件名/结果/耗时，不含串口数据）
+      </label>
+      <p id="fb-error" class="alert alert-err" style="margin:0 0 12px;" hidden></p>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button id="fb-cancel" class="btn" type="button">取消</button>
+        <button id="fb-submit" class="btn btn-primary" type="button">提交</button>
+      </div>
     </div>
   </div>
-  <div class="foot-bottom">
-    © 2026 佩佩队长 · <span class="dom">peipeidev.cn</span> · 保留所有权利<br>
-    免责声明：本站固件仅供学习研究使用，请勿用于非法用途 · 内容均为个人观点<br>
-    👁 <span id="busuanzi_value_site_pv"></span> 次访问 · <span id="busuanzi_value_site_uv"></span> 位访客 · 最后更新 2026-09-19
+
+  <main>
+  <section id="trust" class="trust-strip" aria-label="关于站长与本站">
+    <div class="trust-item"><b>站长</b><span>佩佩队长，野生嵌入式开发玩家，板子上的固件都自己先刷一遍。<a href="https://github.com/z751638806" rel="me noopener">GitHub · z751638806</a></span></div>
+    <div class="trust-item"><b>固件</b><span>本页列出的免费固件直接刷，不注册、不登录、不占额度；付费固件按一机一码激活（闲鱼同名店铺「无敌佩佩队长」）。</span></div>
+    <div class="trust-item"><b>出问题</b><span>右上角「反馈」直接发到站长后台，或写信 <a href="mailto:0XT@tutamail.com">0XT@tutamail.com</a>；付费额度若刷写失败会自动退还。</span></div>
+    <div class="trust-item"><b>合规</b><span>固件仅供学习研究，请勿用于非法用途；本站由 GitHub Pages 托管在境外，依法无需 ICP 备案。</span></div>
+  </section>
+  <section id="mobile-guide" class="mobile-guide" hidden aria-label="手机访客指引">
+    <b>你在手机上打开本站？</b>
+    <p>浏览器直刷需要<b>电脑上的 Chrome 或 Edge</b>——手机浏览器没有串口访问权限（Web Serial API）。</p>
+    <ol>
+      <li>把 <code>peipeidev.cn</code> 复制到电脑浏览器打开，固件与额度都不绑设备，换浏览器不影响。<button class="btn btn-small" type="button" onclick="try{navigator.clipboard.writeText('https://peipeidev.cn/')}catch(e){}">复制本页地址</button></li>
+      <li>手边没电脑：写信到 <a href="mailto:0XT@tutamail.com">0XT@tutamail.com</a>，写清板子型号（BW16 / ESP32-C3 / ESP8266…）和想要的固件，站长把接线与刷写步骤发给你。</li>
+      <li>已买激活码：激活在设备端完成，与本页刷写互不影响；卡在哪一步就把设备码一起发来。</li>
+    </ol>
+  </section>
+  <script>if (!("serial" in navigator)) { document.getElementById("mobile-guide").hidden = false; }</script>
+  <div id="view-flash">
+    <!-- 设备类型选择 (F1) -->
+    <section id="device-section" aria-label="设备类型">
+      <h2>1 · 选择设备类型</h2>
+      <div class="device-grid">
+        <button class="device-card" data-device="bw16" type="button">
+          <span class="device-icon">📡</span>
+          <span class="device-name">BW16</span>
+          <span class="device-desc">安信可 Ai-Thinker BW16（RTL8720DN）<br>Web Serial 直刷 · 3 个固件</span>
+        </button>
+        <button class="device-card" data-device="esp32c3" type="button">
+          <span class="device-icon">🔗</span>
+          <span class="device-name">ESP32-C3</span>
+          <span class="device-desc">乐鑫 ESP32-C3 开发板<br>Web Serial 直刷 · 3 个固件</span>
+        </button>
+        <button class="device-card" data-device="esp8266" type="button">
+          <span class="device-icon">📶</span>
+          <span class="device-name">ESP8266</span>
+          <span class="device-desc">乐鑫 ESP8266 / ESP8285<br>Web Serial 直刷 · 5 个固件</span>
+        </button>
+        <button class="device-card" data-device="esp32" type="button">
+          <span class="device-icon">🔲</span>
+          <span class="device-name">ESP32</span>
+          <span class="device-desc">乐鑫 ESP32（经典款）<br>Web Serial 直刷 · 4 个固件</span>
+        </button>
+        <button class="device-card" data-device="esp32s3" type="button">
+          <span class="device-icon">🧩</span>
+          <span class="device-name">ESP32-S3</span>
+          <span class="device-desc">乐鑫 ESP32-S3<br>Web Serial 直刷 · 2 个固件</span>
+        </button>
+      </div>
+      <p id="device-mismatch" class="alert alert-warn" hidden></p>
+    </section>
+
+    <!-- 固件清单 (F2) -->
+    <section id="firmware-section" hidden aria-label="固件清单">
+      <h2>2 · 选择固件 <small id="firmware-count" class="dim"></small></h2>
+      <div id="firmware-grid" class="fw-grid" role="listbox" aria-label="固件列表"></div>
+    </section>
+
+    <!-- 刷写面板 (F3/F4/M3 起启用) -->
+    <section id="flash-section" hidden aria-label="刷写">
+      <h2>3 · 刷写</h2>
+      <div class="flash-panel">
+        <div class="flash-target">
+          <span id="flash-target-color" class="color-dot"></span>
+          <div>
+            <div id="flash-target-name" class="fw-name"></div>
+            <div id="flash-target-meta" class="dim small"></div>
+          </div>
+        </div>
+
+        <div class="flash-actions">
+          <button id="btn-flash" class="btn btn-primary" type="button" disabled>连接并刷写</button>
+          <div id="esp-web-slot" hidden></div>
+          <label id="advanced-row" class="advanced-row" hidden>
+            <input type="checkbox" id="opt-extended-erase">
+            全片擦除（更彻底但较慢；普通刷写无需勾选）
+          </label>
+          <label id="speed-row" class="advanced-row" hidden>
+            <input type="checkbox" id="opt-high-speed" checked>
+            高速模式（约快 3 倍；连不上会自动改用标准速度）
+          </label>
+        </div>
+        <div id="flash-note" class="small dim" hidden></div>
+
+        <div id="progress-wrap" hidden>
+          <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
+          <div id="progress-text" class="small dim">0%</div>
+        </div>
+
+        <div id="manual-guide" class="alert alert-info" hidden>
+          <strong>自动进入下载模式失败</strong>
+          <p>请手动操作（BW16-Kit 板载按键）：</p>
+          <ol>
+            <li>按住 <strong>BURN</strong> 键不放</li>
+            <li>短按一下 <strong>RST</strong> 键</li>
+            <li>松开 <strong>BURN</strong> 键</li>
+          </ol>
+          <p>完成后点击下方按钮重试（剩余 <span id="manual-retries">3</span> 次）。</p>
+          <button id="btn-manual-retry" class="btn" type="button">已操作，重试</button>
+        </div>
+
+        <div id="flash-result" class="alert" hidden></div>
+      </div>
+    </section>
+
   </div>
-</footer>
 
-<script>
-(function(){
-  "use strict";
-  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  <div id="view-custom" hidden>
+    <!-- 自定义固件刷写 (M7) -->
+    <section aria-label="自定义固件刷写">
+      <h2>自定义固件刷写</h2>
+      <div class="flash-panel">
+        <p class="small dim">
+          刷写自己的固件文件（本地选择，不会上传到任何服务器）。选设备类型后按提示操作：
+          BW16 需要三个镜像（可一键填充官方引导镜像）；ESP32-C3 支持一个或多个 .bin（可改烧录地址）。
+        </p>
+        <div class="auth-tabs" style="display:flex;gap:8px;margin:14px 0;">
+          <button class="view-tab selected" data-cdev="bw16" type="button">BW16</button>
+          <button class="view-tab" data-cdev="esp32c3" type="button">ESP32-C3</button>
+            <button class="view-tab" data-cdev="esp8266" type="button">ESP8266</button>
+        </div>
 
-  /* 终端打字机 */
-  var typed = document.getElementById("typed");
-  var typedOut = document.getElementById("typed-out");
-  var cmd = "./intro.sh";
-  if (reduce || !typed) {
-    if (typed) typed.textContent = cmd;
-    if (typedOut) typedOut.style.opacity = 1;
-  } else {
-    var i = 0;
-    (function type(){
-      if (i <= cmd.length) {
-        typed.textContent = cmd.slice(0, i++);
-        setTimeout(type, 85);
-      } else {
-        setTimeout(function(){ typedOut.style.opacity = 1; }, 240);
-      }
-    })();
-  }
+        <div id="custom-bw16">
+          <div class="rescue-slot">
+            <span class="rescue-label">km0_boot_all.bin</span>
+            <input type="file" id="custom-km0" accept=".bin">
+            <button class="btn btn-small" type="button" data-cfill="km0_boot_all.bin">用 SDK 默认镜像</button>
+            <span class="small dim" data-state="km0_boot_all.bin"></span>
+          </div>
+          <div class="rescue-slot">
+            <span class="rescue-label">km4_boot_all.bin</span>
+            <input type="file" id="custom-km4" accept=".bin">
+            <button class="btn btn-small" type="button" data-cfill="km4_boot_all.bin">用 SDK 默认镜像</button>
+            <span class="small dim" data-state="km4_boot_all.bin"></span>
+          </div>
+          <div class="rescue-slot">
+            <span class="rescue-label">km0_km4_image2.bin（应用）</span>
+            <input type="file" id="custom-image2" accept=".bin">
+            <span class="small dim" data-state="km0_km4_image2.bin"></span>
+          </div>
+          <label class="advanced-row">
+            <input type="checkbox" id="custom-high-speed" checked>
+            高速模式（约快 3 倍；连不上会自动改用标准速度）
+          </label>
+          <label class="advanced-row">
+            <input type="checkbox" id="custom-extended-erase">
+            全片擦除（会清空板上全部数据，较慢；一般无需勾选）
+          </label>
+          <div class="flash-actions">
+            <button id="btn-custom-flash" class="btn btn-primary" type="button">连接并刷写</button>
+          </div>
+          <div id="custom-progress-wrap" hidden>
+            <div class="progress-track"><div id="custom-progress-bar" class="progress-bar"></div></div>
+            <div id="custom-progress-text" class="small dim">0%</div>
+          </div>
+          <div id="custom-result" class="alert" hidden></div>
+        </div>
 
-  /* 滚动渐入 */
-  var revealEls = document.querySelectorAll(".reveal");
-  if ("IntersectionObserver" in window && !reduce) {
-    var ro = new IntersectionObserver(function(entries){
-      entries.forEach(function(e){
-        if (e.isIntersecting) { e.target.classList.add("visible"); ro.unobserve(e.target); }
-      });
-    }, { threshold: .12 });
-    revealEls.forEach(function(el){ ro.observe(el); });
-  } else {
-    revealEls.forEach(function(el){ el.classList.add("visible"); });
-  }
+        <div id="custom-esp" hidden>
+          <div class="rescue-slot">
+            <span class="rescue-label">添加固件文件（.bin，可多选）</span>
+            <input type="file" id="custom-esp-add" accept=".bin" multiple>
+          </div>
+          <div id="custom-esp-files"></div>
+          <p class="small dim">
+            烧录地址默认 0x0（单个应用镜像直刷）；多个文件时请按固件说明填写各自地址（如 0x0 引导 / 0x10000 应用）。
+          </p>
+          <div class="flash-actions">
+            <button id="btn-custom-esp-flash" class="btn btn-primary" type="button">连接并刷写</button>
+          </div>
+          <div id="custom-esp-progress-wrap" hidden>
+            <div class="progress-track"><div id="custom-esp-progress-bar" class="progress-bar"></div></div>
+            <div id="custom-esp-progress-text" class="small dim">0%</div>
+          </div>
+          <div id="custom-esp-result" class="alert" hidden></div>
+        </div>
 
-  /* 数字滚动 */
-  var statEls = document.querySelectorAll(".stat b[data-count]");
-  function countUp(el){
-    var target = parseInt(el.getAttribute("data-count"), 10);
-    var suffix = el.getAttribute("data-suffix") || "";
-    if (reduce) { el.textContent = target + suffix; return; }
-    var start = null, dur = 1400;
-    function step(ts){
-      if (!start) start = ts;
-      var p = Math.min((ts - start) / dur, 1);
-      var eased = 1 - Math.pow(1 - p, 3);
-      el.textContent = Math.round(target * eased) + suffix;
-      if (p < 1) requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
-  }
-  if ("IntersectionObserver" in window) {
-    var so = new IntersectionObserver(function(entries){
-      entries.forEach(function(e){
-        if (e.isIntersecting) { countUp(e.target); so.unobserve(e.target); }
-      });
-    }, { threshold: .5 });
-    statEls.forEach(function(el){ so.observe(el); });
-  } else {
-    statEls.forEach(countUp);
-  }
-})();
-</script>
-<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
-<script>
-/* 主站内容水合：peipeidev.cn 网站后台（admin.peipeidev.cn Worker）→ 在线更新主页内容块。
-   静态内容始终兜底：后台无数据 / 接口不可达时，本脚本不做任何事。后台「主站内容」页签编辑。 */
-(function(){
-  "use strict";
-  var API = (new URLSearchParams(location.search).get("api") || "https://admin.peipeidev.cn") + "/api/site/content";
-  function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
-  function hydrate(c){
-    /* notice：主页顶部公告条（仅后台配置了才出现） */
-    if (c.notice && (c.notice.text || c.notice.title)) {
-      var bar = document.createElement("div");
-      bar.id = "site-notice";
-      bar.style.cssText = "position:sticky;top:0;z-index:50;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;padding:9px 20px;background:rgba(251,114,153,.12);border-bottom:1px solid rgba(251,114,153,.35);font:13px/1.6 system-ui,-apple-system,'PingFang SC',sans-serif;color:#e8eef5;backdrop-filter:blur(8px)";
-      bar.innerHTML = "<b style='color:#FB7299'>📢 " + esc(c.notice.title || "公告") + "</b><span>" + esc(c.notice.text || "") + "</span>"
-        + "<span style='margin-left:auto;display:inline-flex;gap:12px;align-items:baseline'>"
-        + (c.notice.url ? "<a href='" + esc(c.notice.url) + "' target='_blank' rel='noopener' style='color:#8b9dfc'>查看 →</a>" : "")
-        + "<button aria-label='关闭' style='background:none;border:0;color:#8b97a7;cursor:pointer;font-size:15px;padding:0 2px'>×</button></span>";
-      bar.querySelector("button").onclick = function(){ bar.remove(); };
-      document.body.insertBefore(bar, document.body.firstChild);
-    }
-    /* videos：[{title, meta, url, go}] */
-    if (Array.isArray(c.videos) && c.videos.length) {
-      var grid = document.querySelector("#videos .vid-grid");
-      if (grid) grid.innerHTML = c.videos.map(function(v, i){
-        return '<div class="card"><div class="t">' + esc(v.title) + '</div><div class="m">' + esc(v.meta || "") + '</div>'
-          + '<a class="go" href="' + esc(v.url || "https://space.bilibili.com/") + '" target="_blank" rel="noopener">' + esc(v.go || "去B站观看") + ' <span>→</span></a></div>';
-      }).join("");
-    }
-    /* firmware_rows：[{name, desc, badge, date, url, action}] */
-    if (Array.isArray(c.firmware_rows) && c.firmware_rows.length) {
-      var fw = document.querySelector("#firmware .fw");
-      if (fw) fw.innerHTML = c.firmware_rows.map(function(r){
-        return '<div class="fw-row"><div class="fw-name">' + esc(r.name) + (r.desc ? "<small>" + esc(r.desc) + "</small>" : "") + '</div>'
-          + '<div class="fw-meta">' + (r.badge ? '<span class="badge">' + esc(r.badge) + "</span>" : "")
-          + "<span>" + esc(r.date || "") + "</span>"
-          + '<a class="fw-dl" href="' + esc(r.url || "/flash/") + '">' + esc(r.action || "获取") + " →</a></div></div>";
-      }).join("");
-    }
-    /* timeline：[{date, title, desc}]（后台给出的顺序即显示顺序） */
-    if (Array.isArray(c.timeline) && c.timeline.length) {
-      var tl = document.querySelector("#timeline .tl");
-      if (tl) tl.innerHTML = c.timeline.map(function(t){
-        return '<div class="tl-item"><div class="tl-date">' + esc(t.date) + '</div><div class="tl-title">' + esc(t.title) + '</div><div class="tl-desc">' + esc(t.desc || "") + "</div></div>";
-      }).join("");
-    }
-    /* stats：{videos, series, projects, fans}（按主页现有四格语义覆盖） */
-    if (c.stats && typeof c.stats === "object") {
-      var map = [["videos","技术视频"],["series","固件系列"],["projects","开源项目"],["fans","B站粉丝"]];
-      document.querySelectorAll(".stat").forEach(function(el, idx){
-        var key = c.stats.__order ? c.stats.__order[idx] : (map[idx] ? map[idx][0] : null);
-        if (key && c.stats[key] != null) {
-          var b = el.querySelector("b");
-          b.textContent = String(c.stats[key]);
-          b.setAttribute("data-count", parseInt(c.stats[key], 10) || 0);
-          if (map[idx] && c.stats.__labels && c.stats.__labels[key]) el.querySelector("span").textContent = c.stats.__labels[key];
-        }
-      });
-    }
-  }
-  fetch(API, { cache: "no-store" }).then(function(r){ return r.ok ? r.json() : null; })
-    .then(function(d){ if (d && d.ok && d.content) hydrate(d.content); })
-    .catch(function(){ (window.__diag = window.__diag || []).push({ t: Date.now(), kind: "api", msg: "主站内容接口不可达，已静态兜底" }); /* 静默兜底 */ });
-})();
-</script>
-<style>
-/* 一键反馈组件 */
-#fb-fab{position:fixed;right:18px;bottom:18px;z-index:60;width:52px;height:52px;border-radius:50%;
-  background:linear-gradient(135deg,var(--pink-deep),var(--pink));color:#fff;font-size:20px;
-  display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;
-  box-shadow:0 6px 20px rgba(251,114,153,.35);transition:transform .15s,box-shadow .15s}
-#fb-fab:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(251,114,153,.45)}
-#fb-fab i{position:absolute;top:2px;right:2px;width:11px;height:11px;border-radius:50%;background:#ef4444;border:2px solid var(--bg)}
-#fb-ov{position:fixed;inset:0;z-index:70;background:rgba(6,9,13,.66);backdrop-filter:blur(4px);
-  display:none;align-items:center;justify-content:center;padding:16px}
-#fb-ov.on{display:flex}
-.fb-box{width:min(540px,94vw);max-height:88vh;overflow:auto;background:var(--bg-panel);border:1px solid var(--border);
-  border-radius:var(--radius);padding:18px;font-size:14px;box-shadow:0 16px 48px rgba(0,0,0,.5)}
-.fb-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-.fb-head b{color:var(--pink);font-size:16px}
-.fb-head button{background:none;border:0;color:var(--dim);font-size:20px;cursor:pointer;padding:0 4px}
-.fb-l{display:block;margin:10px 0 4px;color:var(--dim);font-size:13px}
-.fb-box select,.fb-box textarea{width:100%;margin-top:4px;padding:9px 10px;border-radius:8px;border:1px solid var(--border);
-  background:var(--bg-panel-2);color:var(--text);font:inherit}
-.fb-pre{margin-top:6px;padding:10px;border-radius:8px;background:var(--bg);border:1px solid var(--border);
-  color:var(--dim);font:12px/1.6 var(--mono);white-space:pre-wrap;word-break:break-all;max-height:180px;overflow:auto}
-.fb-act{display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-top:14px}
-.fb-act span{font-size:13px;color:var(--ok)}
-.fb-act span.fb-err{color:#ef4444}
-.fb-pri{padding:9px 20px;border-radius:8px;border:0;background:linear-gradient(135deg,var(--pink-deep),var(--pink));
-  color:#fff;font-weight:600;cursor:pointer}
-.fb-pri:disabled{opacity:.6;cursor:default}
-.fb-box details{margin:8px 0 0}
-.fb-box summary{cursor:pointer;user-select:none}
-</style>
-<script>
-/* 一键反馈：全站用户反馈入口 → admin.peipeidev.cn/api/feedback（后台「反馈」收件箱）。
-   自动附带诊断日志：JS 报错 / Promise 未捕获异常（环形缓冲，最新 12 条）+ 水合失败记录
-   （window.__diag，由水合脚本写入）+ 页面环境。支持 ?api= 覆盖联调。 */
-(function(){
-  "use strict";
-  var API = (new URLSearchParams(location.search).get("api") || "https://admin.peipeidev.cn") + "/api/feedback";
-  var errs = window.__diag = window.__diag || [];           // {t, kind, msg} 最新 12 条
-  function pushErr(kind, msg){
-    errs.push({ t: Date.now(), kind: kind, msg: String(msg == null ? "" : msg).slice(0, 300) });
-    if (errs.length > 12) errs.shift();
-    badge();
-  }
-  window.addEventListener("error", function(e){ pushErr("js", e.message + (e.filename ? " @" + String(e.filename).split("/").pop() + ":" + e.lineno : "")); });
-  window.addEventListener("unhandledrejection", function(e){ pushErr("promise", (e.reason && e.reason.message) || e.reason); });
-  function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
-  function fmtLog(){
-    var env = { page: location.pathname + location.search, ref: document.referrer || "", ua: navigator.userAgent,
-      lang: navigator.language || "", screen: innerWidth + "x" + innerHeight, time: new Date().toISOString() };
-    var lines = errs.length ? errs.map(function(e){ return "[" + new Date(e.t).toLocaleTimeString("zh-CN") + "][" + e.kind + "] " + e.msg; }) : [];
-    return { env: env, errors: errs.slice(), text: lines.join("\n") };
-  }
-  /* 悬浮按钮（有未反馈报错时亮红点） */
-  var fab = document.createElement("div");
-  fab.id = "fb-fab";
-  fab.setAttribute("role", "button"); fab.setAttribute("tabindex", "0"); fab.title = "意见反馈";
-  fab.innerHTML = '💬<i id="fb-dot" hidden></i>';
-  document.body.appendChild(fab);
-  function badge(){ var d = document.getElementById("fb-dot"); if (d) d.hidden = !errs.length; }
-  /* 弹窗 */
-  var ov = document.createElement("div");
-  ov.id = "fb-ov";
-  ov.innerHTML = '<div class="fb-box" role="dialog" aria-label="意见反馈">'
-    + '<div class="fb-head"><b>意见反馈</b><button id="fb-x" aria-label="关闭">×</button></div>'
-    + '<label class="fb-l">类型<select id="fb-t"><option value="bug">问题（页面异常 / 功能故障）</option><option value="suggestion">建议</option><option value="other">其他</option></select></label>'
-    + '<label class="fb-l">描述（遇到什么问题 / 希望有什么）<textarea id="fb-b" rows="4" placeholder="至少 5 个字，越具体越好"></textarea></label>'
-    + '<details id="fb-log-d"><summary class="fb-l">诊断日志（<span id="fb-n">0</span> 条，自动附带，帮助定位问题）</summary><pre id="fb-log" class="fb-pre"></pre></details>'
-    + '<div id="fb-ts" style="margin-top:10px"></div>'
-    + '<div class="fb-act"><span id="fb-msg"></span><button id="fb-ok" class="fb-pri">提交反馈</button></div>'
-    + '</div>';
-  document.body.appendChild(ov);
-  function refreshLog(){
-    var l = fmtLog();
-    document.getElementById("fb-n").textContent = l.errors.length;
-    document.getElementById("fb-log").textContent = (l.text || "（本次浏览暂无报错记录）") + "\n\n—— 环境 ——" + JSON.stringify(l.env, null, 1);
-  }
-  function open(){ refreshLog(); tsLoad(); document.getElementById("fb-msg").textContent = ""; ov.classList.add("on"); document.getElementById("fb-b").focus(); }
-  fab.addEventListener("click", open);
-  fab.addEventListener("keydown", function(e){ if (e.key === "Enter" || e.key === " ") open(); });
-  document.getElementById("fb-x").addEventListener("click", function(){ ov.classList.remove("on"); });
-  ov.addEventListener("click", function(e){ if (e.target === ov) ov.classList.remove("on"); });
-  /* Turnstile 人机验证（组件 peipei-turnstile；sitekey 为公开值）：打开弹窗时懒加载渲染，提交时带 token；
-     服务端未启用（无 TURNSTILE_SECRET）时 token 会被忽略，不影响提交。 */
-  var TS_KEY = "0x4AAAAAAFUzwgbZTzxfssPL", tsWid = null, tsToken = "";
-  function tsLoad(){
-    if (window.turnstile) { tsRender(); return; }
-    if (document.getElementById("ts-js")) return;
-    var s = document.createElement("script");
-    s.id = "ts-js"; s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-    s.async = true; s.defer = true; s.onload = tsRender;
-    document.head.appendChild(s);
-  }
-  function tsRender(){
-    if (!window.turnstile || tsWid !== null) return;
-    try { tsWid = window.turnstile.render("#fb-ts", { sitekey: TS_KEY,
-      callback: function(t){ tsToken = t; },
-      "expired-callback": function(){ tsToken = ""; },
-      "error-callback": function(){ tsToken = ""; } }); } catch (e) {}
-  }
-  function tsReset(){ tsToken = ""; if (window.turnstile && tsWid !== null) { try { window.turnstile.reset(tsWid); } catch (e) {} } }
-  document.getElementById("fb-ok").addEventListener("click", function(){
-    var body = document.getElementById("fb-b").value.trim();
-    var msg = document.getElementById("fb-msg");
-    if (body.length < 5) { msg.textContent = "请至少写 5 个字"; msg.className = "fb-err"; return; }
-    var btn = document.getElementById("fb-ok"); btn.disabled = true;
-    var l = fmtLog();
-    fetch(API, { method: "POST", cache: "no-store",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: document.getElementById("fb-t").value, body: body,
-        turnstileToken: tsToken || undefined,
-        /* 兼容两代后台：旧版认 message/log，v2 认 body/extra（log 文本两代都存） */
-        message: body, log: l.text,
-        extra: { page: l.env.page, ua: l.env.ua, lang: l.env.lang, screen: l.env.screen,
-                 errors: l.errors, log: l.text } })
-    }).then(function(r){ return r.json().catch(function(){ return {}; }).then(function(d){ if (!r.ok) throw new Error(d.detail || ("HTTP " + r.status)); return d; }); })
-      .then(function(){
-        tsReset();
-        errs.length = 0; badge(); ov.classList.remove("on");
-        document.getElementById("fb-b").value = "";
-        fab.innerHTML = "✓"; setTimeout(function(){ fab.innerHTML = '💬<i id="fb-dot" hidden></i>'; badge(); }, 2400);
-      })
-      .catch(function(e){ tsReset(); btn.disabled = false; msg.textContent = "提交失败：" + e.message + "（可稍后重试）"; msg.className = "fb-err"; });
-  });
-})();
-</script>
+        <div id="custom-esp8266" hidden>
+          <div class="rescue-slot">
+            <span class="rescue-label">添加固件文件（.bin，可多选）</span>
+            <input type="file" id="custom-esp8266-add" accept=".bin" multiple>
+          </div>
+          <div id="custom-esp8266-files"></div>
+          <p class="small dim">
+            实验性支持：ESP8266 / ESP8285（NodeMCU、ESP-12 等）。烧录地址按固件说明填写：一体化固件一般为 0x0；带引导的分段固件为 boot 0x0 + 应用 0x10000。刷写时按提示让板子进入下载模式（按住 BOOT/FLASH → 短按 RST → 松开）。
+          </p>
+          <div class="flash-actions">
+            <button id="btn-custom-esp8266-flash" class="btn btn-primary" type="button">连接并刷写</button>
+          </div>
+          <div id="custom-esp8266-progress-wrap" hidden>
+            <div class="progress-track"><div id="custom-esp8266-progress-bar" class="progress-bar"></div></div>
+            <div id="custom-esp8266-progress-text" class="small dim">0%</div>
+          </div>
+          <div id="custom-esp8266-result" class="alert" hidden></div>
+        </div>
+      </div>
+    </section>
+  </div>
 
+  <div id="view-rescue" hidden>
+    <!-- 救砖恢复 (F7) -->
+    <section aria-label="救砖恢复">
+      <h2>救砖恢复</h2>
+      <div class="flash-panel">
+        <p class="small dim">
+          适用于设备"变砖"或需要恢复已知固件的场景：选择三个镜像文件（或点"用 SDK 默认镜像"自动填充），再点"连接并恢复"，工具会自动完成清理与写入。引导程序已内置，无需额外提供。
+        </p>
+        <div class="alert alert-info" style="margin:2px 0 10px;">
+          <strong>⚡ 一键救砖（免上传）</strong>
+          <p class="small dim" style="margin:4px 0;">自动写入安信可原厂官方 AT 固件（ComboAT），把设备恢复到原厂状态，全程无需上传任何文件。</p>
+          <label class="advanced-row" style="margin:8px 0;">
+            <input type="checkbox" id="oneclick-agree">
+            我已了解：刷写将<b>擦除并覆盖</b>板上现有固件数据（不可撤销）
+          </label>
+          <button id="btn-oneclick-rescue" class="btn btn-primary" type="button">⚡ 一键恢复官方 AT 固件</button>
+        </div>
+        <div class="rescue-slot">
+          <span class="rescue-label">km0_boot_all.bin</span>
+          <input type="file" id="rescue-km0" accept=".bin">
+          <button class="btn btn-small" type="button" data-fill="km0_boot_all.bin">用 SDK 默认镜像</button>
+          <span class="small dim" data-state="km0_boot_all.bin"></span>
+        </div>
+        <div class="rescue-slot">
+          <span class="rescue-label">km4_boot_all.bin</span>
+          <input type="file" id="rescue-km4" accept=".bin">
+          <button class="btn btn-small" type="button" data-fill="km4_boot_all.bin">用 SDK 默认镜像</button>
+          <span class="small dim" data-state="km4_boot_all.bin"></span>
+        </div>
+        <div class="rescue-slot">
+          <span class="rescue-label">km0_km4_image2.bin（应用）</span>
+          <input type="file" id="rescue-image2" accept=".bin">
+          <button class="btn btn-small" type="button" data-fill="km0_km4_image2.bin">用出厂镜像</button>
+          <span class="small dim" data-state="km0_km4_image2.bin"></span>
+        </div>
+        <label class="advanced-row">
+          <input type="checkbox" id="rescue-extended-erase" checked>
+          全片擦除（变砖恢复建议勾选，较慢）
+        </label>
+        <div class="flash-actions">
+          <button id="btn-rescue-flash" class="btn btn-primary" type="button">连接并恢复</button>
+        </div>
+        <div id="rescue-progress-wrap" hidden>
+          <div class="progress-track"><div id="rescue-progress-bar" class="progress-bar"></div></div>
+          <div id="rescue-progress-text" class="small dim">0%</div>
+        </div>
+        <div id="rescue-result" class="alert" hidden></div>
+      </div>
+
+      <div id="rescue-at" hidden></div>
+    </section>
+  </div>
+    <!-- 日志面板 (F8)：全局，两个视图共用 -->
+    <section id="log-section" hidden aria-label="日志">
+      <div class="log-head">
+        <h2>日志</h2>
+        <div class="log-actions">
+          <button id="btn-export-log" class="btn btn-small" type="button">导出 .log</button>
+          <button id="btn-export-stats" class="btn btn-small" type="button">导出统计 .json</button>
+          <button id="btn-clear-log" class="btn btn-small" type="button">清空</button>
+        </div>
+      </div>
+      <pre id="log-panel" class="log-panel" aria-live="polite"></pre>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>本工具与固件仅限<b>授权环境下</b>的安全研究与教学用途，请遵守当地法律法规。</p>
+    <p class="dim small" id="contact">联系站长：<a href="mailto:0XT@tutamail.com">0XT@tutamail.com</a> · <a href="https://github.com/z751638806" rel="me noopener">GitHub</a> · 固件与激活码购买渠道：闲鱼「无敌佩佩队长」 · 本页开源实现见 <a href="https://github.com/z751638806/z751638806.github.io">仓库</a>。</p>
+  </footer>
+
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>
