@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS flash_grants (
   fp TEXT,
   created_ts INTEGER NOT NULL,
   exp_ts INTEGER NOT NULL,
-  used_ts INTEGER
+  used_ts INTEGER                     -- 取件时间戳；-1 = 会话结束时被服务端撤销
 );
 CREATE INDEX IF NOT EXISTS idx_fgrants_session ON flash_grants(session_id, created_ts);
 

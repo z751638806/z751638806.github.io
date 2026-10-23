@@ -1,7 +1,7 @@
 // peipei-flash-api — peipeidev.cn 网站后台 API（Cloudflare Worker + D1 + KV/R2）
 // v2 完整后台：在 M5 统计/反馈/公告/激活码、M6 付费取件之上，新增 backend.js 契约全套：
 //   用户注册/登录/额度（/api/auth/*，cookie 会话）/ 固件目录下发（/api/catalog）/
-//   刷写会话与一次性镜像链接（/api/flash/begin|file|end，失败退额度）/ 额度卡密（/api/redeem v2）/
+//   刷写会话与一次性镜像链接（/api/flash/begin|file|end，未取件失败才退额度）/ 额度卡密（/api/redeem v2）/
 //   主站内容（/api/site/content，主页水合）；管理台新增 用户/卡密/固件目录/主站内容。
 // 契约要点（与 flash/js/backend.js 逐字段对齐，勿随意改动）：
 //   - /api/health 的 service 必须为 "bw16-flash-api"（前端握手判定 api 模式）
@@ -19,22 +19,35 @@ const FLASH_TTL_MS = 120 * 1000;           // api 模式镜像一次性链接有
 const SESSION_TTL_SEC = 30 * 86400;        // 登录会话 cookie 有效期
 const PBKDF2_ITER = 25000;                 // 密码哈希迭代（Workers 免费档 CPU 预算内；8 位以上密码 + 独立盐）
 const REGISTER_BONUS = 1;                  // 注册赠送刷写额度
+// 带凭据的 CORS 只对自有站点与本地联调源开放；同源（含 workers.dev / wrangler dev）按 request.url 放行
+const SITE_ORIGINS = new Set(["https://peipeidev.cn", "https://www.peipeidev.cn"]);
+const LOCAL_ORIGIN_RE = /^https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/;
+const isAllowedOrigin = (origin, selfOrigin) =>
+  origin === selfOrigin || SITE_ORIGINS.has(origin) || LOCAL_ORIGIN_RE.test(origin);
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
-    // 带 Origin 的请求回显 origin 并允许凭据（backend.js 全部 credentials:"include"；
-    // 同源请求浏览器忽略这些头，跨域 ?api= 联调也能带上 cookie）
     const origin = request.headers.get("Origin");
+    const originAllowed = origin ? isAllowedOrigin(origin, url.origin) : false;
     const cors = {
-      "Access-Control-Allow-Origin": origin || "*",
+      ...(originAllowed ? {
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Credentials": "true",
+      } : {}),
       "Access-Control-Allow-Methods": "GET,POST,PUT,OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type,Authorization",
       "Access-Control-Max-Age": "86400",
-      ...(origin ? { "Access-Control-Allow-Credentials": "true" } : {}),
+      "Vary": "Origin",
     };
-    if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
+    if (request.method === "OPTIONS") {
+      if (origin && !originAllowed) return new Response(null, { status: 403, headers: { "Vary": "Origin" } });
+      return new Response(null, { status: 204, headers: cors });
+    }
+    // CORS 只阻止读取；对非白名单源的状态变更请求再挡一层（表单可绕过预检）
+    if (origin && !originAllowed && request.method !== "GET" && request.method !== "HEAD")
+      return json({ detail: "来源不被允许" }, 403, cors);
     if (request.method !== "GET" && request.method !== "POST" && request.method !== "PUT")
       return json({ error: "method" }, 405, cors);
 
@@ -546,7 +559,7 @@ async function getCatalog(env, cors) {
   return json({ ok: true, generatedAt: new Date().toISOString(), device: "bw16", firmware }, 200, cors);
 }
 
-/* ---------- 刷写会话：仅付费固件要登录 + 额度 → 一次性镜像链接（失败/中止退额度） ---------- */
+/* ---------- 刷写会话：仅付费固件要登录 + 额度 → 一次性镜像链接（未取件失败/中止退额度） ---------- */
 async function flashBegin(request, env, cors) {
   const b = await body(request);
   const slug = clean(b.slug, 60);
@@ -604,16 +617,24 @@ async function flashEnd(request, env, cors) {
   if (!sid) return json({ detail: "缺少会话 id" }, 400, cors);
   const s = await env.DB.prepare("SELECT * FROM flash_sessions WHERE session_id=?").bind(sid).first();
   if (!s) return json({ detail: "会话不存在" }, 404, cors);
+  if (s.user_id) {
+    const user = await userFromCookie(request, env);
+    if (!user || user.id !== s.user_id) return json({ detail: "无权结束该会话" }, 403, cors);
+  }
   const result = ["success", "failed", "aborted"].includes(b.result) ? b.result : "failed";
   const first = await env.DB.prepare("UPDATE flash_sessions SET ended_ts=?, result=? WHERE session_id=? AND ended_ts IS NULL")
     .bind(Date.now(), result, sid).run();
   if (first.meta.changes) {
+    // 先撤销本会话所有未用链接，再统计已取件数：客户端上报的 result 不可信，
+    // 只要下载过任一分段就视为已交付，避免“先退款再取件”或“取件后报失败”白拿。
+    await env.DB.prepare("UPDATE flash_grants SET used_ts=-1 WHERE session_id=? AND used_ts IS NULL").bind(sid).run();
+    const used = await env.DB.prepare("SELECT COUNT(*) AS n FROM flash_grants WHERE session_id=? AND used_ts>0").bind(sid).first();
+    const delivered = Number(used?.n || 0) > 0;
     const fw = await env.DB.prepare("SELECT name, device FROM catalog_fw WHERE slug=?").bind(s.slug).first();
     await env.DB.prepare("INSERT INTO flash_events (ts, device, firmware, success, duration_s, err) VALUES (?,?,?,?,?,?)")
       .bind(Date.now(), fw?.device || "BW16", fw?.name || s.slug, result === "success" ? 1 : 0,
         Number(b.durationS) || null, result === "success" ? null : clean(b.failStage, 200)).run();
-    // 失败/中止不白扣：退还本次额度
-    if (result !== "success" && s.quota_charged > 0 && s.user_id)
+    if (result !== "success" && s.quota_charged > 0 && s.user_id && !delivered)
       await addQuota(env, s.user_id, s.quota_charged, `refund:${s.slug}`).catch(() => {});
   }
   return json({ ok: true }, 200, cors);

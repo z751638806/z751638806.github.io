@@ -120,7 +120,7 @@ git add -A && git commit -m "..." && git push   # push 后 1-2 分钟 Pages 生�
   **主站内容**（peipeidev.cn 主页在线更新）
 - **用户与额度体系**：烧录页 api 模式注册/登录（`/api/auth/*`，PBKDF2 密码哈希 + HMAC 签名
   会话 cookie），BW16 刷写经 `/api/flash/begin` 扣 1 次额度换一次性镜像链接（指纹绑定、
-  单次核销），失败/中止自动退还，注册赠送 1 次
+  单次核销），未取件即失败/中止自动退还（已取件视为交付，不退），注册赠送 1 次
 - **api 模式契约**：`flash/js/backend.js` 是权威定义（health 握手 service=`bw16-flash-api`、
   错误体 `{detail}`、`/api/flash/begin` 返回 `{文件名: 链接}` 且链接必须自带 `?…`）——改后端先读它
 - 前端接入：烧录页每次刷写结束匿名上报统计（`tools/flash-telemetry/telemetry.js`，

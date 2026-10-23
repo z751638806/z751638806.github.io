@@ -132,12 +132,13 @@ async function main() {
   ok(other.status === 200 && otherBytes.length === 2048, "第二文件链接独立有效（独立字节流）");
   ok((await j(await worker.fetch(req("/pickup/" + "0".repeat(32) + "?fp=x"), env))).error === "not_found", "随机 jti 404");
 
-  // 时效：手工把授权改成已过期
+  // 时效：手工把本会话的授权改成已过期（按 begin 返回的 jti，避免同毫秒多条 grant 的排序歧义）
   const db2 = env.DB;
-  ok((await j(await worker.fetch(req("/api/pickup/begin", { method: "POST", body: { code: CODE, slug: "bw16-19", fp: "fp2" } }), env))).ok, "已核销取件码 24h 内可重试（重下）");
-  const old = await db2.prepare("SELECT jti FROM pickup_grants ORDER BY created_ts DESC LIMIT 1").first();
-  await db2.prepare("UPDATE pickup_grants SET exp_ts=? WHERE jti=?").bind(Date.now() - 1000, old.jti).run();
-  ok((await j(await worker.fetch(req(`/pickup/${old.jti}?fp=fp2`), env))).error === "expired", "过期链接拒绝");
+  const retry = await j(await worker.fetch(req("/api/pickup/begin", { method: "POST", body: { code: CODE, slug: "bw16-19", fp: "fp2" } }), env));
+  ok(retry.ok, "已核销取件码 24h 内可重试（重下）");
+  const oldJti = retry.files[0].url.split("/").pop().split("?")[0];
+  await db2.prepare("UPDATE pickup_grants SET exp_ts=? WHERE jti=?").bind(Date.now() - 1000, oldJti).run();
+  ok((await j(await worker.fetch(req(`/pickup/${oldJti}?fp=fp2`), env))).error === "expired", "过期链接拒绝");
 
   console.log("M6 取件码生命周期");
   const dis = await j(await worker.fetch(req("/api/admin/codes/disable", { method: "POST", token: T, body: { code: CODE2 } }), env));
@@ -231,16 +232,35 @@ async function main() {
     const fileUrl = beginD.files["km0_boot_all.bin"];
     const fpMiss = await j(await worker.fetch(req(`${fileUrl}&fp=wrong`), env));
     ok(fpMiss.detail === "指纹不匹配", "镜像链接指纹不匹配拒绝");
-    const got2 = await worker.fetch(req(`${fileUrl}&fp=fpA`), env);
+
+    // 未取件即失败：退款，同时撤销本会话链接（否则可“先退款再取件”）
+    const endNoAuth = await worker.fetch(req("/api/flash/end", { method: "POST", body: { flashSessionId: beginD.flashSessionId, result: "failed" } }), env);
+    ok(endNoAuth.status === 403, "付费会话结束必须登录本人（无 cookie 403）");
+    const endBeforeDownload = await j(await worker.fetch(req("/api/flash/end", { method: "POST", body: { flashSessionId: beginD.flashSessionId, result: "failed", durationS: 3.2, failStage: "下载前" }, headers: { Cookie: cookie } }), env));
+    ok(endBeforeDownload.ok, "flash/end 未取件失败上报");
+    const me3 = await j(await worker.fetch(req("/api/auth/me", { headers: { Cookie: cookie } }), env));
+    ok(me3.quota === 1, "未取件失败退还额度 0→1");
+    const revokedRes = await worker.fetch(req(`${fileUrl}&fp=fpA`), env);
+    ok(revokedRes.status === 403 && (await j(revokedRes)).detail === "链接已使用", "结束后未用链接被撤销（退款绕过已封）");
+
+    // 取件后失败：result 不可信，已交付就不退款；剩余链接一并撤销
+    const begin2 = await worker.fetch(req("/api/flash/begin", { method: "POST", body: { slug: "bw16-01", fingerprint: "fpA" }, headers: { Cookie: cookie } }), env);
+    const beginD2 = await j(begin2);
+    ok(beginD2.ok && beginD2.files["km0_boot_all.bin"]?.includes("?g="), "退款后额度恢复，可再次 begin");
+    const me4 = await j(await worker.fetch(req("/api/auth/me", { headers: { Cookie: cookie } }), env));
+    ok(me4.quota === 0, "第二次 begin 再扣额度 1→0");
+    const fileUrl2 = beginD2.files["km0_boot_all.bin"];
+    const got2 = await worker.fetch(req(`${fileUrl2}&fp=fpA`), env);
     const got2Bytes = new Uint8Array(await got2.arrayBuffer());
     ok(got2.status === 200 && got2Bytes.length === 512 && got2Bytes[0] === 4, "镜像回源字节正确");
-    const reuse = await j(await worker.fetch(req(`${fileUrl}&fp=fpA`), env));
+    const reuse = await j(await worker.fetch(req(`${fileUrl2}&fp=fpA`), env));
     ok(reuse.detail === "链接已使用", "镜像链接一次性");
-
-    const endFail = await j(await worker.fetch(req("/api/flash/end", { method: "POST", body: { flashSessionId: beginD.flashSessionId, result: "failed", durationS: 3.2, failStage: "下载阶段" } }), env));
-    ok(endFail.ok, "flash/end 失败上报");
-    const me3 = await j(await worker.fetch(req("/api/auth/me", { headers: { Cookie: cookie } }), env));
-    ok(me3.quota === 1, "失败退还额度 0→1");
+    const endAfterDownload = await j(await worker.fetch(req("/api/flash/end", { method: "POST", body: { flashSessionId: beginD2.flashSessionId, result: "failed", durationS: 1, failStage: "刷写阶段" }, headers: { Cookie: cookie } }), env));
+    ok(endAfterDownload.ok, "flash/end 取件后失败上报");
+    const me5 = await j(await worker.fetch(req("/api/auth/me", { headers: { Cookie: cookie } }), env));
+    ok(me5.quota === 0, "取件后失败不退额度（不信任客户端 result）");
+    const revokedOtherRes = await worker.fetch(req(`${beginD2.files["imgtool_flashloader_amebad.bin"]}&fp=fpA`), env);
+    ok(revokedOtherRes.status === 403 && (await j(revokedOtherRes)).detail === "链接已使用", "结束后剩余链接一并撤销");
     const st = await j(await worker.fetch(req("/api/admin/stats?days=1", { token: T }), env));
     ok((st.byFirmware || []).some((f) => f.firmware === "WiFi安全测试固件「2026」"), "flash/end 落统计看板（与 M5 同表）");
 
@@ -277,7 +297,7 @@ async function main() {
     const rdNoUser = await worker.fetch(req("/api/redeem", { method: "POST", body: { code: cc.codes[0] } }), env);
     ok(rdNoUser.status === 401 && (await rdNoUser.json()).detail, "未登录兑换卡密 401（前端转登录）");
     const rd = await j(await worker.fetch(req("/api/redeem", { method: "POST", body: { code: cc.codes[0] }, headers: { Cookie: cookie } }), env));
-    ok(rd.ok && rd.credited === 5 && rd.quota === 6, "兑换卡密 +5 额度（契约 {credited,quota}）");
+    ok(rd.ok && rd.credited === 5 && rd.quota === 5, "兑换卡密 +5 额度（契约 {credited,quota}）");
     const rd2 = await j(await worker.fetch(req("/api/redeem", { method: "POST", body: { code: cc.codes[0] }, headers: { Cookie: cookie } }), env));
     ok(rd2.detail === "卡密已被使用", "卡密一次性");
 
@@ -287,7 +307,7 @@ async function main() {
     const adj = await j(await worker.fetch(req("/api/admin/users/quota", { method: "POST", token: T, body: { id: uid, delta: -100 } }), env));
     ok(adj.error === "quota_underflow", "额度扣到负数被拒");
     const adj2 = await j(await worker.fetch(req("/api/admin/users/quota", { method: "POST", token: T, body: { id: uid, delta: 2, note: "补偿" } }), env));
-    ok(adj2.ok && adj2.quota === 8, "管理员调整额度 6→8");
+    ok(adj2.ok && adj2.quota === 7, "管理员调整额度 5→7");
     const dis2 = await j(await worker.fetch(req("/api/admin/users/status", { method: "POST", token: T, body: { id: uid, status: "disabled" } }), env));
     ok(dis2.ok, "禁用用户");
     ok((await worker.fetch(req("/api/auth/me", { headers: { Cookie: cookie } }), env)).status === 401, "禁用后会话立即失效");
@@ -300,7 +320,18 @@ async function main() {
     const scPub = await j(await worker.fetch(req("/api/site/content"), env));
     ok(scPub.content?.videos?.[0]?.title === "新视频", "公开主站内容接口（主页水合数据源）");
     const corsRes = await worker.fetch(req("/api/site/content", { headers: { Origin: "https://peipeidev.cn" } }), env);
-    ok(corsRes.headers.get("Access-Control-Allow-Origin") === "https://peipeidev.cn" && corsRes.headers.get("Access-Control-Allow-Credentials") === "true", "CORS 回显 Origin + 凭据（credentials:include 契约）");
+    ok(corsRes.headers.get("Access-Control-Allow-Origin") === "https://peipeidev.cn" && corsRes.headers.get("Access-Control-Allow-Credentials") === "true", "CORS 白名单源回显 + 凭据（credentials:include 契约）");
+    ok((corsRes.headers.get("Vary") || "").includes("Origin"), "CORS 响应带 Vary: Origin");
+    const evilGet = await worker.fetch(req("/api/site/content", { headers: { Origin: "https://evil.example" } }), env);
+    ok(evilGet.status === 200 && !evilGet.headers.get("Access-Control-Allow-Origin"), "非白名单源不回显 ACAO");
+    const evilPost = await worker.fetch(req("/api/auth/logout", { method: "POST", body: {}, headers: { Origin: "https://evil.example" } }), env);
+    ok(evilPost.status === 403, "非白名单源状态变更请求 403");
+    const evilPre = await worker.fetch(req("/api/auth/logout", { method: "OPTIONS", headers: { Origin: "https://evil.example", "Access-Control-Request-Method": "POST" } }), env);
+    ok(evilPre.status === 403, "非白名单源预检 403");
+    const localCors = await worker.fetch(req("/api/site/content", { headers: { Origin: "http://localhost:8000" } }), env);
+    ok(localCors.headers.get("Access-Control-Allow-Origin") === "http://localhost:8000", "localhost 联调源放行");
+    const sameCors = await worker.fetch(req("/api/site/content", { headers: { Origin: "https://admin.peipeidev.cn" } }), env);
+    ok(sameCors.headers.get("Access-Control-Allow-Origin") === "https://admin.peipeidev.cn", "同源（admin）放行");
     await worker.fetch(req("/api/admin/site/content", { method: "POST", token: T, body: { key: "tmp", data: { a: 1 } } }), env);
     const scDel = await j(await worker.fetch(req("/api/admin/site/content", { method: "POST", token: T, body: { key: "tmp", data: null } }), env));
     ok(scDel.deleted && !((await j(await worker.fetch(req("/api/site/content"), env))).content ?? {}).hasOwnProperty?.("tmp"), "删除内容块");
