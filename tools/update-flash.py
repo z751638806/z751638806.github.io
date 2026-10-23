@@ -43,7 +43,7 @@ PATCHES = {
         ("<title>BW16 / ESP32-C3 网页刷写工具</title>",
          "<title>在线烧录 · BW16 / ESP32 / ESP8266 网页直刷 — peipeidev.cn</title>\n"
          "  <meta name=\"description\" content=\"浏览器里直接给 BW16（RTL8720DN）、ESP32、ESP32-C3/S3、ESP8266 刷固件，"
-         "无需装驱动。官方 AT 救砖镜像一键恢复，固件免费公开下载，付费固件一机一码激活。\">", 1),
+         "无需装驱动。固件免费公开下载，付费固件一机一码激活。\">", 1),
         ("<link rel=\"stylesheet\" href=\"css/style.css\">",
          "<link rel=\"stylesheet\" href=\"css/style.css\">\n  <link rel=\"stylesheet\" href=\"css/theme-home.css\">", 1),
         ("<h1>⚡ BW16 / ESP32-C3 网页刷写工具</h1>",
@@ -91,12 +91,6 @@ PATCHES = {
          '<nav class="view-nav" aria-label="视图切换">\n      <button id="nav-flash" class="view-tab selected" type="button">刷固件</button>\n      <button id="nav-rescue" class="view-tab" type="button">救砖恢复</button>\n      <button id="nav-custom" class="view-tab" type="button">自定义固件</button>\n    </nav>', 1),
         ('  <div id="view-rescue" hidden>',
          '  <div id="view-custom" hidden>\n    <!-- 自定义固件刷写 (M7) -->\n    <section aria-label="自定义固件刷写">\n      <h2>自定义固件刷写</h2>\n      <div class="flash-panel">\n        <p class="small dim">\n          刷写自己的固件文件（本地选择，不会上传到任何服务器）。选设备类型后按提示操作：\n          BW16 需要三个镜像（可一键填充官方引导镜像）；ESP32-C3 支持一个或多个 .bin（可改烧录地址）。\n        </p>\n        <div class="auth-tabs" style="display:flex;gap:8px;margin:14px 0;">\n          <button class="view-tab selected" data-cdev="bw16" type="button">BW16</button>\n          <button class="view-tab" data-cdev="esp32c3" type="button">ESP32-C3</button>\n            <button class="view-tab" data-cdev="esp8266" type="button">ESP8266</button>\n        </div>\n\n        <div id="custom-bw16">\n          <div class="rescue-slot">\n            <span class="rescue-label">km0_boot_all.bin</span>\n            <input type="file" id="custom-km0" accept=".bin">\n            <button class="btn btn-small" type="button" data-cfill="km0_boot_all.bin">用 SDK 默认镜像</button>\n            <span class="small dim" data-state="km0_boot_all.bin"></span>\n          </div>\n          <div class="rescue-slot">\n            <span class="rescue-label">km4_boot_all.bin</span>\n            <input type="file" id="custom-km4" accept=".bin">\n            <button class="btn btn-small" type="button" data-cfill="km4_boot_all.bin">用 SDK 默认镜像</button>\n            <span class="small dim" data-state="km4_boot_all.bin"></span>\n          </div>\n          <div class="rescue-slot">\n            <span class="rescue-label">km0_km4_image2.bin（应用）</span>\n            <input type="file" id="custom-image2" accept=".bin">\n            <span class="small dim" data-state="km0_km4_image2.bin"></span>\n          </div>\n          <label class="advanced-row">\n            <input type="checkbox" id="custom-high-speed" checked>\n            高速模式（约快 3 倍；连不上会自动改用标准速度）\n          </label>\n          <label class="advanced-row">\n            <input type="checkbox" id="custom-extended-erase">\n            全片擦除（会清空板上全部数据，较慢；一般无需勾选）\n          </label>\n          <div class="flash-actions">\n            <button id="btn-custom-flash" class="btn btn-primary" type="button">连接并刷写</button>\n          </div>\n          <div id="custom-progress-wrap" hidden>\n            <div class="progress-track"><div id="custom-progress-bar" class="progress-bar"></div></div>\n            <div id="custom-progress-text" class="small dim">0%</div>\n          </div>\n          <div id="custom-result" class="alert" hidden></div>\n        </div>\n\n        <div id="custom-esp" hidden>\n          <div class="rescue-slot">\n            <span class="rescue-label">添加固件文件（.bin，可多选）</span>\n            <input type="file" id="custom-esp-add" accept=".bin" multiple>\n          </div>\n          <div id="custom-esp-files"></div>\n          <p class="small dim">\n            烧录地址默认 0x0（单个应用镜像直刷）；多个文件时请按固件说明填写各自地址（如 0x0 引导 / 0x10000 应用）。\n          </p>\n          <div class="flash-actions">\n            <button id="btn-custom-esp-flash" class="btn btn-primary" type="button">连接并刷写</button>\n          </div>\n          <div id="custom-esp-progress-wrap" hidden>\n            <div class="progress-track"><div id="custom-esp-progress-bar" class="progress-bar"></div></div>\n            <div id="custom-esp-progress-text" class="small dim">0%</div>\n          </div>\n          <div id="custom-esp-result" class="alert" hidden></div>\n        </div>\n\n        <div id="custom-esp8266" hidden>\n          <div class="rescue-slot">\n            <span class="rescue-label">添加固件文件（.bin，可多选）</span>\n            <input type="file" id="custom-esp8266-add" accept=".bin" multiple>\n          </div>\n          <div id="custom-esp8266-files"></div>\n          <p class="small dim">\n            实验性支持：ESP8266 / ESP8285（NodeMCU、ESP-12 等）。烧录地址按固件说明填写：一体化固件一般为 0x0；带引导的分段固件为 boot 0x0 + 应用 0x10000。刷写时按提示让板子进入下载模式（按住 BOOT/FLASH → 短按 RST → 松开）。\n          </p>\n          <div class="flash-actions">\n            <button id="btn-custom-esp8266-flash" class="btn btn-primary" type="button">连接并刷写</button>\n          </div>\n          <div id="custom-esp8266-progress-wrap" hidden>\n            <div class="progress-track"><div id="custom-esp8266-progress-bar" class="progress-bar"></div></div>\n            <div id="custom-esp8266-progress-text" class="small dim">0%</div>\n          </div>\n          <div id="custom-esp8266-result" class="alert" hidden></div>\n        </div>\n      </div>\n    </section>\n  </div>\n\n  <div id="view-rescue" hidden>', 1),
-        # 一键救砖面板（免上传）：官方 AT 固件一键恢复 + 覆盖声明
-        ("引导程序已内置，无需额外提供。\n        </p>",
-         "引导程序已内置，无需额外提供。\n        </p>\n        <div class=\"alert alert-info\" style=\"margin:2px 0 10px;\">\n          <strong>⚡ 一键救砖（免上传）</strong>\n          <p class=\"small dim\" style=\"margin:4px 0;\">自动写入安信可原厂官方 AT 固件（ComboAT），把设备恢复到原厂状态，全程无需上传任何文件。</p>\n          <label class=\"advanced-row\" style=\"margin:8px 0;\">\n            <input type=\"checkbox\" id=\"oneclick-agree\">\n            我已了解：刷写将<b>擦除并覆盖</b>板上现有固件数据（不可撤销）\n          </label>\n          <button id=\"btn-oneclick-rescue\" class=\"btn btn-primary\" type=\"button\">⚡ 一键恢复官方 AT 固件</button>\n        </div>", 1),
-        # 旧「官方 AT 固件恢复」独立区块并入一键面板，隐藏原区块
-        ("      <h2>官方 AT 固件恢复</h2>\n      <div class=\"flash-panel\" id=\"rescue-at\">\n        <!-- rescue.js 按清单内容填充 -->\n      </div>",
-         "      <div id=\"rescue-at\" hidden></div>", 1),
         ("<input type=\"file\" id=\"rescue-image2\" accept=\".bin\">\n          <span class=\"small dim\" data-state=\"km0_km4_image2.bin\"></span>",
          "<input type=\"file\" id=\"rescue-image2\" accept=\".bin\">\n          <button class=\"btn btn-small\" type=\"button\" data-fill=\"km0_km4_image2.bin\">用出厂镜像</button>\n          <span class=\"small dim\" data-state=\"km0_km4_image2.bin\"></span>", 1),
     ],
@@ -206,13 +200,6 @@ PATCHES = {
          "log('ESP32-C3 刷写组件已就绪，点击下方\"连接\"按钮并选择串口', 'sys');", 1),
     ],
     "js/rescue.js": [
-        ("<p>本仓库未内置官方 AT 固件（不编造下载地址）。</p>\n    <p class=\"small dim\">\n      获取渠道：安信可官方资料中心（docs.ai-thinker.com）的 BW16 板资料，或 Realtek Ameba-D SDK\n      发布包中的 AT 固件镜像。拿到后把三件套（km0_boot_all.bin / km4_boot_all.bin /\n      km0_km4_image2.bin）放到 <code>bw16/_at_firmware/flash/a/</code> 并重新运行构建脚本，\n      这里会出现\"一键恢复\"按钮；也可以直接用上方上传槽手动刷入。\n    </p>",
-         "<p>未内置官方 AT 固件。</p>\n    <p class=\"small dim\">\n      如需恢复官方 AT 固件：可从安信可官方资料中心的 BW16 板资料获取三个镜像文件\n      （km0_boot_all.bin / km4_boot_all.bin / km0_km4_image2.bin），用上方上传槽手动刷入。\n    </p>", 1),
-        ("<p>检测到本地官方 AT 固件（${atEntry.sourcePath}）。</p>",
-         "<p>已内置官方 AT 固件。</p>", 1),
-        # 一键救砖：勾选声明 → 从内置 sdkBackup 填充三镜像 → 复用现有恢复流程
-        ("  $('btn-rescue-flash').addEventListener('click', onRescueClick);",
-         "  $('btn-rescue-flash').addEventListener('click', onRescueClick);\n  $('btn-oneclick-rescue').addEventListener('click', async () => {\n    if (!$('oneclick-agree').checked) {\n      showResult('warn', '请先勾选「我已了解将覆盖板上固件」后再开始一键恢复。');\n      return;\n    }\n    setBusy(true);\n    try {\n      const at = state.manifests.firmware.find((f) => f.slug === 'bw16-at');\n      if (!at) throw new Error('官方 AT 固件未内置');\n      for (const name of Object.keys(SLOTS)) {\n        const meta = at.files[name];\n        if (!meta) throw new Error(`内置镜像缺失：${name}`);\n        markImage(name, await fetchBinary(meta.path), '官方 AT 固件');\n      }\n    } catch (e) {\n      setBusy(false);\n      showResult('err', `× 内置镜像加载失败：${e.message}`);\n      return;\n    }\n    setBusy(false);\n    await onRescueClick();\n  });", 1),
         # M7 关联修复：setState 限定 #view-rescue 作用域（自定义视图引入同名槽位后，
         #  无作用域 querySelector 会把救砖页的填充反馈写进隐藏的自定义视图槽位）
         ("function setState(name, text) {\n  document.querySelector(`[data-state=\"${name}\"]`).textContent = text;\n}",
@@ -233,7 +220,7 @@ MANIFEST_FIELD_PATCH = {
 # 线上固件白名单：只发布这些 slug（清单 + bin 文件都以此为准；本地项目不受影响）。
 # 空 list = 该设备暂不上线固件。
 FIRMWARE_WHITELIST = {
-    "bw16": ["bw16-01", "bw16-18", "bw16-19", "bw16-20", "bw16-at"],
+    "bw16": ["bw16-01", "bw16-18", "bw16-19", "bw16-20"],
     "esp32c3": ["esp32c3-1", "esp32c3-2", "esp32c3-nat"],
     "esp8266": ["esp8266-deauther", "esp8266-tasmota", "esp8266-micropython", "esp8266-wled", "esp8266-captive-portal"],
     "esp32": ["esp32-bruce-cyd", "esp32-micropython", "esp32-div-cyd", "esp32-ghost-cyd"],
@@ -272,7 +259,6 @@ if any(PAID_FIRMWARE.values()):
 FIRMWARE_NAME_MAP = {
     "断网": "WiFi安全测试固件「2026」",
     "断网远程版": "WiFi安全测试固件-远程版「2026」",
-    "官方AT固件(本地)": "官方 AT 固件（救砖）",
     "双频断网Deauther": "双频断网固件「英文版」",
 }
 
@@ -280,7 +266,6 @@ FIRMWARE_NAME_MAP = {
 # DEFAULT_CONNECT_NOTE 应用到所有上线固件；如某固件需要单独文案，加进下面的 override 表
 DEFAULT_CONNECT_NOTE = "刷写完成后，设备会释放 WiFi 热点「CMCC」，连接密码：12345678.（注意：末尾有一个英文句点）"
 FIRMWARE_CONNECT_NOTES_OVERRIDE = {
-    "bw16-at": "",   # AT 固件不释放热点，不显示连接提示
     "esp32c3-1": "刷写后热点：ManagementAP（密码 mgmtadmin）· 管理后台 http://192.168.4.1",
     "esp32c3-2": "设备端操作（配套 Flipper 蓝牙工具使用）",
     "bw16-18": "刷写后热点：RTL8720dn-Deauther（密码 0123456789）· 管理后台 http://192.168.1.1 · 支持双频 2.4G/5G",
@@ -643,8 +628,6 @@ def sanitize_manifest(path: Path) -> None:
         paid_slugs = set(PAID_FIRMWARE.get(d.get("device", ""), []))
         # 线上专属连接提示：默认统一文案，override 表可按 slug 单独覆盖
         for f in d["firmware"]:
-            if f.get("slug") == "bw16-at":
-                f["hideInList"] = True   # AT 固件仅供救砖页一键恢复，不进普通刷写列表
             default_note = DEFAULT_CONNECT_NOTE if d.get("device") == "bw16" else ""
             note = FIRMWARE_CONNECT_NOTES_OVERRIDE.get(f.get("slug"), default_note)
             if note:

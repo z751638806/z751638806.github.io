@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>在线烧录 · BW16 / ESP32 / ESP8266 网页直刷 — peipeidev.cn</title>
-  <meta name="description" content="浏览器里直接给 BW16（RTL8720DN）、ESP32、ESP32-C3/S3、ESP8266 刷固件，无需装驱动。官方 AT 救砖镜像一键恢复，固件免费公开下载，付费固件一机一码激活。">
+  <meta name="description" content="浏览器里直接给 BW16（RTL8720DN）、ESP32、ESP32-C3/S3、ESP8266 刷固件，无需装驱动。固件免费公开下载，付费固件一机一码激活。">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/theme-home.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
@@ -331,15 +331,6 @@
         <p class="small dim">
           适用于设备"变砖"或需要恢复已知固件的场景：选择三个镜像文件（或点"用 SDK 默认镜像"自动填充），再点"连接并恢复"，工具会自动完成清理与写入。引导程序已内置，无需额外提供。
         </p>
-        <div class="alert alert-info" style="margin:2px 0 10px;">
-          <strong>⚡ 一键救砖（免上传）</strong>
-          <p class="small dim" style="margin:4px 0;">自动写入安信可原厂官方 AT 固件（ComboAT），把设备恢复到原厂状态，全程无需上传任何文件。</p>
-          <label class="advanced-row" style="margin:8px 0;">
-            <input type="checkbox" id="oneclick-agree">
-            我已了解：刷写将<b>擦除并覆盖</b>板上现有固件数据（不可撤销）
-          </label>
-          <button id="btn-oneclick-rescue" class="btn btn-primary" type="button">⚡ 一键恢复官方 AT 固件</button>
-        </div>
         <div class="rescue-slot">
           <span class="rescue-label">km0_boot_all.bin</span>
           <input type="file" id="rescue-km0" accept=".bin">
@@ -371,8 +362,6 @@
         </div>
         <div id="rescue-result" class="alert" hidden></div>
       </div>
-
-      <div id="rescue-at" hidden></div>
     </section>
   </div>
     <!-- 日志面板 (F8)：全局，两个视图共用 -->

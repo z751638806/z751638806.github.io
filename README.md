@@ -12,7 +12,7 @@
 支持的开发板（Web Serial 直刷）：**BW16（RTL8720DN）/ ESP8266 / ESP32 / ESP32-S3 / ESP32-C3**。
 
 线上固件清单（16 项，署名与来源见 `tools/esp-firmware/SOURCES.md`）：
-BW16：WiFi安全测试固件「2026」/ 远程版「20261001」（需激活码） / **双频断网固件「英文版」（2.4G/5G，本地编译 RTL8720dn-Deauther GPL-3.0）** / 官方 AT（救砖）；
+BW16：WiFi安全测试固件「2026」/ 远程版「20261001」（需激活码） / **双频断网固件「英文版」（2.4G/5G，本地编译 RTL8720dn-Deauther GPL-3.0）**；
 ESP8266：Deauther v2 / Tasmota / MicroPython / WLED / 钓鱼门户演示；
 ESP32：Bruce（CYD）/ MicroPython / **ESP32-DIV 多频工具箱（MIT）** / **Ghost（CYD）**；
 ESP32-S3：Bruce / **Ghost（Cardputer ADV）**；ESP32-C3：**Wifi模拟中继（热点 CMCC/12345678.，后台 192.168.4.1；克隆/中继/网速/打卡）** / WiFi渗透工具 / BLE 工具。
@@ -66,13 +66,9 @@ Safari / iOS / 微信内置浏览器不支持，页面会显示提示徽章）�
 
 - **BW16**：三镜像槽位（km0/km4 可一键填 SDK 默认镜像），复用生产 flashBw16 引擎
   （flashloader 内置并强制 SHA-256 校验、高速档自动回退、手动引导、?mock 演练）
-- **一键救砖恢复（免上传）**：救砖页勾选覆盖声明后一键刷写**安信可原厂官方 AT
-  固件**（ComboAT），把设备恢复到原厂状态，全程免上传；三槽位手动模式保留给
-  高级用户（km0/km4 支持官方引导填充、image2 支持「用出厂镜像」填充）
-- **官方 AT 固件来源**：安信可官方文档站的 ComboAT 整片镜像（16Mbit v4.9.2，
-  2MB/4MB 模块通吃），按分区布局切分为三件套（km0/km4/image2，已规避 FTL/
-  校准区）；换新版 ComboAT 时下载后重新切分覆盖 `bw16/_at_firmware/flash/a/`
-  重跑构建即可
+- **手动救砖恢复**：救砖页上传三个镜像（km0/km4 支持 SDK 默认填充、image2 支持
+  「用出厂镜像」填充）后点「连接并恢复」；站点不再内置或分发官方 AT 固件，
+  也没有一键恢复入口
 - **ESP32-C3**：多 bin + 可编辑烧录地址（如 0x0 引导 / 0x10000 应用），esptool-js
   官方库 esbuild 单文件**本地打包**（`flash/js/vendor/`，v0.7.0），不依赖 CDN
 - **ESP8266（实验性）**：设备卡片已上线（引导至自定义刷写）；自定义固件页 ESP8266

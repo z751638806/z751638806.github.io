@@ -128,33 +128,6 @@
         }
       },
       "connectNote": "刷写后热点：CMCC（密码 12345678.，末尾为英文句点）· 默认信道 6 · 管理后台 http://192.168.1.1 · 需激活后才能使用：刷写完成 → 打开固件界面复制设备码 → 通过 peipeidev.cn 首页联系方式发给开发者 → 获取激活码完成激活（一机一码）· 仅供学习研究，请勿用于非法用途"
-    },
-    {
-      "slug": "bw16-at",
-      "name": "官方 AT 固件（救砖）",
-      "color": "",
-      "colorLabel": "未分类",
-      "colorCss": "#94a3b8",
-      "sourcePath": "佩佩队长固件库",
-      "device": "bw16",
-      "files": {
-        "km0_boot_all.bin": {
-          "path": "firmware/bw16-at/km0_boot_all.bin",
-          "size": 4096,
-          "md5": "8359578eb5397076509a075b0425e88e"
-        },
-        "km4_boot_all.bin": {
-          "path": "firmware/bw16-at/km4_boot_all.bin",
-          "size": 8192,
-          "md5": "3fb6f65401b2b88931657f3a4c2d677e"
-        },
-        "km0_km4_image2.bin": {
-          "path": "firmware/bw16-at/km0_km4_image2.bin",
-          "size": 890048,
-          "md5": "95c1b926d28412c26e685932fbcd65eb"
-        }
-      },
-      "hideInList": true
     }
   ],
   "sdkBackup": {
