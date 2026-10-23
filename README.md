@@ -28,6 +28,8 @@ ESP 系官方固件发行规格在 `tools/update-flash.py` 的 `ESP_FIRMWARES`�
 │   ├── index.html
 │   ├── css/              style.css（原工具样式）+ theme-home.css（线上主题层，构建生成）
 │   ├── js/               刷写协议与界面（terser 压缩版；pickup.js 仅在启用付费下载门槛时附加）
+│   │   ├── v<hash>/      当前版本模块树（内容哈希；自包含 vendor 与 mock helper）
+│   │   └── *.js          扁平兼容入口（供缓存中的旧 HTML 使用，随构建更新）
 │   ├── manifests/        bw16.json / esp32c3.json（固件清单，相对路径 + 净化后）
 │   ├── firmware/         固件 bin（白名单固件 + _common 引导程序 + _sdk_backup 救砖镜像）
 │   ├── test/helpers/     mock-device.js（?mock=1 演练模式依赖）
@@ -100,6 +102,7 @@ git add -A && git commit -m "..." && git push   # push 后 1-2 分钟 Pages 生�
 | `FIRMWARE_NAME_MAP` | 线上显示名映射（本地保留原名） |
 | `DEFAULT_CONNECT_NOTE` / `FIRMWARE_CONNECT_NOTES_OVERRIDE` | 选中固件后的连接提示（热点名/密码），默认统一文案、可按 slug 覆盖 |
 | `FORBIDDEN` | 自检黑名单：敏感串零命中才算构建成功 |
+| `KEEP_JS_VERSIONS` | 保留的 JS 版本目录代数（默认 2，覆盖 HTML 的 10 分钟缓存窗口） |
 
 ## 设备 OTA（/fw/）
 
@@ -190,6 +193,9 @@ python3 -m http.server 8765
 
 - 推送到 main 后 GitHub Pages 自动构建，1-2 分钟生效；页面缓存约 10 分钟，
   改完看不到就 `Cmd+Shift+R` 强刷
+- JS 由构建打成内容哈希目录 `js/v<hash>/`，HTML 直接引用该目录：HTML 或任一模块
+  变化都会换掉整棵模块树的 URL，避免「新 HTML + 缓存里的旧 JS」初始化失败；
+  旧版本目录保留两代，供缓存中的旧 HTML 继续加载
 - `.nojekyll` 必须保留：Jekyll 会忽略下划线开头的目录，导致 `_common/`（刷写引导程序）
   与 `_sdk_backup/`（救砖镜像）404
 - 仓库已配置 GitHub 走本机 SOCKS5 代理（`http.https://github.com/.proxy`）。

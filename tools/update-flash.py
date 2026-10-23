@@ -20,7 +20,9 @@
   python3 tools/update-flash.py [本地项目web目录]
 默认源目录：~/Downloads/归档/BW16-ESP32-tool/web
 """
+import hashlib
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -34,6 +36,12 @@ LEGACY_DIR = SITE / "flash"     # 旧落位：只保留跳转薄壳
 # 组装时允许整体替换的"应用自有路径"。绝不含 SITE 本身——防误删整站
 APP_OWNED = ["index.html", "css", "js", "manifests", "firmware", "test"]
 DEFAULT_SRC = Path.home() / "Downloads/归档/BW16-ESP32-tool/web"
+# JS 资产内容哈希版本化：GitHub Pages 的 HTML 与 module 各自缓存 10 分钟，
+# 一次发布若同时删 DOM 元素和监听，旧 JS + 新 HTML 会初始化失败。HTML 改指
+# js/v<hash>/main.js 后，任何一次内容变化都会换一整棵模块树的 URL。
+# 旧版本保留两代，避免缓存中的旧 HTML 指向已被删除的版本目录而 404。
+JS_VERSION_RE = re.compile(r"^v[0-9a-f]{12}$")
+KEEP_JS_VERSIONS = 2
 
 # ---------------------------------------------------------------------------
 # 补丁表：{相对路径: [(旧, 新, 预期次数), ...]}。旧串必须与源码逐字节一致。
@@ -645,6 +653,60 @@ def sanitize_manifest(path: Path) -> None:
     path.write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def version_js_assets(dist: Path) -> str:
+    """把 dist/js 打成内容哈希目录，并让 index.html 指向它。
+
+    哈希覆盖全部 JS（含 vendor 与 mock helper）和 index.html：HTML 或任一模块变化
+    都会产生新目录名，从而让浏览器与 CDN 拿到整套一致的资产。模块内的
+    ../test/helpers 改为目录内相对路径，整个版本目录自包含。
+    """
+    js_dir = dist / "js"
+    app_js = sorted(js_dir.glob("*.js"))
+    if not app_js:
+        sys.exit("✗ 版本化失败：构建产物里没有 js/*.js")
+    h = hashlib.sha256()
+    inputs = app_js + sorted((js_dir / "vendor").rglob("*.js")) \
+        + sorted((dist / "test" / "helpers").rglob("*.js"))
+    for p in inputs:
+        h.update(p.relative_to(dist).as_posix().encode())
+        h.update(p.read_bytes())
+    h.update((dist / "index.html").read_bytes())
+    h.update(Path(__file__).read_bytes())   # 构建逻辑变化也必须换版本目录
+    stamp = "v" + h.hexdigest()[:12]
+
+    out = js_dir / stamp
+    if out.exists():
+        shutil.rmtree(out)
+    out.mkdir()
+    for p in app_js:
+        text = (p.read_text(encoding="utf-8")
+                .replace('"../test/helpers/', '"./test/helpers/')
+                .replace("'../test/helpers/", "'./test/helpers/"))
+        (out / p.name).write_text(text, encoding="utf-8")
+    shutil.copytree(js_dir / "vendor", out / "vendor")
+    shutil.copytree(dist / "test" / "helpers", out / "test" / "helpers")
+
+    html_path = dist / "index.html"
+    html = html_path.read_text(encoding="utf-8")
+    needle = '<script type="module" src="js/main.js"></script>'
+    if html.count(needle) != 1:
+        sys.exit(f"✗ 版本化失败：index.html 应恰有一处 {needle}")
+    html_path.write_text(
+        html.replace(needle, f'<script type="module" src="js/{stamp}/main.js"></script>'),
+        encoding="utf-8",
+    )
+
+    for p in out.glob("*.js"):
+        text = p.read_text(encoding="utf-8")
+        if "../test/helpers/" in text:
+            sys.exit(f"✗ 版本化失败：{p.name} 仍引用版本目录外的 test/helpers")
+        for ref in re.findall(r'''(?:from|import)\s*\(?\s*["'](\.[^"']+)["']''', text):
+            if not (p.parent / ref).is_file():
+                sys.exit(f"✗ 版本化失败：{p.name} 引用了不存在的 {ref}")
+    print(f"  ✓ JS 版本化目录：js/{stamp}/（模块树自包含）")
+    return stamp
+
+
 def main() -> None:
     src = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else DEFAULT_SRC
     if not src.is_dir():
@@ -706,18 +768,32 @@ def main() -> None:
             print("  ✓ ESP 系直刷模块已附加（esp-flash.js）")
         for m in dist.glob("manifests/*.json"):
             sanitize_manifest(m)
-        print("② 压缩 + 清单净化完成")
+        version_js_assets(dist)
+        print("② 压缩 + 清单净化 + JS 版本化完成")
 
         # 组装到站点根（应用上根）：只替换"应用自有路径"，绝不对站点根做 rmtree
         for rel in APP_OWNED:
             target = (SITE / rel).resolve()
             if target == SITE.resolve():
                 sys.exit(f"✗ APP_OWNED 解析到站点根本身，拒绝替换：{rel}")
+            if rel == "js" and target.is_dir():
+                # 只清当前代与旧版扁平文件，保留历史版本目录供缓存中的旧 HTML 使用
+                for child in target.iterdir():
+                    if child.is_dir() and JS_VERSION_RE.fullmatch(child.name):
+                        continue
+                    shutil.rmtree(child) if child.is_dir() else child.unlink()
+                continue
             if target.is_dir():
                 shutil.rmtree(target)
             elif target.is_file():
                 target.unlink()
         shutil.copytree(dist, SITE, dirs_exist_ok=True)
+        versions = sorted(
+            (p for p in (SITE / "js").iterdir() if p.is_dir() and JS_VERSION_RE.fullmatch(p.name)),
+            key=lambda p: p.stat().st_mtime, reverse=True)
+        for old in versions[KEEP_JS_VERSIONS:]:
+            shutil.rmtree(old)
+            print(f"  · 清理过期 JS 版本目录：js/{old.name}/")
         # 旧落位 /flash/ 只留跳转薄壳（书签与短链继续可达），docs/ 永不发布
         for stale in ("css", "js", "manifests", "firmware", "test", "index.html"):
             p = LEGACY_DIR / stale
@@ -731,7 +807,12 @@ def main() -> None:
 
     # 自检：上线文件不得包含开发向字符串
     bad = []
-    scanned = list(OUT.glob("js/*.js")) + [OUT / "index.html", LEGACY_DIR / "index.html"] + list(OUT.glob("manifests/*.json"))
+    # 只扫应用模块（扁平代 + 各版本目录顶层）；vendor/ 与 test/helpers 沿用原有豁免
+    scanned = list(OUT.glob("js/*.js"))
+    for vd in (OUT / "js").iterdir():
+        if vd.is_dir() and JS_VERSION_RE.fullmatch(vd.name):
+            scanned += list(vd.glob("*.js"))
+    scanned += [OUT / "index.html", LEGACY_DIR / "index.html"] + list(OUT.glob("manifests/*.json"))
     for f in scanned:
         text = f.read_text(encoding="utf-8", errors="ignore")
         for s in FORBIDDEN:
@@ -745,6 +826,18 @@ def main() -> None:
                       ('id="contact"', "联系锚点")]:
         if need not in home:
             sys.exit(f"✗ 自检失败：根 index.html 缺少{why}（{need}）——主页重构第②步未落地")
+    # 自检：入口必须指向一个存在的版本目录，且目录内含完整模块树
+    vm = re.search(r'<script type="module" src="js/(v[0-9a-f]{12})/main\.js"></script>', home)
+    if not vm:
+        sys.exit("✗ 自检失败：index.html 未指向 js/v<hash>/main.js（JS 版本化未生效）")
+    current_js = OUT / "js" / vm.group(1)
+    for need in ("main.js", "rescue.js", "vendor/esptool-js.esm.js", "test/helpers/mock-device.js"):
+        if not (current_js / need).is_file():
+            sys.exit(f"✗ 自检失败：当前 JS 版本目录缺少 {need}")
+    live_versions = [p for p in (OUT / "js").iterdir()
+                     if p.is_dir() and JS_VERSION_RE.fullmatch(p.name)]
+    if len(live_versions) > KEEP_JS_VERSIONS:
+        sys.exit(f"✗ 自检失败：JS 版本目录未按上限清理（{len(live_versions)} > {KEEP_JS_VERSIONS}）")
     shell = (LEGACY_DIR / "index.html").read_text(encoding="utf-8")
     if 'rel="canonical" href="https://peipeidev.cn/"' not in shell or "http-equiv=\"refresh\"" not in shell:
         sys.exit("✗ 自检失败：flash/index.html 薄壳缺少 canonical 或 meta refresh")
