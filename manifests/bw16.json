@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-21 02:03:18",
+  "generatedAt": "2026-10-26 03:16:08",
   "device": "bw16",
   "flashloader": {
     "path": "firmware/_common/imgtool_flashloader_amebad.bin",
@@ -126,11 +126,11 @@
         "km0_km4_image2.bin": {
           "path": "firmware/bw16-20/km0_km4_image2.bin",
           "size": 933888,
-          "md5": "bc03a1172e3f7c0f8678126b2b1802cc",
-          "sha256": "13c465efbe280694dec6d7c410ae1a0dba75853cea99482fb1ded66878ef1106"
+          "md5": "680ffc7200abb71cf6956051bd48d28d",
+          "sha256": "55e0f5589655ed2f105b12454c01f6cae36c449d2b3aa06d60d9d7f6a7aab2cb"
         }
       },
-      "date": "2026-10-21",
+      "date": "2026-10-26",
       "connectNote": "刷写后热点：CMCC（密码 12345678.，末尾为英文句点）· 默认信道 6 · 管理后台 http://192.168.1.1 · 需激活后才能使用：刷写完成 → 打开固件界面复制设备码 → 通过 peipeidev.cn 首页联系方式发给开发者 → 获取激活码完成激活（一机一码）· 仅供学习研究，请勿用于非法用途"
     }
   ],
