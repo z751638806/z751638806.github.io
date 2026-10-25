@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26 03:16:08",
+  "generatedAt": "2026-10-26 03:21:44",
   "device": "bw16",
   "flashloader": {
     "path": "firmware/_common/imgtool_flashloader_amebad.bin",
@@ -104,7 +104,7 @@
     },
     {
       "slug": "bw16-20",
-      "name": "WiFi安全测试固件-远程版「20261021」",
+      "name": "WiFi安全测试固件-远程版「20261026」",
       "color": "G",
       "colorLabel": "绿",
       "colorCss": "#22c55e",
