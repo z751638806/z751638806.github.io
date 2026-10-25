@@ -214,6 +214,15 @@ async function main() {
     // 介绍文案必须原样回到前端（api 模式下 main.js 只认 fw.connectNote，掉了就不显示提示）
     ok(entry?.connectNote === "刷写后热点：CMCC（密码 12345678.，末尾为英文句点）· 管理后台 http://192.168.1.1", "/api/catalog 下发 connectNote 全文");
     ok(entry?.attribution === "", "/api/catalog 未署名时 attribution 为空串而非 undefined");
+    // date 字段：sync-catalog 随清单写入 → 下发；不传时保留旧值（控制台改其他字段不清日期）
+    await worker.fetch(req("/api/admin/catalog", { method: "POST", token: T, body: { slug: "bw16-01", date: "2026-09-19" } }), env);
+    const catD1 = await j(await worker.fetch(req("/api/catalog"), env));
+    ok(catD1.firmware.find((f) => f.slug === "bw16-01")?.date === "2026-09-19", "/api/catalog 下发 date（信息行「更新」数据源）");
+    await worker.fetch(req("/api/admin/catalog", { method: "POST", token: T, body: { slug: "bw16-01", name: "改名不清日期" } }), env);
+    const catD2 = await j(await worker.fetch(req("/api/catalog"), env));
+    ok(catD2.firmware.find((f) => f.slug === "bw16-01")?.date === "2026-09-19", "upsert 不带 date 时保留旧日期");
+    // 恢复显示名（上面改名会污染后续 flash/end → stats 断言按固件名查询）
+    await worker.fetch(req("/api/admin/catalog", { method: "POST", token: T, body: { slug: "bw16-01", name: "WiFi安全测试固件「2026」" } }), env);
 
     ok((await j(await worker.fetch(req("/api/admin/paid", { method: "POST", token: T, body: { slug: "bw16-01", name: "WiFi安全测试固件「2026」", device: "bw16" } }), env))).ok, "把 bw16-01 登记为付费固件（闸门生效前提）");
     const anon401 = await worker.fetch(req("/api/flash/begin", { method: "POST", body: { slug: "bw16-01", fingerprint: "fpA" } }), env);

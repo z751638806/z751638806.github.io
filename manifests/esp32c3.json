@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26 02:39:01",
+  "generatedAt": "2026-10-26 03:01:27",
   "device": "esp32c3",
   "firmware": [
     {
@@ -49,7 +49,8 @@
       ],
       "version": "local",
       "connectNote": "刷写后热点：CMCC（密码 12345678.，注意末尾有英文句点）· 浏览器打开 http://192.168.4.1 进入后台（克隆/中继/网速/打卡）",
-      "attribution": "基于 esp32-nat-router 开源项目 · Nomad 定制版 · 打包发行 无敌佩佩队长 · peipeidev.cn"
+      "attribution": "基于 esp32-nat-router 开源项目 · Nomad 定制版 · 打包发行 无敌佩佩队长 · peipeidev.cn",
+      "date": "2026-10-26"
     },
     {
       "slug": "esp32c3-1",
@@ -80,6 +81,7 @@
       ],
       "offsetNote": "使用该固件的标准写入布局",
       "version": "local-20260729",
+      "date": "2026-09-28",
       "connectNote": "刷写后热点：ManagementAP（密码 mgmtadmin）· 管理后台 http://192.168.4.1",
       "attribution": "原项目 © risinek（MIT）· 打包发行 无敌佩佩队长 · peipeidev.cn"
     },
@@ -112,6 +114,7 @@
       ],
       "offsetNote": "使用标准布局写入（如刷写失败请通过首页联系方式反馈）",
       "version": "local-20260918",
+      "date": "2026-09-28",
       "connectNote": "设备端操作（配套 Flipper 蓝牙工具使用）",
       "attribution": "来源：佩佩队长固件库 · 打包发行 无敌佩佩队长 · peipeidev.cn"
     }

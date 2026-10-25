@@ -161,7 +161,7 @@ PATCHES = {
         ("'已关闭高速档（全程 115200，约慢 3 倍）'",
          "'已使用标准速度（约慢 3 倍）'", 1),
         ("  $('flash-target-meta').textContent =\n    `${fw.device === 'bw16' ? 'BW16' : 'ESP32-C3'} · ${fmtBytes(sizes)} · 来源 ${fw.sourcePath}`;",
-         "  $('flash-target-meta').textContent =\n    `${({ bw16: 'BW16', esp32c3: 'ESP32-C3', esp8266: 'ESP8266', esp32: 'ESP32', esp32s3: 'ESP32-S3' })[fw.device] ?? fw.device} · ${fmtBytes(sizes)} · 来源 ${fw.sourcePath}`;\n  if (fw.attribution) $('flash-target-meta').textContent += ' · ' + fw.attribution;", 1),
+         "  $('flash-target-meta').textContent =\n    `${({ bw16: 'BW16', esp32c3: 'ESP32-C3', esp8266: 'ESP8266', esp32: 'ESP32', esp32s3: 'ESP32-S3' })[fw.device] ?? fw.device} · ${fmtBytes(sizes)} · 来源 ${fw.sourcePath}`;\n  if (fw.attribution) $('flash-target-meta').textContent += ' · ' + fw.attribution;\n  if (fw.date) $('flash-target-meta').textContent += ' · 更新 ' + fw.date;", 1),
         (" · 来源 ${fw.sourcePath}", "", 1),
         ("flasherLog.append(`固件加载完成：flashloader ${fmtBytes(fl.length)} + 三镜像 ${fmtBytes(km0.length + km4.length + image2.length)}`, 'ok');",
          "flasherLog.append('固件文件校验完成，可以开始写入', 'ok');", 1),
@@ -223,6 +223,31 @@ MANIFEST_FIELD_PATCH = {
         "偏移推断自 firmware_config.json 同为 esp32c3 的 flash_cmd 布局 (0x0/0x8000/0x10000) —— 待实机验证":
             "使用标准布局写入（如刷写失败请通过首页联系方式反馈）",
     },
+}
+
+# 固件更新日期（烧录页信息行展示「更新 YYYY-MM-DD」）：
+# 语义 = 该固件 bin 内容最后一次变化（git 历史考证；换 bin 时同步更新此表）。
+# 考证基准 commit —— bw16-01: 82521e8 / bw16-18: 9655827 / bw16-19: d01a23d /
+# bw16-20: 7cb3a13 / esp32c3-1,2 与全部 ESP 系: e72fb6b / esp32c3-nat: 65cd4c4
+FIRMWARE_DATES = {
+    "bw16-01": "2026-09-19",
+    "bw16-18": "2026-09-28",
+    "bw16-19": "2026-10-01",
+    "bw16-20": "2026-10-21",
+    "esp32c3-1": "2026-09-28",
+    "esp32c3-2": "2026-09-28",
+    "esp32c3-nat": "2026-10-26",
+    "esp8266-deauther": "2026-09-28",
+    "esp8266-tasmota": "2026-09-28",
+    "esp8266-micropython": "2026-09-28",
+    "esp8266-wled": "2026-09-28",
+    "esp8266-captive-portal": "2026-09-28",
+    "esp32-bruce-cyd": "2026-09-28",
+    "esp32-micropython": "2026-09-28",
+    "esp32-div-cyd": "2026-09-28",
+    "esp32-ghost-cyd": "2026-09-28",
+    "esp32s3-bruce-devkit": "2026-09-28",
+    "esp32s3-ghost-cardputeradv": "2026-09-28",
 }
 
 # 线上固件白名单：只发布这些 slug（清单 + bin 文件都以此为准；本地项目不受影响）。
@@ -612,6 +637,8 @@ def sanitize_manifest(path: Path) -> None:
     def walk(obj):
         if isinstance(obj, dict):
             obj.pop("protocolRef", None)   # 指向协议文档的字段，不随站点发布
+            if obj.get("slug") in FIRMWARE_DATES:   # 更新日期注入（迭代前设置，避免遍历中改键）
+                obj["date"] = FIRMWARE_DATES[obj["slug"]]
             for k, v in obj.items():
                 if k in ("path", "manifest") and isinstance(v, str) and v.startswith("/firmware/"):
                     obj[k] = v[1:]         # 绝对路径 → 相对路径（/flash/ 子目录部署）

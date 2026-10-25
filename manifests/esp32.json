@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26 02:39:01",
+  "generatedAt": "2026-10-26 03:01:27",
   "device": "esp32",
   "firmware": [
     {
@@ -17,7 +17,8 @@
         }
       ],
       "connectNote": "设备端触摸屏操作 · 含 WiFi 测试/门户/文件管理等功能",
-      "attribution": "原项目 © Bruce 项目贡献者（AGPL-3.0）· 打包发行 无敌佩佩队长 · peipeidev.cn"
+      "attribution": "原项目 © Bruce 项目贡献者（AGPL-3.0）· 打包发行 无敌佩佩队长 · peipeidev.cn",
+      "date": "2026-09-28"
     },
     {
       "slug": "esp32-micropython",
@@ -34,7 +35,8 @@
         }
       ],
       "connectNote": "刷写后热点：MicroPython-xxxxxx（密码 micropythn）· WebREPL 地址 ws://192.168.4.1:8266",
-      "attribution": "原项目 © MicroPython 贡献者（MIT）· 打包发行 无敌佩佩队长 · peipeidev.cn"
+      "attribution": "原项目 © MicroPython 贡献者（MIT）· 打包发行 无敌佩佩队长 · peipeidev.cn",
+      "date": "2026-09-28"
     },
     {
       "slug": "esp32-div-cyd",
@@ -51,7 +53,8 @@
         }
       ],
       "connectNote": "设备端触摸屏操作 · WiFi断网/泛洪/包监视/断网检测 + BLE/SubGHz/RFID/IR · CYD 触摸屏",
-      "attribution": "原项目 © cifertech（MIT）· 打包发行 无敌佩佩队长 · peipeidev.cn"
+      "attribution": "原项目 © cifertech（MIT）· 打包发行 无敌佩佩队长 · peipeidev.cn",
+      "date": "2026-09-28"
     },
     {
       "slug": "esp32-ghost-cyd",
@@ -68,7 +71,8 @@
         }
       ],
       "connectNote": "设备端触摸屏操作 · WiFi/BLE 攻防与探针 · 可配 Flipper/Ghost App 联动",
-      "attribution": "原项目 © GhostESP-Revival 贡献者（GPL-3.0）· 打包发行 无敌佩佩队长 · peipeidev.cn"
+      "attribution": "原项目 © GhostESP-Revival 贡献者（GPL-3.0）· 打包发行 无敌佩佩队长 · peipeidev.cn",
+      "date": "2026-09-28"
     }
   ]
 }
