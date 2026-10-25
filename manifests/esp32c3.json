@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-24 00:42:45",
+  "generatedAt": "2026-10-26 02:39:01",
   "device": "esp32c3",
   "firmware": [
     {
@@ -24,8 +24,8 @@
         {
           "path": "firmware/esp32c3-nat/esp32_nat_router.bin",
           "offset": 65536,
-          "size": 1343600,
-          "sha256": "18528c91178206d173696b3cc55638b74bb650c59625bc10b6d2f32df9164f51"
+          "size": 1346576,
+          "sha256": "d2f6f55da89c048d210c001db5675933563f5f9abe9630da9c90235f04f8d00e"
         }
       ],
       "type": "esptool",
@@ -44,7 +44,7 @@
         {
           "path": "esp32_nat_router.bin",
           "offset": 65536,
-          "size": 1343600
+          "size": 1346576
         }
       ],
       "version": "local",
