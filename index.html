@@ -329,29 +329,26 @@
       <h2>救砖恢复</h2>
       <div class="flash-panel">
         <p class="small dim">
-          适用于设备"变砖"或需要恢复已知固件的场景：选择三个镜像文件（或点"用 SDK 默认镜像"自动填充），再点"连接并恢复"，工具会自动完成清理与写入。引导程序已内置，无需额外提供。
+          设备"变砖"或想回到出厂状态：直接点下方"连接并恢复"即可——工具会自动写入内置出厂镜像（引导 + 应用）并完成清理，无需选择或上传任何文件。默认勾选全片擦除（覆盖板上全部数据）；如有自己的备份镜像，可在下方按槽位选择性替换。
         </p>
         <div class="rescue-slot">
           <span class="rescue-label">km0_boot_all.bin</span>
           <input type="file" id="rescue-km0" accept=".bin">
-          <button class="btn btn-small" type="button" data-fill="km0_boot_all.bin">用 SDK 默认镜像</button>
           <span class="small dim" data-state="km0_boot_all.bin"></span>
         </div>
         <div class="rescue-slot">
           <span class="rescue-label">km4_boot_all.bin</span>
           <input type="file" id="rescue-km4" accept=".bin">
-          <button class="btn btn-small" type="button" data-fill="km4_boot_all.bin">用 SDK 默认镜像</button>
           <span class="small dim" data-state="km4_boot_all.bin"></span>
         </div>
         <div class="rescue-slot">
           <span class="rescue-label">km0_km4_image2.bin（应用）</span>
           <input type="file" id="rescue-image2" accept=".bin">
-          <button class="btn btn-small" type="button" data-fill="km0_km4_image2.bin">用出厂镜像</button>
           <span class="small dim" data-state="km0_km4_image2.bin"></span>
         </div>
         <label class="advanced-row">
           <input type="checkbox" id="rescue-extended-erase" checked>
-          全片擦除（变砖恢复建议勾选，较慢）
+          全片擦除（覆盖板上全部数据后写入出厂镜像，较慢；恢复变砖建议保持勾选）
         </label>
         <div class="flash-actions">
           <button id="btn-rescue-flash" class="btn btn-primary" type="button">连接并恢复</button>
@@ -383,6 +380,6 @@
     <p class="dim small" id="contact">联系站长：<a href="mailto:0XT@tutamail.com">0XT@tutamail.com</a> · <a href="https://github.com/z751638806" rel="me noopener">GitHub</a> · 固件与激活码购买渠道：闲鱼「无敌佩佩队长」 · 本页开源实现见 <a href="https://github.com/z751638806/z751638806.github.io">仓库</a>。</p>
   </footer>
 
-  <script type="module" src="js/ve49433a19efc/main.js"></script>
+  <script type="module" src="js/v16485f7bde5b/main.js"></script>
 </body>
 </html>
