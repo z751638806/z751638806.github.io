@@ -46,7 +46,8 @@ async function readFile(input) {
 }
 
 function view(name) {
-  // 与主视图切换同款语义：三个视图互斥
+  // 与主视图切换同款语义：三个视图互斥；任一刷写进行中不允许切走（丢失进度显示）
+  if (window.__flashBusy) return;
   $("view-flash").hidden = name !== "flash";
   $("view-rescue").hidden = name !== "rescue";
   $("view-custom").hidden = name !== "custom";
@@ -71,7 +72,7 @@ function setDevice(d) {
 /* ---------------- BW16：复用生产引擎 ---------------- */
 
 async function flashCustomBw16() {
-  if (busy) return;
+  if (busy || window.__flashBusy) return;
   const missing = IMAGES.filter((x) => !x.bytes).map((x) => x.file);
   if (missing.length) {
     const r = $("custom-result");
@@ -82,6 +83,7 @@ async function flashCustomBw16() {
   }
 
   busy = true;
+  window.__flashBusy = true;
   setCustomBusy(true);
   const params = new URLSearchParams(location.search);
   const mock = params.has("mock");
@@ -179,6 +181,7 @@ async function flashCustomBw16() {
     $("custom-progress-bar").className = "progress-bar";
     $("custom-progress-bar").style.width = "0%";
     busy = false;
+    window.__flashBusy = false;
     setCustomBusy(false);
     FlashLog.recordResult({
       device: "BW16",
@@ -244,7 +247,7 @@ function parseOffset(s) {
 }
 
 async function flashCustomEsp() {
-  if (busy) return;
+  if (busy || window.__flashBusy) return;
   if (!espFiles.length || espFiles.some((f) => parseOffset(f.offset) === null)) {
     const r = $("custom-esp-result");
     r.hidden = false;
@@ -253,6 +256,7 @@ async function flashCustomEsp() {
     return;
   }
   busy = true;
+  window.__flashBusy = true;
   const t0 = Date.now();
   let ok = false;
   $("btn-custom-esp-flash").disabled = true;
@@ -300,9 +304,36 @@ async function flashCustomEsp() {
       },
     });
     log.append("写入完成，正在校验复位…", "sys");
-    await loader.after("hard_reset");
-    await transport.disconnect();
+    // USB-Serial-JTAG 复位后原生 USB 重新枚举，复位/断开的 await 可能永远等不到端口回包
+    // → 页面卡死在收尾（固件其实已写入成功）。加超时兜底，与官方固件流程一致。
+    const withTimeout = (p, ms) => Promise.race([p, new Promise((r) => setTimeout(r, ms))]);
+    await withTimeout(loader.after("hard_reset"), 3000);
+    try { await withTimeout(transport.disconnect(), 2000); } catch { /* ignore */ }
     transport = null;
+
+    // 原生 USB 的复位只能触发核心复位、退不出下载模式（esptool 官方文档 troubleshooting）
+    // → 芯片可能停在下载模式跑不了新固件。检测：重开已授权端口（getPorts 无需再次手势授权）
+    // 做同步——同步成功 = 停在下载模式，用 flashBegin(0,0) + flashFinish(reboot) 的协议级
+    // 方式启动新固件；同步失败 = 应用已正常运行，无需处理。
+    try {
+      await new Promise((r) => setTimeout(r, 1200));
+      const ports = await navigator.serial.getPorts();
+      const again = ports.find((p) => p === port) || ports[0];
+      if (again) {
+        await again.open({ baudRate: 115200 });
+        const { ESPLoader: Loader2, Transport: Transport2 } = await import("./vendor/esptool-js.esm.js");
+        const t2 = new Transport2(again, false);
+        const l2 = new Loader2({
+          transport: t2, port: again, baudrate: 115200,
+          terminal: { clean: () => {}, writeLine: (s) => log.append(String(s).trim(), "sys"), write: () => {} },
+        });
+        await l2.main();
+        log.append("检测到设备停在下载模式，发送运行指令启动新固件…", "warn");
+        await l2.flashBegin(0, 0);
+        await l2.flashFinish(true);
+        await again.close();
+      }
+    } catch { /* 同步失败 = 应用已正常运行 */ }
 
     $("custom-esp-progress-bar").classList.add("done");
     ok = true;
@@ -335,6 +366,7 @@ async function flashCustomEsp() {
     $("custom-esp-progress-bar").style.width = "0%";
     $("btn-custom-esp-flash").disabled = false;
     busy = false;
+    window.__flashBusy = false;
     FlashLog.recordResult({
       device: "ESP32-C3",
       firmware: "自定义固件",
@@ -376,7 +408,7 @@ function renderEsp8266Rows() {
 }
 
 async function flashCustomEsp8266() {
-  if (busy) return;
+  if (busy || window.__flashBusy) return;
   if (!esp8266Files.length || esp8266Files.some((f) => parseOffset(f.offset) === null)) {
     const r = $("custom-esp8266-result");
     r.hidden = false;
@@ -385,6 +417,7 @@ async function flashCustomEsp8266() {
     return;
   }
   busy = true;
+  window.__flashBusy = true;
   const t0 = Date.now();
   let ok = false;
   $("btn-custom-esp8266-flash").disabled = true;
@@ -429,9 +462,30 @@ async function flashCustomEsp8266() {
       },
     });
     log.append("写入完成，正在复位…", "sys");
-    await loader.after("hard_reset");
-    await transport.disconnect();
+    // 复位收尾超时兜底 + 停在下载模式的自动救出，与 ESP32-C3 流程/官方固件流程一致
+    const withTimeout = (p, ms) => Promise.race([p, new Promise((r) => setTimeout(r, ms))]);
+    await withTimeout(loader.after("hard_reset"), 3000);
+    try { await withTimeout(transport.disconnect(), 2000); } catch { /* ignore */ }
     transport = null;
+    try {
+      await new Promise((r) => setTimeout(r, 1200));
+      const ports = await navigator.serial.getPorts();
+      const again = ports.find((p) => p === port) || ports[0];
+      if (again) {
+        await again.open({ baudRate: 115200 });
+        const { ESPLoader: Loader2, Transport: Transport2 } = await import("./vendor/esptool-js.esm.js");
+        const t2 = new Transport2(again, false);
+        const l2 = new Loader2({
+          transport: t2, port: again, baudrate: 115200,
+          terminal: { clean: () => {}, writeLine: (s) => log.append(String(s).trim(), "sys"), write: () => {} },
+        });
+        await l2.main();
+        log.append("检测到设备停在下载模式，发送运行指令启动新固件…", "warn");
+        await l2.flashBegin(0, 0);
+        await l2.flashFinish(true);
+        await again.close();
+      }
+    } catch { /* 同步失败 = 应用已正常运行 */ }
     $("custom-esp8266-progress-bar").classList.add("done");
     ok = true;
     const sec = ((Date.now() - t0) / 1e3).toFixed(1);
@@ -461,6 +515,7 @@ async function flashCustomEsp8266() {
     $("custom-esp8266-progress-bar").style.width = "0%";
     $("btn-custom-esp8266-flash").disabled = false;
     busy = false;
+    window.__flashBusy = false;
     FlashLog.recordResult({
       device: "ESP8266",
       firmware: "自定义固件",
@@ -479,9 +534,9 @@ export async function initCustom(m, l, z) {
   switchView = z;
 
   $("nav-custom").addEventListener("click", () => view("custom"));
-  // 主导航不知道本视图，切走时帮它隐藏
-  $("nav-flash").addEventListener("click", () => ($("view-custom").hidden = true));
-  $("nav-rescue").addEventListener("click", () => ($("view-custom").hidden = true));
+  // 主导航不知道本视图，切走时帮它隐藏（刷写进行中不动视图，避免进度界面消失）
+  $("nav-flash").addEventListener("click", () => { if (!window.__flashBusy) $("view-custom").hidden = true; });
+  $("nav-rescue").addEventListener("click", () => { if (!window.__flashBusy) $("view-custom").hidden = true; });
 
   document.querySelectorAll("[data-cdev]").forEach((b) => {
     b.addEventListener("click", () => setDevice(b.dataset.cdev));

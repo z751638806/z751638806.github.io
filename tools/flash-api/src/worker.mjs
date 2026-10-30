@@ -154,8 +154,28 @@ async function verifyTurnstile(env, token, ip) {
   } catch { return false; }
 }
 
+/* ---------- 进程内限流（免费档不动 D1/KV 计数预算；按 isolate 尽力而为） ----------
+   每键滑动窗口计数；过期键随清扫删除，Map 超限时整体清空防膨胀。
+   isolate 重启计数归零——这是给匿名写接口（event/feedback）加的减速带，不是硬上限。 */
+const rateHits = new Map();
+let rateSweptAt = 0;
+function rateLimit(key, limit, windowMs = 60000) {
+  const now = Date.now();
+  if (now - rateSweptAt > windowMs) {
+    rateSweptAt = now;
+    for (const [k, e] of rateHits) if (now - e.t0 > windowMs) rateHits.delete(k);
+    if (rateHits.size > 5000) rateHits.clear();
+  }
+  const e = rateHits.get(key);
+  if (!e || now - e.t0 > windowMs) { rateHits.set(key, { t0: now, n: 1 }); return true; }
+  e.n += 1;
+  return e.n <= limit;
+}
+
 /* ---------- 公开：刷写统计上报 ---------- */
 async function reportEvent(request, env, cors) {
+  if (!rateLimit("ev:" + (clientIp(request) || "?"), 120))
+    return json({ detail: "上报过于频繁，请稍后再试" }, 429, cors);
   const b = await body(request);
   const device = clean(b.device, 40), firmware = clean(b.firmware, 120);
   if (!device || !firmware) return json({ error: "bad_request" }, 400, cors);
@@ -167,6 +187,8 @@ async function reportEvent(request, env, cors) {
 
 /* ---------- 公开：用户反馈（v2 契约 {type,body,sessionPublicId,extra}；旧 {message,contact,log} 兼容） ---------- */
 async function postFeedback(request, env, cors) {
+  if (!rateLimit("fb:" + (clientIp(request) || "?"), 30))
+    return json({ detail: "提交过于频繁，请稍后再试" }, 429, cors);
   const b = await body(request);
   if (env.TURNSTILE_SECRET && b.turnstileToken && !(await verifyTurnstile(env, b.turnstileToken, clientIp(request))))
     return json({ detail: "人机验证未通过，请刷新页面后重试" }, 400, cors);
