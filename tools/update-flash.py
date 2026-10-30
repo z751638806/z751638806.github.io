@@ -80,9 +80,12 @@ PATCHES = {
         ("高速档 921600（快约 3 倍；失败自动回退 115200；出处 PROTOCOL.md P19）",
          "高速模式（约快 3 倍；连不上会自动改用标准速度）", 1),
         ("适用于设备\"变砖\"或需要恢复已知固件的场景：把三段镜像按固定地址写入\n          （km0@0x08000000 / km4@0x08004000 / 应用@0x08006000，出处 PROTOCOL.md P13）。\n          flashloader 自动使用内置副本，无需提供。",
-         "设备\"变砖\"或想回到出厂状态：直接点下方\"连接并恢复\"即可——工具会自动写入内置出厂镜像（引导 + 应用）并完成清理，无需选择或上传任何文件。默认勾选全片擦除（覆盖板上全部数据）；如有自己的备份镜像，可在下方按槽位选择性替换。", 1),
+         "设备\"变砖\"或想回到出厂状态：直接点下方\"连接并恢复\"即可——工具会自动写入内置出厂镜像（引导 + 应用）并完成清理，无需选择或上传任何文件。默认勾选全片擦除（覆盖板上全部数据）。", 1),
         ("扩展擦除（变砖恢复建议勾选；出处 PROTOCOL.md P14 备注）",
          "全片擦除（覆盖板上全部数据后写入出厂镜像，较慢；恢复变砖建议保持勾选）", 1),
+        # 折叠区的 summary 下方补一行说明（上传槽位已收进 <details>，默认视图零文件按钮）
+        ('<details id="rescue-advanced">\n          <summary class="small dim">高级：替换为自己的备份镜像（可选）</summary>',
+         '<details id="rescue-advanced">\n          <summary class="small dim">高级：替换为自己的备份镜像（可选）</summary>\n          <p class="small dim">默认已使用下方列出的内置出厂镜像（加载后自动 SHA-256 核对）；上传你的文件即按槽位替换，不上传的槽位仍用内置镜像。</p>', 1),
         ("<span class=\"device-desc\">安信可 Ai-Thinker BW16（RTL8720DN）<br>Web Serial 直刷 · 17 个固件</span>",
          "<span class=\"device-desc\">安信可 Ai-Thinker BW16（RTL8720DN）<br>Web Serial 直刷 · 3 个固件</span>", 1),
         ("<span class=\"device-desc\">乐鑫 ESP32-C3 开发板<br>ESP Web Tools · 2 个固件</span>",

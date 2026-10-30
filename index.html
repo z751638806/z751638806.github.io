@@ -329,23 +329,8 @@
       <h2>救砖恢复</h2>
       <div class="flash-panel">
         <p class="small dim">
-          设备"变砖"或想回到出厂状态：直接点下方"连接并恢复"即可——工具会自动写入内置出厂镜像（引导 + 应用）并完成清理，无需选择或上传任何文件。默认勾选全片擦除（覆盖板上全部数据）；如有自己的备份镜像，可在下方按槽位选择性替换。
+          设备"变砖"或想回到出厂状态：直接点下方"连接并恢复"即可——工具会自动写入内置出厂镜像（引导 + 应用）并完成清理，无需选择或上传任何文件。默认勾选全片擦除（覆盖板上全部数据）。
         </p>
-        <div class="rescue-slot">
-          <span class="rescue-label">km0_boot_all.bin</span>
-          <input type="file" id="rescue-km0" accept=".bin">
-          <span class="small dim" data-state="km0_boot_all.bin"></span>
-        </div>
-        <div class="rescue-slot">
-          <span class="rescue-label">km4_boot_all.bin</span>
-          <input type="file" id="rescue-km4" accept=".bin">
-          <span class="small dim" data-state="km4_boot_all.bin"></span>
-        </div>
-        <div class="rescue-slot">
-          <span class="rescue-label">km0_km4_image2.bin（应用）</span>
-          <input type="file" id="rescue-image2" accept=".bin">
-          <span class="small dim" data-state="km0_km4_image2.bin"></span>
-        </div>
         <label class="advanced-row">
           <input type="checkbox" id="rescue-extended-erase" checked>
           全片擦除（覆盖板上全部数据后写入出厂镜像，较慢；恢复变砖建议保持勾选）
@@ -353,6 +338,26 @@
         <div class="flash-actions">
           <button id="btn-rescue-flash" class="btn btn-primary" type="button">连接并恢复</button>
         </div>
+        <!-- 可选替换：默认折叠，避免"无需上传"文案下方出现连续的选择文件按钮 -->
+        <details id="rescue-advanced">
+          <summary class="small dim">高级：替换为自己的备份镜像（可选）</summary>
+          <p class="small dim">默认已使用下方列出的内置出厂镜像（加载后自动 SHA-256 核对）；上传你的文件即按槽位替换，不上传的槽位仍用内置镜像。</p>
+          <div class="rescue-slot">
+            <span class="rescue-label">km0_boot_all.bin</span>
+            <input type="file" id="rescue-km0" accept=".bin">
+            <span class="small dim" data-state="km0_boot_all.bin"></span>
+          </div>
+          <div class="rescue-slot">
+            <span class="rescue-label">km4_boot_all.bin</span>
+            <input type="file" id="rescue-km4" accept=".bin">
+            <span class="small dim" data-state="km4_boot_all.bin"></span>
+          </div>
+          <div class="rescue-slot">
+            <span class="rescue-label">km0_km4_image2.bin（应用）</span>
+            <input type="file" id="rescue-image2" accept=".bin">
+            <span class="small dim" data-state="km0_km4_image2.bin"></span>
+          </div>
+        </details>
         <div id="rescue-progress-wrap" hidden>
           <div class="progress-track"><div id="rescue-progress-bar" class="progress-bar"></div></div>
           <div id="rescue-progress-text" class="small dim">0%</div>
@@ -380,6 +385,6 @@
     <p class="dim small" id="contact">联系站长：<a href="mailto:0XT@tutamail.com">0XT@tutamail.com</a> · <a href="https://github.com/z751638806" rel="me noopener">GitHub</a> · 固件与激活码购买渠道：闲鱼「无敌佩佩队长」 · 本页开源实现见 <a href="https://github.com/z751638806/z751638806.github.io">仓库</a>。</p>
   </footer>
 
-  <script type="module" src="js/v3d2475c155c5/main.js"></script>
+  <script type="module" src="js/vc0ce0510e420/main.js"></script>
 </body>
 </html>
