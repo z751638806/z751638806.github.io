@@ -173,6 +173,43 @@ a { color: var(--accent); }
   flex-direction: column;
   gap: 14px;
 }
+
+/* ---------- 使用说明页（M8） ---------- */
+.guide-hero {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  background: linear-gradient(135deg, rgba(56, 189, 248, .14), rgba(14, 165, 233, .04));
+  border: 1px solid var(--accent-dark);
+  border-radius: var(--radius); padding: 14px 16px;
+}
+.guide-hero b { font-size: 1rem; }
+.guide-hero p { margin: 4px 0 0; }
+.guide-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+.guide-step { background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+.guide-step i {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 50%; font-style: normal;
+  background: var(--accent); color: #06121d; font-weight: 700;
+}
+.guide-step b { display: block; margin: 8px 0 4px; }
+.guide-step p, .guide-note p, .guide-card p { margin: 0; font-size: 0.9rem; color: var(--text-dim); }
+.guide-note { background: var(--bg-panel); border: 1px dashed var(--border); border-radius: var(--radius); padding: 10px 14px; }
+.guide-note code { color: var(--accent); }
+.guide-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 760px) { .guide-cols { grid-template-columns: 1fr; } }
+.guide-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+.guide-card h3 { margin: 0 0 10px; font-size: 0.95rem; }
+.guide-card p { margin: 8px 0; }
+.guide-card b { color: var(--text); }
+.guide-card details { border-bottom: 1px solid var(--border); padding: 8px 0; }
+.guide-card details:last-child { border-bottom: 0; padding-bottom: 0; }
+.guide-card summary { cursor: pointer; font-size: 0.9rem; }
+.guide-card details p { margin: 8px 0 0; }
+.guide-contact {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 12px 14px; font-size: 0.9rem;
+}
+.guide-contact .dim { font-size: 0.85rem; }
 .flash-target { display: flex; align-items: center; gap: 10px; }
 
 .btn {

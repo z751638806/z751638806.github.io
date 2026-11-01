@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>在线烧录 · BW16 / ESP32 / ESP8266 网页直刷 — peipeidev.cn</title>
   <meta name="description" content="浏览器里直接给 BW16（RTL8720DN）、ESP32、ESP32-C3/S3、ESP8266 刷固件，无需装驱动。固件免费公开下载，付费固件一机一码激活。">
-  <link rel="stylesheet" href="css/vac819842e8c7/style.css">
-  <link rel="stylesheet" href="css/vac819842e8c7/theme-home.css">
+  <link rel="stylesheet" href="css/vcd5445321597/style.css">
+  <link rel="stylesheet" href="css/vcd5445321597/theme-home.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
   <script>
     // 早期错误捕获（诊断用；后续版本把错误接入日志面板）
@@ -401,30 +401,45 @@
       <section aria-label="使用说明">
         <h2>使用说明</h2>
         <div class="flash-panel">
-          <p class="small dim">全程无需安装任何软件或浏览器插件——串口能力内置于浏览器，三步上手。</p>
+          <div class="guide-hero">
+            <div>
+              <b>三步完成刷写，无需安装任何软件</b>
+              <p class="small dim">串口能力内置于浏览器 · 用 Chrome / Edge 打开本页即可</p>
+            </div>
+            <a class="btn btn-primary" href="?mock=1">🧪 无设备演示</a>
+          </div>
 
-          <h3>① 准备</h3>
-          <p>电脑安装 <b>Chrome 或 Edge</b> 浏览器（Safari / Firefox / 微信内置浏览器不支持）；一根<b>可靠的数据线</b>（很多"连不上"都是数据线的问题）；开发板通电。</p>
+          <div class="guide-steps">
+            <div class="guide-step"><i>1</i><b>准备</b><p>电脑装 Chrome 或 Edge；备一根可靠的数据线（"连不上"多半是它）；开发板通电。</p></div>
+            <div class="guide-step"><i>2</i><b>选设备与固件</b><p>「刷固件」页选设备类型与固件；面板里会显示刷写后的热点、密码与使用说明。</p></div>
+            <div class="guide-step"><i>3</i><b>连接并刷写</b><p>浏览器弹窗中选中串口；提示手动操作时按住 BURN → 短按 RST → 松开。完成自动复位。</p></div>
+          </div>
 
-          <h3>② 选择设备与固件</h3>
-          <p>在「刷固件」页选择设备类型（BW16 / ESP32-C3 / ESP8266 / ESP32 / ESP32-S3），再选固件。每个固件的面板里会显示刷写后的热点名、密码与使用说明；带「需激活」字样的固件按面板说明操作，其余刷完即用。</p>
+          <div class="guide-note"><p>💡 演示与真实刷写流程完全一致，只是不连真板——建议新用户先跑一遍熟悉交互；救砖演练在演示页地址后加 <code>&amp;rescuebins=bw16-01</code>。</p></div>
 
-          <h3>③ 连接并刷写</h3>
-          <p>点「连接并刷写」，在浏览器弹窗中选中开发板串口。BW16 会自动尝试进入下载模式；若提示手动操作：<b>按住 BURN 不放 → 短按一下 RST → 松开 BURN</b>，然后点重试。刷写完成设备自动复位运行新固件。</p>
-          <p><a class="btn btn-primary" href="?mock=1">🧪 无设备？先看完整演示（模拟刷写，不写硬件）</a></p>
-          <p class="small dim">演示与真实刷写流程完全一致，只是不连真板——新用户建议先跑一遍熟悉交互；救砖演练可在演示页加 <code>&amp;rescuebins=bw16-01</code> 体验。</p>
+          <div class="guide-cols">
+            <div class="guide-card">
+              <h3>🧩 各板块</h3>
+              <p><b>刷固件</b>——官方与经审核的用户分享固件。</p>
+              <p><b>救砖恢复</b>——变砖一键恢复出厂镜像，引导程序已内置。</p>
+              <p><b>自定义固件</b>——刷你自己的 bin，纯本地文件不上传任何服务器。</p>
+              <p><b>用户分享</b>——经站长审核后出现在各设备清单下方，署名致谢分享者。</p>
+            </div>
+            <div class="guide-card">
+              <h3>❓ 常见问题</h3>
+              <details><summary>提示"当前浏览器不支持 Web Serial"</summary><p>换 Chrome / Edge 打开本页。</p></details>
+              <details><summary>连不上 / 反复失败</summary><p>① 换一根数据线、直插电脑（不要经 USB hub）；② 关闭占用串口的其他程序（串口监视器 / 上位机）；③ 按提示手动 BURN + RST 后重试；④ 刷新页面再试。</p></details>
+              <details><summary>刷完设备没反应</summary><p>按一下板上 RST 键，或重新插拔 USB 供电。</p></details>
+              <details><summary>手机上打开本站？</summary><p>手机浏览器没有串口权限，把网址发到电脑上用 Chrome / Edge 打开。</p></details>
+              <details><summary>固件需要激活？</summary><p>带「需激活」字样的固件按面板说明操作（设备码 → 获取激活码 → 设备端激活）；其余刷完即用。</p></details>
+            </div>
+          </div>
 
-          <h3>各板块说明</h3>
-          <p><b>刷固件</b>——刷官方与经审核的用户分享固件；<b>救砖恢复</b>——设备变砖时一键恢复出厂镜像（引导程序已内置）；<b>自定义固件</b>——刷你自己的 bin（纯本地文件，不上传任何服务器）；用户分享的固件经站长审核后出现在各设备清单下方，并署名致谢分享者。</p>
-
-          <h3>常见问题</h3>
-          <p><b>提示"当前浏览器不支持 Web Serial"</b>——换 Chrome / Edge 打开本页。</p>
-          <p><b>连不上 / 反复失败</b>——① 换一根数据线、直插电脑（不要经 USB hub）；② 关闭占用串口的其他程序（串口监视器 / 上位机）；③ 按提示手动 BURN + RST 后重试；④ 刷新页面再试。</p>
-          <p><b>刷完设备没反应</b>——按一下板上的 RST 键，或重新插拔 USB 供电。</p>
-          <p><b>手机上打开本站？</b>手机浏览器没有串口权限，请把网址发到电脑上用 Chrome / Edge 打开。</p>
-
-          <h3>联系站长</h3>
-          <p>邮箱 <a href="mailto:0XT@tutamail.com">0XT@tutamail.com</a> · 固件与激活码购买渠道：闲鱼「无敌佩佩队长」· 页面问题用顶栏「反馈」提交（登录后可附刷写摘要）。</p>
+          <div class="guide-contact">
+            <span>✉️ 联系站长：<a href="mailto:0XT@tutamail.com">0XT@tutamail.com</a></span>
+            <span>· 固件与激活码购买渠道：闲鱼「无敌佩佩队长」</span>
+            <span class="dim">· 页面问题用顶栏「反馈」提交（登录后可附刷写摘要）</span>
+          </div>
         </div>
       </section>
     </div>
@@ -447,6 +462,6 @@
     <p class="dim small" id="contact">联系站长：<a href="mailto:0XT@tutamail.com">0XT@tutamail.com</a> · 固件与激活码购买渠道：闲鱼「无敌佩佩队长」</p>
   </footer>
 
-  <script type="module" src="js/v8680c2d654dd/main.js"></script>
+  <script type="module" src="js/v1e8cee7e10ef/main.js"></script>
 </body>
 </html>
