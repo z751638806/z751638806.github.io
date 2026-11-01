@@ -93,10 +93,10 @@ PATCHES = {
         # M2：ESP8266 设备卡片（第三张，实验性）
         ("乐鑫 ESP32-C3 开发板<br>固件即将上线</span>\n        </button>",
          "乐鑫 ESP32-C3 开发板<br>Web Serial 直刷 · 3 个固件</span>\n        </button>\n        <button class=\"device-card\" data-device=\"esp8266\" type=\"button\">\n          <span class=\"device-icon\">📶</span>\n          <span class=\"device-name\">ESP8266</span>\n          <span class=\"device-desc\">乐鑫 ESP8266 / ESP8285<br>Web Serial 直刷 · 5 个固件</span>\n        </button>\n        <button class=\"device-card\" data-device=\"esp32\" type=\"button\">\n          <span class=\"device-icon\">🔲</span>\n          <span class=\"device-name\">ESP32</span>\n          <span class=\"device-desc\">乐鑫 ESP32（经典款）<br>Web Serial 直刷 · 4 个固件</span>\n        </button>\n        <button class=\"device-card\" data-device=\"esp32s3\" type=\"button\">\n          <span class=\"device-icon\">🧩</span>\n          <span class=\"device-name\">ESP32-S3</span>\n          <span class=\"device-desc\">乐鑫 ESP32-S3<br>Web Serial 直刷 · 2 个固件</span>\n        </button>", 1),
-        # 2026-11-02 站长指示：页脚不再提"本页开源实现见 仓库"（仓库随之转私密，源码不再公开引流）
+        # 2026-11-02 站长指示：页脚不再提"本页开源实现见 仓库"（仓库随之转私密，源码不再公开引流），
+        # GitHub 链接一并移除——页脚只留邮箱与闲鱼渠道
         ('<p class="dim small">协议出处：<a href="docs/PROTOCOL.md">web/docs/PROTOCOL.md</a> ·\n      审查记录：<a href="docs/REVIEW_LOG.md">web/docs/REVIEW_LOG.md</a></p>',
-         '<p class="dim small" id="contact">联系站长：<a href="mailto:0XT@tutamail.com">0XT@tutamail.com</a> · '
-         '<a href="https://github.com/z751638806" rel="me noopener">GitHub</a> · 固件与激活码购买渠道：闲鱼「无敌佩佩队长」</p>', 1),
+         '<p class="dim small" id="contact">联系站长：<a href="mailto:0XT@tutamail.com">0XT@tutamail.com</a> · 固件与激活码购买渠道：闲鱼「无敌佩佩队长」</p>', 1),
         # M7：自定义固件视图（导航页签 + 视图区块；custom.js 由 tools/flash-custom/ 附加）
         ('<nav class="view-nav" aria-label="视图切换">\n      <button id="nav-flash" class="view-tab selected" type="button">刷固件</button>\n      <button id="nav-rescue" class="view-tab" type="button">救砖恢复</button>\n    </nav>',
          '<nav class="view-nav" aria-label="视图切换">\n      <button id="nav-flash" class="view-tab selected" type="button">刷固件</button>\n      <button id="nav-rescue" class="view-tab" type="button">救砖恢复</button>\n      <button id="nav-custom" class="view-tab" type="button">自定义固件</button>\n    </nav>', 1),
