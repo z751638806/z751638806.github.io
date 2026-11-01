@@ -154,3 +154,21 @@ CREATE TABLE IF NOT EXISTS quota_log (
   ts INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_quota_log_user ON quota_log(user_id, ts);
+
+CREATE TABLE IF NOT EXISTS fw_submissions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ts INTEGER NOT NULL,                -- 提交时间
+  user_id INTEGER,                    -- 提交者（登录用户）
+  login_id TEXT,                      -- 冗余：署名致谢展示
+  device TEXT NOT NULL,               -- bw16|esp32c3|esp8266|esp32|esp32s3
+  name TEXT NOT NULL,                 -- 展示名（审核时可改）
+  note TEXT,                          -- 用户说明（审核时可改）
+  contact TEXT,                       -- 可选联系方式
+  kv_key TEXT,                        -- KV 中 bin 的 key（share/ 前缀）
+  size INTEGER,
+  sha256 TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',  -- pending|approved|rejected|archived
+  reviewed_ts INTEGER,
+  review_note TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_fw_sub_status ON fw_submissions(status, ts);

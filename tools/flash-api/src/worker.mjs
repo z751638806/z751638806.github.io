@@ -59,6 +59,10 @@ export default {
       if (path === "/api/redeem" && request.method === "POST") return await redeemCode(request, env, cors);
       if (path === "/api/event" && request.method === "POST") return await reportEvent(request, env, cors);
       if (path === "/api/feedback" && request.method === "POST") return await postFeedback(request, env, cors);
+      // 公开：用户分享固件（M7：登录投稿 → 站长审核 → 上线免费直刷）
+      if (path === "/api/share/submit" && request.method === "POST") return await shareSubmit(request, env, cors);
+      if (path === "/api/share/list" && request.method === "GET") return await shareList(env, cors);
+      if (path === "/api/share/file" && request.method === "GET") return await shareFile(url, env, cors);
       if (path === "/api/announcements") return await listAnnouncements(env, cors);
       // 公开：付费固件取件——M6（备用机制，保留兼容）
       if (path === "/api/pickup/begin" && request.method === "POST") return await pickupBegin(request, env, cors);
@@ -81,6 +85,8 @@ export default {
         if (path === "/api/admin/stats") return await stats(env, url, cors);
         if (path === "/api/admin/feedback" && request.method === "GET") return await listFeedback(env, url, cors);
         if (path === "/api/admin/feedback/handle" && request.method === "POST") return await handleFeedback(request, env, cors);
+        if (path === "/api/admin/submissions" && request.method === "GET") return await listSubmissions(env, cors);
+        if (path === "/api/admin/submissions/review" && request.method === "POST") return await reviewSubmission(request, env, cors);
         if (path === "/api/admin/announcements" && request.method === "GET") return await listAnnouncements(env, cors, true);
         if (path === "/api/admin/announcements" && request.method === "POST") return await upsertAnnouncement(request, env, cors);
         if (path === "/api/admin/codes" && request.method === "POST") return await genCodes(request, env, cors);
@@ -203,6 +209,74 @@ async function postFeedback(request, env, cors) {
     "INSERT INTO feedback (ts, contact, message, log) VALUES (?,?,?,?)"
   ).bind(Date.now(), contact, message, log).run();
   return json({ ok: true }, 200, cors);
+}
+
+/* ---------- 用户分享固件（M7：登录投稿 → 站长审核 → 上线"用户分享"分组，免费直刷） ----------
+   bin 存 KV（PICKUP，share/ 前缀）；fw_submissions 表走 pending→approved/rejected/archived。
+   上线后任何访客经 /api/share/file 免费下载，无一次性链接（与免费固件同水位）。 */
+const SHARE_MAX_BYTES = 6 * 1024 * 1024;
+const SHARE_DEVICES = new Set(["bw16", "esp32c3", "esp8266", "esp32", "esp32s3"]);
+async function shareSubmit(request, env, cors) {
+  const user = await userFromCookie(request, env);
+  if (!user) return json({ detail: "请先登录后再分享固件" }, 401, cors);
+  if (!rateLimit("share:" + (clientIp(request) || "?"), 10))
+    return json({ detail: "提交过于频繁，请稍后再试" }, 429, cors);
+  if (!rateLimit("shareu:" + user.id, 5, 3600000))
+    return json({ detail: "提交次数已达上限（每小时 5 条），请稍后再试" }, 429, cors);
+  let form;
+  try { form = await request.formData(); } catch { return json({ detail: "bad_request" }, 400, cors); }
+  const file = form.get("file");
+  const device = clean(form.get("device"), 20);
+  const name = clean(form.get("name"), 60);
+  const note = clean(form.get("note"), 500) || "";
+  const contact = clean(form.get("contact"), 120) || "";
+  if (!(file instanceof File) || !file.size) return json({ detail: "请选择要分享的 .bin 固件文件" }, 400, cors);
+  if (file.size > SHARE_MAX_BYTES) return json({ detail: `文件过大（上限 ${Math.round(SHARE_MAX_BYTES / 1048576)}MB）` }, 400, cors);
+  if (!SHARE_DEVICES.has(device)) return json({ detail: "设备类型无效" }, 400, cors);
+  if (!name) return json({ detail: "请填写固件名称" }, 400, cors);
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const sha256 = hex(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)));
+  const key = `share/${randomHex(12)}.bin`;
+  await env.PICKUP.put(key, bytes);
+  const r = await env.DB.prepare(
+    "INSERT INTO fw_submissions (ts, user_id, login_id, device, name, note, contact, kv_key, size, sha256, status) VALUES (?,?,?,?,?,?,?,?,?,?,'pending')"
+  ).bind(Date.now(), user.id, user.login_id, device, name, note, contact, key, file.size, sha256).run();
+  return json({ ok: true, id: r.meta.last_row_id, sha256 }, 200, cors);
+}
+async function shareList(env, cors) {
+  const { results } = await env.DB.prepare(
+    "SELECT id, device, name, note, size, sha256, login_id, ts FROM fw_submissions WHERE status='approved' ORDER BY ts DESC LIMIT 100"
+  ).all();
+  return json({ ok: true, shared: results || [] }, 200, cors);
+}
+async function shareFile(url, env, cors) {
+  const id = Number(url.searchParams.get("id"));
+  if (!id) return json({ detail: "bad_request" }, 400, cors);
+  const row = await env.DB.prepare("SELECT kv_key, status FROM fw_submissions WHERE id=?").bind(id).first();
+  if (!row || row.status !== "approved") return json({ detail: "分享不存在或未上线" }, 404, cors);
+  const data = await readPickupBlob(env.PICKUP, row.kv_key);
+  if (!data) return json({ detail: "文件缺失" }, 404, cors);
+  return new Response(data, { status: 200, headers: { "Content-Type": "application/octet-stream", "Cache-Control": "no-store", ...cors } });
+}
+async function listSubmissions(env, cors) {
+  const { results } = await env.DB.prepare(
+    "SELECT id, ts, user_id, login_id, device, name, note, contact, size, sha256, status, reviewed_ts, review_note FROM fw_submissions ORDER BY (status='pending') DESC, ts DESC LIMIT 200"
+  ).all();
+  return json({ ok: true, submissions: results || [] }, 200, cors);
+}
+async function reviewSubmission(request, env, cors) {
+  const b = await body(request);
+  const id = Number(b.id);
+  const action = b.action;
+  if (!id || !["approve", "reject", "unpublish"].includes(action)) return json({ error: "bad_request" }, 400, cors);
+  const status = action === "approve" ? "approved" : action === "reject" ? "rejected" : "archived";
+  const name = clean(b.name, 60), note = clean(b.note, 500);
+  const row = await env.DB.prepare("SELECT id FROM fw_submissions WHERE id=?").bind(id).first();
+  if (!row) return json({ detail: "投稿不存在" }, 404, cors);
+  await env.DB.prepare(
+    "UPDATE fw_submissions SET status=?, reviewed_ts=?, name=COALESCE(?, name), note=COALESCE(?, note) WHERE id=?"
+  ).bind(status, Date.now(), name, note, id).run();
+  return json({ ok: true, id, status }, 200, cors);
 }
 
 /* ---------- 公开/管理：公告 ---------- */

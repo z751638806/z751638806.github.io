@@ -100,6 +100,34 @@
   </div>
 
   <!-- 反馈对话框（M4：F6） -->
+  <div id="share-overlay" hidden
+       style="position:fixed;inset:0;background:rgba(2,6,23,.72);z-index:60;align-items:center;justify-content:center;">
+    <div role="dialog" aria-modal="true" aria-label="分享固件"
+         style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:22px 24px;width:min(92vw,440px);color:#e2e8f0;">
+      <h3 style="margin:0 0 6px;font-size:17px;">📤 分享固件</h3>
+      <p class="dim" style="margin:0 0 12px;font-size:12px;">上传你的自制固件（.bin，≤6MB），经站长审核后上线「用户分享」分组并署名致谢。需登录。</p>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <label style="flex:1;font-size:13px;">设备类型
+          <select id="share-device" style="width:100%;margin-top:4px;padding:8px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;">
+            <option value="bw16">BW16</option><option value="esp32c3">ESP32-C3</option><option value="esp8266">ESP8266</option><option value="esp32">ESP32</option><option value="esp32s3">ESP32-S3</option>
+          </select></label>
+        <label style="flex:1;font-size:13px;">固件名称
+          <input id="share-name" maxlength="60" placeholder="如 我的自定义固件" style="width:100%;margin-top:4px;padding:8px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;"></label>
+      </div>
+      <label style="display:block;margin-bottom:10px;font-size:13px;">说明（刷写后热点/用法/注意事项）
+        <textarea id="share-note" rows="3" maxlength="500" style="width:100%;margin-top:4px;padding:8px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;resize:vertical;"></textarea></label>
+      <label style="display:block;margin-bottom:10px;font-size:13px;">固件文件（.bin，≤6MB）
+        <input id="share-file" type="file" accept=".bin" style="width:100%;margin-top:4px;font-size:13px;color:#e2e8f0;"></label>
+      <label style="display:block;margin-bottom:12px;font-size:13px;">联系方式（可选，便于站长联系你）
+        <input id="share-contact" maxlength="120" style="width:100%;margin-top:4px;padding:8px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;"></label>
+      <p id="share-error" class="alert alert-err" style="margin:0 0 12px;" hidden></p>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button id="share-cancel" class="btn" type="button">取消</button>
+        <button id="share-submit" class="btn btn-primary" type="button">提交分享</button>
+      </div>
+    </div>
+  </div>
+
   <div id="fb-overlay" hidden
        style="position:fixed;inset:0;background:rgba(2,6,23,.72);z-index:60;align-items:center;justify-content:center;">
     <div id="fb-dialog" role="dialog" aria-modal="true" aria-label="提交反馈"
@@ -178,7 +206,8 @@
 
     <!-- 固件清单 (F2) -->
     <section id="firmware-section" hidden aria-label="固件清单">
-      <h2>2 · 选择固件 <small id="firmware-count" class="dim"></small></h2>
+      <h2>2 · 选择固件 <small id="firmware-count" class="dim"></small>
+        <button id="btn-share" class="btn btn-small" type="button" style="float:right">📤 分享固件</button></h2>
       <div id="firmware-grid" class="fw-grid" role="listbox" aria-label="固件列表"></div>
     </section>
 
@@ -385,6 +414,6 @@
     <p class="dim small" id="contact">联系站长：<a href="mailto:0XT@tutamail.com">0XT@tutamail.com</a> · 固件与激活码购买渠道：闲鱼「无敌佩佩队长」</p>
   </footer>
 
-  <script type="module" src="js/vdda48fa64682/main.js"></script>
+  <script type="module" src="js/v44f9db108f72/main.js"></script>
 </body>
 </html>

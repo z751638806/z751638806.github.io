@@ -375,6 +375,58 @@ async function main() {
     } finally { globalThis.fetch = realFetch; }
   }
 
+  console.log("M7 用户分享固件：投稿 → 审核 → 上线 → 下载 → 下架");
+  {
+    const reg = await worker.fetch(req("/api/auth/register", { method: "POST", body: { loginId: "sharer", password: "password8" } }), env);
+    const cookie = (reg.headers.get("Set-Cookie") || "").split(";")[0];
+    ok((await j(reg)).ok === true, "投稿用户注册成功");
+    const bin = new Uint8Array(2048).fill(0x5a);
+    const anonFd = new FormData();
+    anonFd.append("file", new Blob([bin]), "fw.bin");
+    anonFd.append("device", "bw16"); anonFd.append("name", "匿名分享");
+    const anon = await worker.fetch(new Request("https://admin.peipeidev.cn/api/share/submit", { method: "POST", body: anonFd }), env);
+    ok(anon.status === 401, "匿名投稿 401（需登录）");
+    const fd = new FormData();
+    fd.append("file", new Blob([bin]), "fw.bin");
+    fd.append("device", "bw16"); fd.append("name", "社区自制固件A"); fd.append("note", "测试分享说明");
+    const subD = await j(await worker.fetch(new Request("https://admin.peipeidev.cn/api/share/submit", { method: "POST", headers: { Cookie: cookie }, body: fd }), env));
+    ok(subD.ok === true && subD.id > 0 && /^[0-9a-f]{64}$/.test(subD.sha256), "登录投稿成功（回传 sha256）");
+    const list0 = await j(await worker.fetch(req("/api/share/list"), env));
+    ok(!(list0.shared || []).some((x) => x.id === subD.id), "待审核不出现在公开清单");
+    ok((await worker.fetch(req(`/api/share/file?id=${subD.id}`), env)).status === 404, "待审核文件 404（未上线不可下载）");
+    const fdBad = new FormData();
+    fdBad.append("file", new Blob([bin]), "fw.bin");
+    fdBad.append("device", "esp32x99"); fdBad.append("name", "bad");
+    const badDev = await worker.fetch(new Request("https://admin.peipeidev.cn/api/share/submit", { method: "POST", headers: { Cookie: cookie }, body: fdBad }), env);
+    ok(badDev.status === 400, "无效设备类型 400");
+    ok(((await j(await worker.fetch(req("/api/admin/submissions", { token: T }), env))).submissions || []).some((s) => s.id === subD.id && s.status === "pending"), "管理列表可见待审核");
+    const rv = await j(await worker.fetch(req("/api/admin/submissions/review", { method: "POST", token: T, body: { id: subD.id, action: "approve", name: "社区自制固件A（审核版）" } }), env));
+    ok(rv.ok === true && rv.status === "approved", "批准上线（可改展示名）");
+    const item = ((await j(await worker.fetch(req("/api/share/list"), env))).shared || []).find((x) => x.id === subD.id);
+    ok(item && item.name === "社区自制固件A（审核版）" && item.login_id === "sharer", "上线清单带分享者署名与改后展示名");
+    const dlBytes = new Uint8Array(await (await worker.fetch(req(`/api/share/file?id=${subD.id}`), env)).arrayBuffer());
+    ok(dlBytes.length === bin.length && dlBytes.every((b, i) => b === bin[i]), "上线后文件可下载且字节一致");
+    const fd2 = new FormData();
+    fd2.append("file", new Blob([bin]), "fw2.bin");
+    fd2.append("device", "esp32c3"); fd2.append("name", "社区自制固件B");
+    const sub2 = await j(await worker.fetch(new Request("https://admin.peipeidev.cn/api/share/submit", { method: "POST", headers: { Cookie: cookie }, body: fd2 }), env));
+    ok(sub2.ok === true, "第二条投稿成功（esp32c3）");
+    await worker.fetch(req("/api/admin/submissions/review", { method: "POST", token: T, body: { id: sub2.id, action: "reject" } }), env);
+    const list2 = await j(await worker.fetch(req("/api/share/list"), env));
+    ok(!(list2.shared || []).some((x) => x.id === sub2.id), "拒绝后不出现在清单");
+    ok((await worker.fetch(req(`/api/share/file?id=${sub2.id}`), env)).status === 404, "拒绝后文件 404");
+    await worker.fetch(req("/api/admin/submissions/review", { method: "POST", token: T, body: { id: subD.id, action: "unpublish" } }), env);
+    const list3 = await j(await worker.fetch(req("/api/share/list"), env));
+    ok(!(list3.shared || []).some((x) => x.id === subD.id), "下架后从清单移除");
+    ok((await worker.fetch(req(`/api/share/file?id=${subD.id}`), env)).status === 404, "下架后文件 404");
+    const big = new Uint8Array(6 * 1024 * 1024 + 1);
+    const fdBig = new FormData();
+    fdBig.append("file", new Blob([big]), "big.bin");
+    fdBig.append("device", "bw16"); fdBig.append("name", "超大");
+    const bigSub = await worker.fetch(new Request("https://admin.peipeidev.cn/api/share/submit", { method: "POST", headers: { Cookie: cookie }, body: fdBig }), env);
+    ok(bigSub.status === 400, "超 6MB 文件 400");
+  }
+
   console.log(`\n结果：${passed} 通过，${failed} 失败`);
   if (failed) process.exit(1);
 }

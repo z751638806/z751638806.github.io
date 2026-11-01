@@ -83,6 +83,9 @@ PATCHES = {
          "设备\"变砖\"或想回到出厂状态：直接点下方\"连接并恢复\"即可——工具会自动写入内置出厂镜像（引导 + 应用）并完成清理，无需选择或上传任何文件。默认勾选全片擦除（覆盖板上全部数据）。", 1),
         ("扩展擦除（变砖恢复建议勾选；出处 PROTOCOL.md P14 备注）",
          "全片擦除（覆盖板上全部数据后写入出厂镜像，较慢；恢复变砖建议保持勾选）", 1),
+        # M7：用户分享固件投稿入口按钮（弹窗在源 index.html 内；share.js 由源项目随构建发布）
+        ('      <h2>2 · 选择固件 <small id="firmware-count" class="dim"></small></h2>',
+         '      <h2>2 · 选择固件 <small id="firmware-count" class="dim"></small>\n        <button id="btn-share" class="btn btn-small" type="button" style="float:right">📤 分享固件</button></h2>', 1),
         # 折叠区的 summary 下方补一行说明（上传槽位已收进 <details>，默认视图零文件按钮）
         ('<details id="rescue-advanced">\n          <summary class="small dim">高级：替换为自己的备份镜像（可选）</summary>',
          '<details id="rescue-advanced">\n          <summary class="small dim">高级：替换为自己的备份镜像（可选）</summary>\n          <p class="small dim">默认已使用下方列出的内置出厂镜像（加载后自动 SHA-256 核对）；上传你的文件即按槽位替换，不上传的槽位仍用内置镜像。</p>', 1),
@@ -183,7 +186,7 @@ PATCHES = {
          "'当前是 IDE 内嵌预览窗（Electron），弹不出系统串口列表。请复制当前页面地址，到独立的 Chrome / Edge 标签页打开后再刷写。'", 1),
         # M7：初始化自定义固件模块（custom.js 由 tools/flash-custom/ 附加，随站点发布）
         ("  await initRescue(bw16, flasherLog);\n}",
-         "  await initRescue(bw16, flasherLog);\n  try {\n    const custom = await import('./custom.js');\n    await custom.initCustom(state.manifests, flasherLog);\n  } catch (e) {\n    flasherLog.append('自定义固件模块加载失败：' + e.message, 'err');\n  }\n\n  try {\n    const { initTelemetry } = await import('./telemetry.js');\n    initTelemetry(() => lastFlashSummary);\n  } catch { /* 遥测失败不影响使用 */ }\n}", 1),
+         "  await initRescue(bw16, flasherLog);\n  try {\n    const custom = await import('./custom.js');\n    await custom.initCustom(state.manifests, flasherLog);\n  } catch (e) {\n    flasherLog.append('自定义固件模块加载失败：' + e.message, 'err');\n  }\n\n  try {\n    const { initTelemetry } = await import('./telemetry.js');\n    initTelemetry(() => lastFlashSummary);\n  } catch { /* 遥测失败不影响使用 */ }\n\n  // M7 用户分享固件：登录投稿 → 后台审核 → 清单末尾「用户分享」分组（署名致谢）\n  try {\n    const share = await import('./share.js');\n    await share.initShare(state.manifests, flasherLog, selectFirmware);\n  } catch (e) {\n    flasherLog.append('分享模块加载失败：' + e.message, 'err');\n  }\n  window.__openAuthDialog = openAuthDialog;   // share.js 401 时拉起登录框\n}", 1),
         # M7 修复：switchView 同步第三个视图/页签，否则从「自定义固件」切回时旧页签保持高亮且视图叠加
         ("  $('view-rescue').hidden = view !== 'rescue';\n  $('nav-flash').classList.toggle('selected', view === 'flash');\n  $('nav-rescue').classList.toggle('selected', view === 'rescue');",
          "  $('view-rescue').hidden = view !== 'rescue';\n  $('view-custom').hidden = view !== 'custom';\n  $('nav-flash').classList.toggle('selected', view === 'flash');\n  $('nav-rescue').classList.toggle('selected', view === 'rescue');\n  $('nav-custom').classList.toggle('selected', view === 'custom');", 1),
