@@ -18,6 +18,11 @@
 
 * { box-sizing: border-box; }
 
+/* hidden 语义兜底：类选择器的 display 规则会压过 [hidden] 的 UA 样式
+   （实例：.badge/.alert 让登出后的额度徽章/公告条关不掉）。
+   2026-11-02 实锤 topbar 残留过期登录文本，故全局恢复 hidden 语义。 */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   background: var(--bg);

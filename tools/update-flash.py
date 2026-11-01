@@ -728,10 +728,35 @@ def version_js_assets(dist: Path) -> str:
     needle = '<script type="module" src="js/main.js"></script>'
     if html.count(needle) != 1:
         sys.exit(f"✗ 版本化失败：index.html 应恰有一处 {needle}")
-    html_path.write_text(
-        html.replace(needle, f'<script type="module" src="js/{stamp}/main.js"></script>'),
-        encoding="utf-8",
-    )
+    html = html.replace(needle, f'<script type="module" src="js/{stamp}/main.js"></script>')
+
+    # CSS 内容哈希版本化（2026-11-02）：JS 树早已版本化而 css/*.css 是稳定 URL，
+    # 浏览器启发式缓存会吞掉 CSS 更新（实锤：[hidden] 兜底规则上线时页面拿旧样式表）。
+    # 必须换「路径」而非加查询参数——GH Pages 边缘忽略 query。未版本化文件继续
+    # 原位更新，供缓存中的旧 HTML 使用；版本目录保留两代，与 KEEP_JS_VERSIONS 同策略。
+    css_links = sorted(set(re.findall(r'<link rel="stylesheet" href="(css/[^"?:]+)">', html)))
+    if not css_links:
+        sys.exit("✗ 版本化失败：index.html 未找到 stylesheet 链接")
+    ch = hashlib.sha256()
+    css_texts = {}
+    for rel in css_links:
+        p = dist / rel
+        if not p.is_file():
+            sys.exit(f"✗ 版本化失败：样式表缺失 {rel}")
+        css_texts[rel] = p.read_text(encoding="utf-8")
+        ch.update(rel.encode())
+        ch.update(css_texts[rel].encode())
+    css_stamp = ch.hexdigest()[:12]
+    for rel, text in css_texts.items():
+        out = dist / "css" / f"v{css_stamp}" / Path(rel).name
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(text, encoding="utf-8")
+        html = html.replace(f'href="{rel}"', f'href="css/v{css_stamp}/{Path(rel).name}"')
+    for old in (dist / "css").glob("v*"):
+        if old.is_dir() and old.name != f"v{css_stamp}":
+            shutil.rmtree(old, ignore_errors=True)
+    html_path.write_text(html, encoding="utf-8")
+    print(f"  ✓ CSS 版本化：css/v{css_stamp}/（{len(css_texts)} 个样式表）")
 
     for p in out.glob("*.js"):
         text = p.read_text(encoding="utf-8")
