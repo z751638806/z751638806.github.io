@@ -5,7 +5,7 @@ import { SerialSession, beginPortRequest } from "./serial.js";
 import { flashBw16 } from "./ameba.js";
 import { FlashLog } from "./log.js";
 import { classifyDeviceMatch } from "./guard.js";
-import { showManualGuide } from "./ui.js";
+import { showManualGuide, setTitleProgress, resetTitle } from "./ui.js";
 import { isEmbeddedBrowser } from "./main.js";
 
 let manifests = null;
@@ -151,6 +151,7 @@ async function flashCustomBw16() {
         const pct = totalBytes ? Math.round((writtenBytes / totalBytes) * 100) : 0;
         $("custom-progress-bar").style.width = `${pct}%`;
         $("custom-progress-text").textContent = `${pct}% · ${text}（${writtenBytes}/${totalBytes} 字节）`;
+        setTitleProgress(pct);
       },
       onNeedManual: async (n) => {
         log.append(`等待手动操作（剩余重试 ${n} 次）…`, "warn");
@@ -182,6 +183,7 @@ async function flashCustomBw16() {
     $("custom-progress-bar").style.width = "0%";
     busy = false;
     window.__flashBusy = false;
+    resetTitle();
     setCustomBusy(false);
     FlashLog.recordResult({
       device: "BW16",
@@ -285,6 +287,7 @@ async function flashCustomEsp() {
     });
     log.append("正在连接设备…", "sys");
     await loader.main();
+    log.append(`检测到芯片：${loader.CHIP_NAME || "未知型号"}`, "sys");
     log.append("设备已就绪，开始写入自定义固件…", "ok");
 
     const total = espFiles.reduce((s, f) => s + f.bytes.length, 0);
@@ -301,6 +304,7 @@ async function flashCustomEsp() {
         const pct = total ? Math.round((done / total) * 100) : 0;
         $("custom-esp-progress-bar").style.width = `${pct}%`;
         $("custom-esp-progress-text").textContent = `${pct}% · ${espFiles[fileIndex]?.name ?? ""}（${fileIndex + 1}/${espFiles.length}）`;
+        setTitleProgress(pct);
       },
     });
     log.append("写入完成，正在校验复位…", "sys");
@@ -367,6 +371,7 @@ async function flashCustomEsp() {
     $("btn-custom-esp-flash").disabled = false;
     busy = false;
     window.__flashBusy = false;
+    resetTitle();
     FlashLog.recordResult({
       device: "ESP32-C3",
       firmware: "自定义固件",
@@ -444,6 +449,7 @@ async function flashCustomEsp8266() {
     });
     log.append("正在连接设备…（ESP8266 支持：实验性）", "sys");
     await loader.main();
+    log.append(`检测到芯片：${loader.CHIP_NAME || "未知型号"}`, "sys");
     log.append("设备已就绪，开始写入自定义固件…", "ok");
     const total = esp8266Files.reduce((s, f) => s + f.bytes.length, 0);
     await loader.writeFlash({
@@ -459,6 +465,7 @@ async function flashCustomEsp8266() {
         const pct = total ? Math.round((done / total) * 100) : 0;
         $("custom-esp8266-progress-bar").style.width = `${pct}%`;
         $("custom-esp8266-progress-text").textContent = `${pct}% · ${esp8266Files[fileIndex]?.name ?? ""}（${fileIndex + 1}/${esp8266Files.length}）`;
+        setTitleProgress(pct);
       },
     });
     log.append("写入完成，正在复位…", "sys");
@@ -516,6 +523,7 @@ async function flashCustomEsp8266() {
     $("btn-custom-esp8266-flash").disabled = false;
     busy = false;
     window.__flashBusy = false;
+    resetTitle();
     FlashLog.recordResult({
       device: "ESP8266",
       firmware: "自定义固件",
