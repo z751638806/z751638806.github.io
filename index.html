@@ -22,6 +22,7 @@
       <button id="nav-flash" class="view-tab selected" type="button">刷固件</button>
       <button id="nav-rescue" class="view-tab" type="button">救砖恢复</button>
       <button id="nav-custom" class="view-tab" type="button">自定义固件</button>
+      <button id="nav-guide" class="view-tab" type="button">使用说明</button>
     </nav>
     <div class="topbar-status">
       <button id="btn-feedback" class="btn" type="button" hidden style="padding:2px 10px;font-size:12px;">反馈</button>
@@ -395,6 +396,38 @@
       </div>
     </section>
   </div>
+    <!-- 使用说明（M8）：新手上手 + 板块导航 + 常见问题 + 无设备演练入口 -->
+    <div id="view-guide" hidden>
+      <section aria-label="使用说明">
+        <h2>使用说明</h2>
+        <div class="flash-panel">
+          <p class="small dim">全程无需安装任何软件或浏览器插件——串口能力内置于浏览器，三步上手。</p>
+
+          <h3>① 准备</h3>
+          <p>电脑安装 <b>Chrome 或 Edge</b> 浏览器（Safari / Firefox / 微信内置浏览器不支持）；一根<b>可靠的数据线</b>（很多"连不上"都是数据线的问题）；开发板通电。</p>
+
+          <h3>② 选择设备与固件</h3>
+          <p>在「刷固件」页选择设备类型（BW16 / ESP32-C3 / ESP8266 / ESP32 / ESP32-S3），再选固件。每个固件的面板里会显示刷写后的热点名、密码与使用说明；带「需激活」字样的固件按面板说明操作，其余刷完即用。</p>
+
+          <h3>③ 连接并刷写</h3>
+          <p>点「连接并刷写」，在浏览器弹窗中选中开发板串口。BW16 会自动尝试进入下载模式；若提示手动操作：<b>按住 BURN 不放 → 短按一下 RST → 松开 BURN</b>，然后点重试。刷写完成设备自动复位运行新固件。</p>
+          <p><a class="btn btn-primary" href="?mock=1">🧪 无设备？先看完整演示（模拟刷写，不写硬件）</a></p>
+          <p class="small dim">演示与真实刷写流程完全一致，只是不连真板——新用户建议先跑一遍熟悉交互；救砖演练可在演示页加 <code>&amp;rescuebins=bw16-01</code> 体验。</p>
+
+          <h3>各板块说明</h3>
+          <p><b>刷固件</b>——刷官方与经审核的用户分享固件；<b>救砖恢复</b>——设备变砖时一键恢复出厂镜像（引导程序已内置）；<b>自定义固件</b>——刷你自己的 bin（纯本地文件，不上传任何服务器）；用户分享的固件经站长审核后出现在各设备清单下方，并署名致谢分享者。</p>
+
+          <h3>常见问题</h3>
+          <p><b>提示"当前浏览器不支持 Web Serial"</b>——换 Chrome / Edge 打开本页。</p>
+          <p><b>连不上 / 反复失败</b>——① 换一根数据线、直插电脑（不要经 USB hub）；② 关闭占用串口的其他程序（串口监视器 / 上位机）；③ 按提示手动 BURN + RST 后重试；④ 刷新页面再试。</p>
+          <p><b>刷完设备没反应</b>——按一下板上的 RST 键，或重新插拔 USB 供电。</p>
+          <p><b>手机上打开本站？</b>手机浏览器没有串口权限，请把网址发到电脑上用 Chrome / Edge 打开。</p>
+
+          <h3>联系站长</h3>
+          <p>邮箱 <a href="mailto:0XT@tutamail.com">0XT@tutamail.com</a> · 固件与激活码购买渠道：闲鱼「无敌佩佩队长」· 页面问题用顶栏「反馈」提交（登录后可附刷写摘要）。</p>
+        </div>
+      </section>
+    </div>
     <!-- 日志面板 (F8)：全局，两个视图共用 -->
     <section id="log-section" hidden aria-label="日志">
       <div class="log-head">
@@ -414,6 +447,6 @@
     <p class="dim small" id="contact">联系站长：<a href="mailto:0XT@tutamail.com">0XT@tutamail.com</a> · 固件与激活码购买渠道：闲鱼「无敌佩佩队长」</p>
   </footer>
 
-  <script type="module" src="js/v44f9db108f72/main.js"></script>
+  <script type="module" src="js/v8680c2d654dd/main.js"></script>
 </body>
 </html>
