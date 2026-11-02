@@ -55,7 +55,7 @@ PATCHES = {
         ("<link rel=\"stylesheet\" href=\"css/style.css\">",
          "<link rel=\"stylesheet\" href=\"css/style.css\">\n  <link rel=\"stylesheet\" href=\"css/theme-home.css\">", 1),
         ("<h1>⚡ BW16 / ESP32-C3 网页刷写工具</h1>",
-         "<h1 class=\"logo\"><a href=\"/\"><svg class=\"logo-bolt\" viewBox=\"0 0 24 24\" width=\"17\" height=\"17\" aria-hidden=\"true\"><path d=\"M13 2 4.5 13.5h5L9 22l8.5-11.5h-5L13 2z\"/></svg>peipei<span>.</span>dev</a><span class=\"topbar-title\">在线烧录</span></h1>", 1),
+         "<h1 class=\"logo\"><a href=\"/\"><svg class=\"logo-bolt\" viewBox=\"0 0 24 24\" width=\"17\" height=\"17\" aria-hidden=\"true\"><path d=\"M13 2 4.5 13.5h5L9 22l8.5-11.5h-5L13 2z\"/></svg>peipeidev<span>.</span>cn</a><span class=\"topbar-title\">在线烧录</span></h1>", 1),
         # 站点导航放在登录区左侧：顶栏最左的「反馈」由遥测模块运行时注入，别夹在两个反馈中间
         ('      <span id="user-box"',
          '      <nav class="site-nav" aria-label="站点导航"><a href="#contact" id="nav-contact">联系</a></nav>\n      <span id="user-box"', 1),
