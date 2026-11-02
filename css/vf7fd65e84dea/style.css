@@ -421,3 +421,8 @@ a { color: var(--accent); }
 #view-guide:not([hidden]) .guide-ico .d1 { animation-play-state: running; }
 .guide-step { position: relative; }
 .guide-step i { position: absolute; top: 12px; right: 12px; margin: 0; }
+
+/* 行内 SVG 图标通用对齐（M8 视觉升级） */
+.h-ico { vertical-align: -4px; }
+.device-icon .h-ico { vertical-align: 0; display: block; }
+h3 .h-ico { vertical-align: -3px; margin-right: 4px; }
