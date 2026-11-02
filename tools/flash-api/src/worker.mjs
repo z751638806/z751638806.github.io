@@ -28,7 +28,8 @@ const isAllowedOrigin = (origin, selfOrigin) =>
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    const path = url.pathname;
+    // 尾斜杠归一（2026-11-02 实锤：/admin/ 落到 not_found——精确匹配不认 /admin/）
+    const path = url.pathname.length > 1 ? url.pathname.replace(/\/+$/, "") : url.pathname;
     const origin = request.headers.get("Origin");
     const originAllowed = origin ? isAllowedOrigin(origin, url.origin) : false;
     const cors = {
