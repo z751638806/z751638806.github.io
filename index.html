@@ -26,7 +26,7 @@
     </nav>
     <div class="topbar-status">
       <button id="btn-feedback" class="btn" type="button" hidden style="padding:2px 10px;font-size:12px;">反馈</button>
-      <nav class="site-nav" aria-label="站点导航"><a href="#contact">联系</a></nav>
+      <nav class="site-nav" aria-label="站点导航"><a href="#contact" id="nav-contact">联系</a></nav>
       <span id="user-box" class="badge badge-dim" hidden></span>
       <button id="btn-redeem" class="btn" type="button" hidden style="padding:2px 10px;font-size:12px;">兑换码</button>
       <button id="btn-login" class="btn" type="button" hidden style="padding:2px 10px;font-size:12px;">登录 / 注册</button>
@@ -101,6 +101,24 @@
   </div>
 
   <!-- 反馈对话框（M4：F6） -->
+  <div id="contact-overlay" hidden
+       style="position:fixed;inset:0;background:rgba(2,6,23,.72);z-index:70;align-items:center;justify-content:center;">
+    <div role="dialog" aria-modal="true" aria-label="联系站长"
+         style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:22px 24px;width:min(92vw,380px);color:#e2e8f0;">
+      <h3 style="margin:0 0 14px;font-size:17px;">联系站长</h3>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <span class="h-ico" style="color:#38bdf8"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 7l8.5 6 8.5-6"/></g></svg></span>
+        <span style="flex:1;font-size:14px;">0XT@tutamail.com</span>
+        <button id="contact-copy" class="btn btn-small" type="button">复制邮箱</button>
+      </div>
+      <p style="margin:0 0 10px;font-size:13px;color:#8b97a7;">固件与激活码购买渠道：闲鱼「无敌佩佩队长」</p>
+      <p style="margin:0 0 16px;font-size:12px;color:#8b97a7;">页面问题建议用顶栏「反馈」提交（登录后可附刷写摘要，处理进度可在后台跟踪）。</p>
+      <div style="display:flex;justify-content:flex-end;">
+        <button id="contact-close" class="btn" type="button">关闭</button>
+      </div>
+    </div>
+  </div>
+
   <div id="share-overlay" hidden
        style="position:fixed;inset:0;background:rgba(2,6,23,.72);z-index:60;align-items:center;justify-content:center;">
     <div role="dialog" aria-modal="true" aria-label="分享固件"
@@ -499,6 +517,6 @@
     <p class="dim small" id="contact">联系站长：<a href="mailto:0XT@tutamail.com">0XT@tutamail.com</a> · 固件与激活码购买渠道：闲鱼「无敌佩佩队长」</p>
   </footer>
 
-  <script type="module" src="js/v0ecc101f15c6/main.js"></script>
+  <script type="module" src="js/vc8f1b518dd02/main.js"></script>
 </body>
 </html>
