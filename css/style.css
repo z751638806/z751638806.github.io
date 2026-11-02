@@ -345,13 +345,15 @@ a { color: var(--accent); }
 
 /* ---------- 全屏浮层（M3/M4/M6：登录/版本/反馈/兑换） ---------- */
 /* 内联 display:flex 会压过 hidden 属性导致浮层常驻显示——显示样式统一在此控制 */
-#auth-overlay, #version-overlay, #fb-overlay, #rd-overlay {
+#auth-overlay, #version-overlay, #fb-overlay, #rd-overlay,
+#contact-overlay, #share-overlay {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 #auth-overlay[hidden], #version-overlay[hidden],
-#fb-overlay[hidden], #rd-overlay[hidden] { display: none; }
+#fb-overlay[hidden], #rd-overlay[hidden],
+#contact-overlay[hidden], #share-overlay[hidden] { display: none; }
 
 /* ---------- 动画层（M8 视觉升级：SVG/过渡统一语言） ----------
    原则：只动 transform/opacity（合成器路径，不抢串口读循环的 CPU 时间）；
