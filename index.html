@@ -417,6 +417,20 @@
 
           <div class="guide-note"><p>💡 演示与真实刷写流程完全一致，只是不连真板——建议新用户先跑一遍熟悉交互；救砖演练在演示页地址后加 <code>&amp;rescuebins=bw16-01</code>。</p></div>
 
+          <div class="guide-card" id="guide-driver-card">
+            <h3>🔌 串口驱动（插上板子没有串口出现时看这里）</h3>
+            <p><b>大多数情况不需要装：</b>ESP32-C3/S3 原生 USB、BW16 原生 USB 全系统免驱；Windows 10/11 插上 CH340/CP210x 板子会<b>自动通过 Windows Update 装好</b>（联网等几秒）；Linux 全免装。需要手动装的主要是 <b>macOS + CH340/CP210x 板</b>的组合。</p>
+            <p><b>驱动下载（厂商官网）：</b></p>
+            <p>· CH340 / CH341（最常见，BW16-Kit 与多数 ESP8266/ESP32 板）：
+              <a href="https://www.wch.cn/downloads/CH341SER_EXE.html" target="_blank" rel="noopener">Windows 安装包（WCH 官网）</a> ·
+              <a href="https://www.wch.cn/downloads/CH341SER_MAC_ZIP.html" target="_blank" rel="noopener">macOS 驱动（WCH 官网）</a></p>
+            <p>· CP210x（部分 ESP32/ESP8266 板）：
+              <a href="https://www.silabs.com/developer-tools/usb-to-uart-bridge-vcp-drivers" target="_blank" rel="noopener">Silicon Labs 官网 VCP 驱动（Win/mac）</a></p>
+            <p>· 串口连接排错参考：<a href="https://docs.espressif.com/projects/esp-idf/en/stable/esp32/get-started/establish-serial-connection.html" target="_blank" rel="noopener">Espressif 官方文档</a></p>
+            <div class="guide-note" id="guide-mac-note" hidden style="margin-top:8px"><p>🍎 检测到你在 macOS：如果你用的是 CH340 / CP210x 板，请先装上方对应驱动再回来刷写（装一次长期有效）；C3/S3 原生 USB 与 BW16 原生 USB 无需此步。</p></div>
+            <script>if (/Mac/i.test(navigator.platform || navigator.userAgent)) { var n = document.getElementById('guide-mac-note'); if (n) n.hidden = false; }</script>
+          </div>
+
           <div class="guide-cols">
             <div class="guide-card">
               <h3>🧩 各板块</h3>
@@ -462,6 +476,6 @@
     <p class="dim small" id="contact">联系站长：<a href="mailto:0XT@tutamail.com">0XT@tutamail.com</a> · 固件与激活码购买渠道：闲鱼「无敌佩佩队长」</p>
   </footer>
 
-  <script type="module" src="js/v4a5ec7772f5e/main.js"></script>
+  <script type="module" src="js/v8c5858f95658/main.js"></script>
 </body>
 </html>

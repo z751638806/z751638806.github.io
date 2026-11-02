@@ -74,6 +74,8 @@ export async function flashEspFirmware(fw, log) {
     });
     log.append("正在连接设备…", "sys");
     await loader.main();
+    // 芯片识别（学习 esptool CLI 的连接输出）：同步阶段已读 magic，回读型号写进日志
+    log.append(`检测到芯片：${loader.CHIP_NAME || "未知型号"}`, "sys");
     log.append("设备已就绪，开始写入固件…", "ok");
 
     await loader.writeFlash({
