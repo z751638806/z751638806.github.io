@@ -172,3 +172,37 @@ CREATE TABLE IF NOT EXISTS fw_submissions (
   review_note TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_fw_sub_status ON fw_submissions(status, ts);
+
+CREATE TABLE IF NOT EXISTS flash_begin_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ts INTEGER NOT NULL,
+  ip TEXT,
+  client_id TEXT,
+  user_id INTEGER,
+  slug TEXT NOT NULL,
+  session_id TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_fbl_ip_ts ON flash_begin_log(ip, ts);
+CREATE INDEX IF NOT EXISTS idx_fbl_cid_ts ON flash_begin_log(client_id, ts);
+
+CREATE TABLE IF NOT EXISTS ip_bans (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ip TEXT NOT NULL UNIQUE,
+  reason TEXT,
+  kind TEXT NOT NULL DEFAULT 'manual',   -- manual（人工）| auto（自动冷却）
+  until_ts INTEGER,                      -- NULL = 永久
+  created_ts INTEGER NOT NULL,
+  created_by TEXT                        -- admin | auto
+);
+
+CREATE TABLE IF NOT EXISTS risk_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ts INTEGER NOT NULL,
+  ip TEXT,
+  client_id TEXT,
+  user_id INTEGER,
+  kind TEXT NOT NULL,                    -- rate_free_hour|rate_free_day|multi_register|...
+  detail TEXT,
+  handled INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_risk_ts ON risk_events(handled, ts);

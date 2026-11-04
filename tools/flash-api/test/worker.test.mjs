@@ -71,7 +71,7 @@ const req = (path, { method = "GET", body, token, headers = {} } = {}) =>
 const j = (r) => r.json();
 
 async function main() {
-  const env = { DB: makeD1(), PICKUP: makeR2(), ADMIN_TOKEN: "test-token" };
+  const env = { DB: makeD1(), PICKUP: makeR2(), ADMIN_TOKEN: "test-token", FREE_RATE_HOURLY: "0", FREE_RATE_DAILY: "0" };
   const T = "test-token";
 
   console.log("基础路由");
@@ -425,6 +425,66 @@ async function main() {
     fdBig.append("device", "bw16"); fdBig.append("name", "超大");
     const bigSub = await worker.fetch(new Request("https://admin.peipeidev.cn/api/share/submit", { method: "POST", headers: { Cookie: cookie }, body: fdBig }), env);
     ok(bigSub.status === 400, "超 6MB 文件 400");
+  }
+
+  console.log("M8 风控：匿名免费固件 1 次/小时 · 5 次/日 + IP 封禁");
+  {
+    // 独立 env：全新 D1（限流阈值用默认 1/时·5/日）；测试请求用 CF-Connecting-IP 模拟多 IP
+    const envR = { DB: makeD1(), PICKUP: makeR2(), ADMIN_TOKEN: T };
+    await worker.fetch(req("/api/admin/catalog", { method: "POST", token: T, body: { slug: "bw16-21", name: "测试固件", device: "bw16", files: { "km0_km4_image2.bin": { size: 100, sha256: "x" } } } }), envR);
+    const beginAt = (ip, cid) => worker.fetch(new Request("https://admin.peipeidev.cn/api/flash/begin",
+      { method: "POST", headers: { "Content-Type": "application/json", ...(ip ? { "CF-Connecting-IP": ip } : {}) }, body: JSON.stringify({ slug: "bw16-21", fingerprint: cid || "fp", client_id: cid, purpose: "flash" }) }), envR);
+
+    const r1 = await beginAt("1.1.1.1", "cid-a");
+    ok(r1.status === 200, "首刷 200（1 次/小时内）");
+    const r2 = await beginAt("1.1.1.1", "cid-a");
+    ok(r2.status === 429 && /每小时限 1 次/.test((await r2.json()).detail || ""), "同 IP 第二次 429（1 次/小时）");
+    const r3 = await beginAt("2.2.2.2", "cid-b");
+    ok(r3.status === 200, "不同 IP 不受影响（按 IP 隔离）");
+
+    // IP 封禁 → 403；解封 → 恢复（不再 403）
+    await worker.fetch(req("/api/admin/risk/ban", { method: "POST", token: T, body: { ip: "2.2.2.2", days: 1, reason: "测试封禁" } }), envR);
+    const banned = await beginAt("2.2.2.2", "cid-b");
+    ok(banned.status === 403 && /已被限制/.test((await banned.json()).detail || ""), "封禁后 begin 403（已限制）");
+    ok(((await j(await worker.fetch(req("/api/admin/risk", { token: T }), envR))).bans || []).some((b) => b.ip === "2.2.2.2"), "封禁列表可见");
+    await worker.fetch(req("/api/admin/risk/unban", { method: "POST", token: T, body: { ip: "2.2.2.2" } }), envR);
+    const unbanned = await beginAt("2.2.2.2", "cid-b");
+    ok(unbanned.status !== 403, "解封后不再 403");
+
+    // 日阈值：直插 5 条 2-3 小时前的 begin 记录（绕开小时窗，独立测日窗）
+    for (let i = 0; i < 5; i++) {
+      await envR.DB.prepare("INSERT INTO flash_begin_log (ts, ip, client_id, slug, session_id) VALUES (?,?,?,?,?)")
+        .bind(Date.now() - (2 + i) * 3600e3, "3.3.3.3", "cid-c", "bw16-21", "old" + i).run();
+    }
+    const rDay = await beginAt("3.3.3.3", "cid-c");
+    ok(rDay.status === 429 && /5 次\/日/.test((await rDay.json()).detail || ""), "日窗独立判定 429（5 次/日）");
+
+    // client_id 维度：同设备跨 IP 也计数
+    const c1 = await beginAt("4.4.4.4", "cid-shared");
+    ok(c1.status === 200, "新 IP 新设备首刷 200");
+    const c2 = await beginAt("5.5.5.5", "cid-shared");
+    ok(c2.status === 429, "同 client_id 跨 IP 第二次 429（设备维度）");
+
+    // 风险事件入账 + 标记处理
+    const risk = await j(await worker.fetch(req("/api/admin/risk", { token: T }), envR));
+    const ev = (risk.events || []).find((e) => e.kind === "rate_free_hour");
+    ok(!!ev, "429 触发写入 risk_events");
+    await worker.fetch(req("/api/admin/risk/handle", { method: "POST", token: T, body: { id: ev.id } }), envR);
+    ok(((await j(await worker.fetch(req("/api/admin/risk", { token: T }), envR))).events || []).find((e) => e.id === ev.id).handled === 1, "风险事件可标记处理");
+
+    // paid begin 不受免费限流影响（结构上 else-if 分支）+ 封禁对付费同样生效
+    const P = "peipei-flash-api";
+    // begin 读 catalog_fw（files 非空即可到扣额度逻辑），gated 读 paid_fw——两表都要有
+    await worker.fetch(req("/api/admin/catalog", { method: "POST", token: T, body: { slug: "bw16-19", name: "付费", device: "bw16", files: { "km0_km4_image2.bin": { size: 100, sha256: "x" } } } }), envR);
+    await worker.fetch(req("/api/admin/paid", { method: "POST", token: T, body: { slug: "bw16-19", name: "付费", device: "bw16" } }), envR);
+    const reg = await worker.fetch(new Request("https://admin.peipeidev.cn/api/auth/register",
+      { method: "POST", headers: { "CF-Connecting-IP": "6.6.6.6" }, body: JSON.stringify({ loginId: "payer", password: "password8" }) }), envR);
+    const pcookie = (reg.headers.get("Set-Cookie") || "").split(";")[0];
+    const paidBegin = (ip) => worker.fetch(new Request("https://admin.peipeidev.cn/api/flash/begin",
+      { method: "POST", headers: { "Content-Type": "application/json", Cookie: pcookie, ...(ip ? { "CF-Connecting-IP": ip } : {}) }, body: JSON.stringify({ slug: "bw16-19", fingerprint: "pfp", purpose: "flash" }) }), envR);
+    ok((await paidBegin("6.6.6.6")).status === 200, "付费 begin 不占免费限流额度");
+    await worker.fetch(req("/api/admin/risk/ban", { method: "POST", token: T, body: { ip: "6.6.6.6", days: 1 } }), envR);
+    ok((await paidBegin("6.6.6.6")).status === 403, "IP 封禁对付费 begin 同样生效");
   }
 
   console.log(`\n结果：${passed} 通过，${failed} 失败`);

@@ -88,6 +88,10 @@ export default {
         if (path === "/api/admin/feedback/handle" && request.method === "POST") return await handleFeedback(request, env, cors);
         if (path === "/api/admin/submissions" && request.method === "GET") return await listSubmissions(env, cors);
         if (path === "/api/admin/submissions/review" && request.method === "POST") return await reviewSubmission(request, env, cors);
+        if (path === "/api/admin/risk" && request.method === "GET") return await listRisk(env, cors);
+        if (path === "/api/admin/risk/ban" && request.method === "POST") return await banIp(request, env, cors);
+        if (path === "/api/admin/risk/unban" && request.method === "POST") return await unbanIp(request, env, cors);
+        if (path === "/api/admin/risk/handle" && request.method === "POST") return await handleRisk(request, env, cors);
         if (path === "/api/admin/announcements" && request.method === "GET") return await listAnnouncements(env, cors, true);
         if (path === "/api/admin/announcements" && request.method === "POST") return await upsertAnnouncement(request, env, cors);
         if (path === "/api/admin/codes" && request.method === "POST") return await genCodes(request, env, cors);
@@ -264,6 +268,43 @@ async function listSubmissions(env, cors) {
     "SELECT id, ts, user_id, login_id, device, name, note, contact, size, sha256, status, reviewed_ts, review_note FROM fw_submissions ORDER BY (status='pending') DESC, ts DESC LIMIT 200"
   ).all();
   return json({ ok: true, submissions: results || [] }, 200, cors);
+}
+
+/* ---------- 风控后台（M8：异常可见 + 人工裁决；只标记不自动封） ---------- */
+async function listRisk(env, cors) {
+  const q = async (sql, ...p) => (await env.DB.prepare(sql).bind(...p).all()).results;
+  const [bans, events, topIps] = await Promise.all([
+    q("SELECT * FROM ip_bans ORDER BY created_ts DESC LIMIT 100"),
+    q("SELECT * FROM risk_events ORDER BY ts DESC LIMIT 50"),
+    q("SELECT ip, COUNT(*) AS n, MAX(ts) AS last_ts FROM flash_begin_log WHERE ts > ? AND ip IS NOT NULL GROUP BY ip ORDER BY n DESC LIMIT 20", Date.now() - 86400e3),
+  ]);
+  return json({ ok: true, bans: bans || [], events: events || [], topIps: topIps || [] }, 200, cors);
+}
+async function banIp(request, env, cors) {
+  const b = await body(request);
+  const ip = clean(b.ip, 64);
+  const days = Number(b.days) || 0;   // 0 = 永久
+  if (!ip) return json({ error: "bad_request" }, 400, cors);
+  const until = days > 0 ? Date.now() + days * 86400e3 : null;
+  await env.DB.prepare(
+    "INSERT INTO ip_bans (ip, reason, kind, until_ts, created_ts, created_by) VALUES (?,?,?,?,?, 'admin') "
+    + "ON CONFLICT(ip) DO UPDATE SET reason=excluded.reason, until_ts=excluded.until_ts, created_ts=excluded.created_ts"
+  ).bind(ip, clean(b.reason, 200) || null, "manual", until, Date.now()).run();
+  return json({ ok: true, ip, until_ts: until }, 200, cors);
+}
+async function unbanIp(request, env, cors) {
+  const b = await body(request);
+  const ip = clean(b.ip, 64);
+  if (!ip) return json({ error: "bad_request" }, 400, cors);
+  const r = await env.DB.prepare("DELETE FROM ip_bans WHERE ip=?").bind(ip).run();
+  return json({ ok: true, removed: r.meta.changes || 0 }, 200, cors);
+}
+async function handleRisk(request, env, cors) {
+  const b = await body(request);
+  const id = Number(b.id);
+  if (!id) return json({ error: "bad_request" }, 400, cors);
+  await env.DB.prepare("UPDATE risk_events SET handled=? WHERE id=?").bind(b.unhandled ? 0 : 1, id).run();
+  return json({ ok: true, id }, 200, cors);
 }
 async function reviewSubmission(request, env, cors) {
   const b = await body(request);
@@ -662,6 +703,7 @@ async function flashBegin(request, env, cors) {
   const b = await body(request);
   const slug = clean(b.slug, 60);
   const fp = clean(b.fingerprint, 128);
+  const clientId = clean(b.client_id, 64);
   if (!slug) return json({ detail: "缺少固件 slug" }, 400, cors);
   const fw = await env.DB.prepare("SELECT * FROM catalog_fw WHERE slug=? AND active=1").bind(slug).first();
   if (!fw) return json({ detail: "固件不存在或未上架" }, 404, cors);
@@ -671,6 +713,22 @@ async function flashBegin(request, env, cors) {
   const gated = await env.DB.prepare("SELECT 1 FROM paid_fw WHERE slug=? AND active=1").bind(slug).first();
   const user = gated ? await userFromCookie(request, env) : null;
   if (gated && !user) return json({ detail: "请先登录后再刷写" }, 401, cors);
+  const ip = clientIp(request);
+
+  // M8 风控：IP 封禁检查（所有 begin 一律拦截）
+  if (ip) {
+    const ban = await env.DB.prepare("SELECT reason, until_ts FROM ip_bans WHERE ip=? AND (until_ts IS NULL OR until_ts > ?)")
+      .bind(ip, Date.now()).first();
+    if (ban) {
+      await env.DB.prepare("INSERT INTO risk_events (ts, ip, client_id, kind, detail) VALUES (?,?,?,?,?)")
+        .bind(Date.now(), ip, clientId || null, "banned_begin", `slug=${slug}${ban.reason ? " · " + ban.reason : ""}`).run();
+      return json({ detail: "此 IP 已被限制刷写，如有疑问请联系站长" }, 403, cors);
+    }
+  }
+
+  // M8 风控：匿名免费固件频次限制（阈值可由 env 覆盖；测试环境设 0 关闭）
+  const rateHourly = Number(env.FREE_RATE_HOURLY ?? 1);
+  const rateDaily = Number(env.FREE_RATE_DAILY ?? 5);
   let charged = 0;
   if (gated) {
     const r = await env.DB.prepare("UPDATE users SET quota=quota-1 WHERE id=? AND quota>0").bind(user.id).run();
@@ -678,11 +736,32 @@ async function flashBegin(request, env, cors) {
     charged = 1;
     await env.DB.prepare("INSERT INTO quota_log (user_id, delta, reason, ts) VALUES (?,?,?,?)")
       .bind(user.id, -1, `flash:${slug}`, Date.now()).run();
+  } else if (rateHourly > 0 || rateDaily > 0) {
+    const ipMatch = ip ? "ip=?" : "(client_id=? OR ip IS NULL)";   // 无 IP（单测）时按 client_id 计
+    const args = ip ? [ip] : [clientId || ""];
+    const cidClause = clientId ? " OR client_id=?" : "";
+    const cidArgs = clientId ? [clientId] : [];
+    const cnt = async (ms) => (await env.DB.prepare(
+      `SELECT COUNT(*) AS n FROM flash_begin_log WHERE ts > ? AND ( (${ipMatch})${cidClause} ) AND user_id IS NULL AND slug NOT IN (SELECT slug FROM paid_fw WHERE active=1)`
+    ).bind(Date.now() - ms, ...args, ...cidArgs).first()).n;
+    if (rateHourly > 0 && (await cnt(3600e3)) >= rateHourly) {
+      await env.DB.prepare("INSERT INTO risk_events (ts, ip, client_id, kind, detail) VALUES (?,?,?,?,?)")
+        .bind(Date.now(), ip, clientId || null, "rate_free_hour", `slug=${slug} · ${rateHourly} 次/小时已满`).run();
+      return json({ detail: `刷写过于频繁（每小时限 ${rateHourly} 次）。如刷写失败请检查数据线后稍后再试，特殊情况请联系站长` }, 429, cors);
+    }
+    if (rateDaily > 0 && (await cnt(86400e3)) >= rateDaily) {
+      await env.DB.prepare("INSERT INTO risk_events (ts, ip, client_id, kind, detail) VALUES (?,?,?,?,?)")
+        .bind(Date.now(), ip, clientId || null, "rate_free_day", `slug=${slug} · ${rateDaily} 次/日已满`).run();
+      return json({ detail: `今日刷写次数已达上限（${rateDaily} 次/日）。如刷写失败请检查数据线后稍后再试，特殊情况请联系站长` }, 429, cors);
+    }
   }
   const sessionId = randomHex(16);
   const expTs = Date.now() + FLASH_TTL_MS;
   await env.DB.prepare("INSERT INTO flash_sessions (session_id, user_id, slug, fp, quota_charged, created_ts) VALUES (?,?,?,?,?,?)")
     .bind(sessionId, gated ? user.id : null, slug, fp, charged, Date.now()).run();
+  // M8 风控：begin 审计日志（限流计数与后台排查的计数基底）
+  await env.DB.prepare("INSERT INTO flash_begin_log (ts, ip, client_id, user_id, slug, session_id) VALUES (?,?,?,?,?,?)")
+    .bind(Date.now(), ip, clientId || null, gated ? user.id : null, slug, sessionId).run();
   const out = {};
   for (const name of Object.keys(files)) {
     const jti = randomHex(16);

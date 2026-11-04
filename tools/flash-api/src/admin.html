@@ -58,6 +58,7 @@ button:hover{border-color:var(--pink)}
     <button class="tab" data-t="catalog" onclick="go('catalog')">📂 固件目录</button>
     <button class="tab" data-t="site" onclick="go('site')">📝 主站内容</button>
     <button class="tab" data-t="sub" onclick="go('sub')">📨 固件投稿</button>
+    <button class="tab" data-t="risk" onclick="go('risk')">🛡 风控</button>
   </div>
 
   <div id="v-stats">
@@ -222,6 +223,29 @@ button:hover{border-color:var(--pink)}
       <div id="subList" style="margin-top:8px"></div>
     </div>
   </div>
+
+  <div id="v-risk" hidden>
+    <div class="card">
+      <b>手动封禁 / 解封（匿名刷手无账号可禁，用 IP 维度）</b>
+      <div class="row">
+        <input id="rkIp" placeholder="IP（如 1.2.3.4）" style="width:150px">
+        <select id="rkDays"><option value="1">禁 24 小时</option><option value="7">禁 7 天</option><option value="30">禁 30 天</option><option value="0">永久</option></select>
+        <input id="rkReason" placeholder="原因（可选）" style="min-width:200px">
+        <button class="pri" onclick="banIp()">封禁</button>
+        <button onclick="unbanIp()">解封</button>
+      </div>
+      <div id="rkBanList" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <b>近 24 小时高频刷写 IP（按 begin 次数）</b>
+      <p class="dim">匿名免费固件已限 1 次/小时 · 5 次/日；此处是全量 begin 排行，用于发现规律性滥用。</p>
+      <div id="rkTop" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <b>异常事件（限流触发等，最近 50 条）</b>
+      <div id="rkEvents" style="margin-top:8px"></div>
+    </div>
+  </div>
 </main>
 <div id="toast"></div>
 <script>
@@ -236,7 +260,25 @@ async function login(){TK=$("tk").value.trim();if(!TK)return;try{await api("/api
 function logout(){TK="";localStorage.removeItem("admin_tk");location.reload()}
 if(TK){(async()=>{try{await api("/api/admin/stats?days=1");$("login").hidden=true;$("main").hidden=false;go("stats")}catch{}})()}
 
-function go(t){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("sel",b.dataset.t===t));["stats","fb","an","code","paid","user","catalog","site","sub"].forEach(v=>$("v-"+v).hidden=v!==t);({stats:loadStats,fb:loadFb,an:loadAn,code:loadKg,paid:loadPaid,user:loadUser,catalog:loadCat,site:loadSiteBlock,sub:loadSub})[t]()}
+function go(t){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("sel",b.dataset.t===t));["stats","fb","an","code","paid","user","catalog","site","sub","risk"].forEach(v=>$("v-"+v).hidden=v!==t);({stats:loadStats,fb:loadFb,an:loadAn,code:loadKg,paid:loadPaid,user:loadUser,catalog:loadCat,site:loadSiteBlock,sub:loadSub,risk:loadRisk})[t]()}
+
+async function loadRisk(){
+  const d=await api("/api/admin/risk");
+  $("rkBanList").innerHTML=(d.bans||[]).length?"<table><tr><th>IP</th><th>范围</th><th>原因</th><th>封于</th><th></th></tr>"+d.bans.map(b=>`<tr><td>${esc(b.ip)}</td><td>${b.until_ts?"至 "+ts(b.until_ts):"永久"}</td><td>${esc(b.reason||"")}</td><td class="dim">${ts(b.created_ts)}</td><td><button style="padding:2px 10px;font-size:12px" onclick="unbanIp('${esc(b.ip)}')">解封</button></td></tr>`).join("")+"</table>":'<p class="dim">当前无封禁</p>';
+  $("rkTop").innerHTML=(d.topIps||[]).length?"<table><tr><th>IP</th><th>begin 次数</th><th>最近</th><th></th></tr>"+d.topIps.map(x=>`<tr><td>${esc(x.ip)}</td><td>${x.n}</td><td class="dim">${ts(x.last_ts)}</td><td><button style="padding:2px 10px;font-size:12px" onclick="quickBan('${esc(x.ip)}')">禁 24h</button> <button style="padding:2px 10px;font-size:12px" onclick="quickBan('${esc(x.ip)}',0)">永久</button></td></tr>`).join("")+"</table>":'<p class="dim">24 小时内无 begin 记录</p>';
+  $("rkEvents").innerHTML=(d.events||[]).length?d.events.map(e=>`
+    <div style="border-bottom:1px solid var(--border);padding:10px 0;">
+      <div><span class="tag ${e.handled?"r":"u"}">${e.handled?"已处理":"待处理"}</span>
+        <b style="margin-left:8px">${esc(e.kind)}</b>
+        <span class="dim" style="margin-left:8px">${esc(e.ip||"—")}${e.client_id?" · 设备 "+esc(e.client_id.slice(0,8)):""} · ${ts(e.ts)}</span>
+        <button style="float:right;padding:2px 10px;font-size:12px" onclick="handleRisk(${e.id},${e.handled?1:0})">${e.handled?"标记待处理":"标记已处理"}</button></div>
+      ${e.detail?`<div class="dim" style="margin-top:4px">${esc(e.detail)}</div>`:""}
+    </div>`).join(""):'<p class="dim">暂无异常事件 🎉</p>';
+}
+async function banIp(){const ip=$("rkIp").value.trim();if(!ip)return toast("请填 IP");await api("/api/admin/risk/ban",{method:"POST",body:JSON.stringify({ip,days:Number($("rkDays").value),reason:$("rkReason").value.trim()||null})});toast("已封禁 "+ip);loadRisk()}
+async function quickBan(ip,days=1){await api("/api/admin/risk/ban",{method:"POST",body:JSON.stringify({ip,days,reason:"风控页一键封禁"})});toast("已封禁 "+ip);loadRisk()}
+async function unbanIp(){const ip=$("rkIp").value.trim();if(!ip)return toast("请填 IP");await api("/api/admin/risk/unban",{method:"POST",body:JSON.stringify({ip})});toast("已解封 "+ip);loadRisk()}
+async function handleRisk(id,cur){await api("/api/admin/risk/handle",{method:"POST",body:JSON.stringify({id,unhandled:cur===1})});loadRisk()}
 
 async function loadSub(){
   const d=await api("/api/admin/submissions");
